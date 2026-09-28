@@ -42,7 +42,7 @@ They distinguish user-approved product intent, proposed architecture, user-selec
 - During the initial documentation pass, inspected repository files, Git status/history/refs, and candidate rule/document paths; at that point `main` and `origin/main` were both at `dbca199` and no unrelated work was present. The later UI-reference images are separately preserved as untracked user assets.
 - Checked KB-MCP context and retrieved the registered visual-design lifecycle guidance; unrelated project records were excluded from repository claims.
 - Inspected all 24 `ui/*.png` references via contact sheets and full-size views of key screens. No image was modified or staged.
-- Observed local tools: Node.js v25.2.1, npm 11.6.2, Docker 29.8.0, and psql client 17.10. These are host capabilities only; they do not select a deployment, support matrix, or project runtime.
+- Observed local tools: Node.js v25.2.1, npm 11.6.2, Docker CLI 29.8.0, Docker Compose v5.5.1, and psql client 17.10. `docker info` could not connect to the Docker Desktop Linux Engine; the compose client is present but no daemon was available. These are host capabilities only; they do not select a deployment, support matrix, or project runtime.
 - Added three synthetic, exact-integer financial calculation fixtures to `SPEC.md` for the explicitly stated additive formulas. An independent Python `Decimal` spot-check passed; this is not a contract test or completion of T-002.
 - Full documentation consistency recheck after the T-002 fixtures passed: 8/8 required docs; local Markdown targets; ordered E2E-01–E2E-18; unique T-001–T-016 plus documentation task T-017; D-008 mirrored between SPEC.md and TASK.md; all 24 image filenames indexed; no trailing whitespace; GOAL_PROMPT.md is 1,969/2,000 characters. `git diff --check` passed.
 - Created the earlier local documentation commit containing only the eight requested files, parented directly to `dbca199`; verified that commit's file list. The current UI-reference change is Markdown-only; the 24 PNGs remain untracked/unstaged. No push or release was performed.
@@ -57,7 +57,7 @@ These are unavailable checks, not passing checks. See [SPEC.md](SPEC.md) for the
 
 ## Risks and blockers
 
-1. The product blueprint is explicit, but the recommended stack and target hosting are not approved decisions.
+1. D-001 now proposes a portability-first stack/host/browser baseline, but it is still unapproved; no organizational hosting/support requirements were found, and the local Docker engine was unavailable.
 2. Tenant/external-user identity and permission semantics require explicit security design before data/API implementation.
 3. Offline retention/revocation on shared devices is unresolved; sensitive offline access must fail closed until approved.
 4. Financial rounding/tax/currency/retention allocation and exact lifecycle transitions need a contract before schema migrations.
@@ -68,4 +68,4 @@ These are unavailable checks, not passing checks. See [SPEC.md](SPEC.md) for the
 
 ## Next task / resume point
 
-Start with **T-001** in [TASK.md](TASK.md): decide whether to adopt the proposed technology baseline or run a bounded architecture/deployment spike. T-002 (financial lifecycle/calculation contract) and T-003 (tenant, external access, and offline security policy) may proceed in parallel. Do not scaffold packages or migrations until these dependencies are resolved. No release, push, PR, or deployment is authorized by this documentation task.
+Continue with **T-001** in [TASK.md](TASK.md): confirm or replace the explicitly non-binding D-001 proposal, especially the deployment and browser matrix. Local Node/Compose/PostgreSQL client versions do not satisfy that gate, and Docker Compose cannot run until a daemon is available. T-002 (financial lifecycle/calculation contract) and T-003 (tenant, external access, and offline security policy) remain open; do not scaffold packages or migrations until T-001–T-003 are resolved. No release, push, PR, or deployment is authorized.

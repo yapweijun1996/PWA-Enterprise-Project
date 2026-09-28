@@ -60,7 +60,7 @@ Priorities: **P0** blocks safe foundations or the V1 financial/tenant contract; 
 
 | ID | Decision | Why material | Recommendation / unblock |
 |---|---|---|---|
-| D-001 | Adopt, replace, or spike the proposed stack and choose deployment target. | Changes packages, runtimes, API and operations contract. | Prefer the proposed stack only if it fits the user's approved hosting/runtime constraints; otherwise run a bounded comparison before T-004. |
+| D-001 | Adopt, replace, or spike the proposed stack and choose deployment target. | Changes packages, runtimes, API and operations contract. | **Proposed default (not approved):** blueprint stack with a currently supported Node.js LTS, Docker Compose for local development if a container engine is available, and portable Linux containers with managed PostgreSQL/private S3-compatible storage in deployment. Proposed browser baseline: current and preceding stable releases of Chrome/Edge desktop, Safari on iOS/iPadOS, and Chrome on Android. Owner must confirm or replace hosting/browser constraints before T-004; no packages or scaffold until then. |
 | D-002 | Identity, tenant topology, and external party access model. | Controls trust boundary and sensitive cross-company access. | Server-enforced tenant/project/action policy; define whether customers/subcontractors receive accounts or participate through controlled document exchange. |
 | D-003 | Offline dataset, local retention, shared-device, logout and revoked-user behavior. | Offline data may remain on a device after access changes. | Default to minimum necessary fields/files, explicit expiry and sync; block sensitive offline data until policy/security review approves it. |
 | D-004 | Currency/tax/rounding, retention ledger, and claim/certificate state transitions. | Affects legal/financial integrity and schema compatibility. | Define decimal-safe calculation rules and independent claim/certificate/invoice/payment records before migrations. |
@@ -71,7 +71,7 @@ Priorities: **P0** blocks safe foundations or the V1 financial/tenant contract; 
 
 ## Current next task
 
-**T-001 is the first implementation gate** because the blueprint labels its stack as recommended rather than approved. T-002 and T-003 can be refined in parallel without changing source. Do not start T-004 until material platform, domain, and security decisions have an explicit record.
+**T-001 is the first implementation gate** because the blueprint labels its stack as recommended rather than approved. TASK.md D-001 now contains a portability-first proposal, not a selected stack/hosting/browser contract. Confirm or replace it with the owner’s target. T-002 and T-003 can be refined in parallel without changing source. Do not start T-004 until material platform, domain, and security decisions have an explicit record.
 
 ## V1 acceptance mapping
 
