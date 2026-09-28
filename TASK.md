@@ -101,6 +101,10 @@ Use D-001/D-006 to record a selected option (or replacement) and rationale for e
 - [MDN's storage quota and eviction guide](https://developer.mozilla.org/en-US/docs/Web/API/Storage_API/Storage_quotas_and_eviction_criteria) documents browser-specific quotas and eviction behavior, storage-pressure deletion, and `QuotaExceededError`. Its [StorageManager.persist() reference](https://developer.mozilla.org/en-US/docs/Web/API/StorageManager/persist) says the request may resolve false and is available only in secure contexts. `navigator.storage.estimate()` is only an estimate.
 - **Engineering consequence:** offline retention must not promise that browser data survives eviction, a denied persistence request, private-browsing cleanup, or user clearing. Identify denied persistent-storage permission as best-effort (not as a failed IndexedDB write); surface actual write failures; do not label a command queued until its local transaction succeeds; bound and reconcile pending records/files with the server. Verify both states, quota, logout, update, and recovery on the approved browser matrix. These facts do not select the offline allowlist, retention period, or shared-device policy.
 
+### Repository secret-pattern spot-check (limited; not a security review)
+
+No Secretlint executable, project dependency/configuration, or ignore configuration is present. A no-write heuristic checked the nine tracked Markdown/`.gitattributes` files for common credential assignments, private-key headers, token prefixes, and JWT-shaped strings; it found no matches. Untracked `ui/` files and runtime-injected values were excluded. This is not a Secretlint scan and does not establish that the repository or runtime is secret-free; no package was downloaded or installed. T-003 security review remains outstanding.
+
 ### Owner response key for P0 gates
 
 Reply with decisions keyed by IDs; partial answers are useful, but unanswered items remain blocked and no proposal is treated as approved:
