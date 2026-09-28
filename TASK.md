@@ -117,6 +117,8 @@ Reply with decisions keyed by IDs; partial answers are useful, but unanswered it
 
 ## Current next task
 
+**Scope decision:** The owner selected option 1: retain the full V1 scope rather than exclude unresolved capabilities. This is not approval of any proposed stack, financial rule, role grant, offline policy, or AI provider; T-001–T-003 still require explicit answers in their worksheets.
+
 **Blocked on owner input: no product implementation task is currently unblocked.** T-001 is the first implementation gate because the blueprint labels its stack as recommended rather than approved. D-001 contains a portability-first proposal, not a selected stack/hosting/browser contract; the owner must confirm or replace it. T-002 and T-003 can be resolved in parallel without changing source. Do not start T-004 until material platform, domain, and security/privacy decisions have an explicit record.
 
 ## V1 acceptance mapping

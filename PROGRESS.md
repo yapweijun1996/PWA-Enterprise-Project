@@ -33,13 +33,13 @@ The eight core SSOT files are:
 - `PROGRESS.md` — this evidence-based state.
 - `GOAL_PROMPT.md` — bounded future autonomous work contract.
 
-They distinguish user-approved product intent, proposed architecture, user-selected visual references, unresolved decisions, and verified source/runtime facts. The UI reference update is documentation-only; product implementation/verification/release remains 0/18. The PNGs remain local/untracked and are not included in the Markdown-only updates.
+They distinguish user-approved product intent, proposed architecture, user-selected visual references, unresolved decisions, and verified source/runtime facts. The UI reference update is documentation-only; product implementation/verification/release remains 0/18. The PNGs were subsequently committed in `89370cd` by a separate change; this documentation update does not modify them.
 
 ## Verification performed / not performed
 
 ### Performed
 
-- During the initial documentation pass, inspected repository files, Git status/history/refs, and candidate rule/document paths; at that point `main` and `origin/main` were both at `dbca199` and no unrelated work was present. The later UI-reference images are separately preserved as untracked user assets.
+- During the initial documentation pass, inspected repository files, Git status/history/refs, and candidate rule/document paths; at that point `main` and `origin/main` were both at `dbca199` and no unrelated work was present. At that checkpoint, the later UI-reference images were preserved as untracked user assets; they were subsequently committed in `89370cd`.
 - Checked KB-MCP context and retrieved the registered visual-design lifecycle guidance; unrelated project records were excluded from repository claims.
 - Inspected all 24 `ui/*.png` references via contact sheets and full-size views of key screens. No image was modified or staged.
 - Observed local tools: Node.js v25.2.1, npm 11.6.2, Docker CLI 29.8.0, Docker Compose v5.5.1, and psql client 17.10. `docker info` could not connect to the Docker Desktop Linux Engine; the compose client is present but no daemon was available. These are host capabilities only; they do not select a deployment, support matrix, or project runtime.
@@ -56,7 +56,7 @@ They distinguish user-approved product intent, proposed architecture, user-selec
 - Added a cross-screen accessible/truthful UI state contract to `DESIGN.md` and linked it from `SPEC.md`, T-012/T-015, and E2E-12. It distinguishes local writes, pending commands, server outcomes, denial, and recovery; it is an unimplemented acceptance requirement, not browser evidence. Documentation checks passed for all eight core docs, local links/fragments, E2E-01–E2E-18, the 1,969-character prompt limit, 24/24 UI inventory, whitespace, and `git diff --check`.
 - Added an unfilled T-003 security/privacy decision-to-test worksheet in `SPEC.md` for identity/invitations, action grants, external-party/file boundaries, offline/device policy, and AI-provider scope. It selects no grants or retention/provider policy; T-003 remains Planned and its security review gate remains open. All eight core docs passed local-link/fragment, E2E-01–E2E-18, GOAL_PROMPT length (1,969/2,000), 24/24 image-inventory, whitespace, and `git diff --check` validation.
 - Added a T-001 owner decision-to-verification worksheet to `TASK.md` mapping platform/runtime, environments/artifacts, supported browsers/devices, data/recovery operations, and issued-document output to required evidence. It endorses no stack/host/matrix; T-001 remains Planned and T-004 stays gated. All eight core docs passed local-link/fragment, E2E-01–E2E-18, GOAL_PROMPT length (1,969/2,000), 24/24 image-inventory, whitespace, and `git diff --check` validation.
-- Created the earlier local documentation commit containing only the eight requested files, parented directly to `dbca199`; verified that commit's file list. The current UI-reference change is Markdown-only; the 24 PNGs remain untracked/unstaged. No push or release was performed.
+- Created the earlier local documentation commit containing only the eight requested files, parented directly to `dbca199`; verified that commit's file list. That UI-reference documentation change was Markdown-only and did not include the PNGs. No push or release was performed as part of that change.
 
 ### Not run / not possible
 
@@ -74,9 +74,11 @@ These are unavailable checks, not passing checks. See [SPEC.md](SPEC.md) for the
 4. Financial rounding/tax/currency/retention allocation and exact lifecycle transitions need a contract before schema migrations.
 5. Invoice-link meaning, AI data handling, evidence retention, supported browsers, and release operations are not finalized; the T-003 security/privacy worksheet has no approved answers or review evidence.
 6. No code-based behavior can be confirmed until implementation begins.
-7. The 24 PNG anchors are untracked; they are preserved locally and excluded from documentation commits. A future shareable visual gallery requires the owner to decide whether these assets should be versioned.
+7. The 24 PNG anchors are tracked by the existing `89370cd` commit; static images remain layout references, not product or accessibility verification.
 8. T-002 has three synthetic additive fixtures and an unfilled decision-to-test worksheet; currency/tax/rounding, negative adjustments, retention, variance convention, and lifecycle rules remain unresolved.
 
 ## Next task / resume point
+
+**Owner scope choice:** retain the full V1 scope (option 1). This approves no specific platform, money/state rule, permission grant, offline/data policy, or AI provider. At the start of this update, local `main` and `origin/main` were both at `89370cd`, which added the 24 `ui/` images; no application source or runtime appeared.
 
 Continue with **T-001** in [TASK.md](TASK.md): fill its unapproved decision-to-verification worksheet and confirm/replace D-001/D-006. T-001–T-003 remain Planned pending owner decisions. Local Node/Compose/PostgreSQL client versions do not satisfy those gates, and Docker Compose cannot run until a daemon is available. Do not scaffold packages or migrations until platform, financial, and security/privacy decisions are resolved. No release, push, PR, or deployment is authorized.
