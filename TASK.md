@@ -83,6 +83,16 @@ Primary documentation supports these maintenance and compatibility constraints; 
 
 **Unresolved:** these sources do not identify the organization's hosting, browser/device minimums, storage provider, artifact, environment, backup/restore, or rollback requirements. T-001 remains Planned pending owner confirmation/replacement of D-001 and the required operational constraints. No packages, scaffold, or migrations are authorized by this research.
 
+### Owner response key for P0 gates
+
+Reply with decisions keyed by IDs; partial answers are useful, but unanswered items remain blocked and no proposal is treated as approved:
+
+- **D-001/D-006 (T-001):** adopt or replace the candidate stack; name hosting/deployment environment, supported browser/device versions, and required artifact, data-store, CI, migration, health/readiness, backup/restore, and rollback constraints.
+- **D-004/D-005/D-008 (T-002):** specify currency/tax/precision/rounding, negative adjustments and variance convention, retention basis/cap/release allocation, separate document transitions/authority/correction and snapshot-versioning rules, invoice-link boundary, and mandatory-versus-advisory evidence rules.
+- **D-002/D-003/D-007 (T-003):** specify identity/tenant and external-user model, role/action grants, offline data/command allowlist and retention/revocation/shared-device policy, evidence access/retention, and AI provider/data/retention boundaries.
+
+“Defer” is not an implicit product rule: name any item explicitly excluded from V1, or leave its dependent work gated. This checklist collects owner input; it makes no new product or security decision.
+
 ## Current next task
 
 **T-001 is the first implementation gate** because the blueprint labels its stack as recommended rather than approved. TASK.md D-001 now contains a portability-first proposal, not a selected stack/hosting/browser contract. Confirm or replace it with the owner’s target. T-002 and T-003 can be refined in parallel without changing source. Do not start T-004 until material platform, domain, and security decisions have an explicit record.
