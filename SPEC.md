@@ -90,13 +90,14 @@ These are **specification fixtures only**, not executable contract tests or a co
 ### FR-07 — Offline PWA and synchronization
 
 - Authorized users may download an explicitly bounded assigned-project dataset and create/edit allowed drafts while offline only under the approved allowlist/local-retention policy (TASK.md D-003).
-- Offline commands are nonauthoritative until the server rechecks identity, tenant/project/document/action permission, workflow state, and base version and commits them. A queued submission must display as pending, not submitted. Offline approval/issue and invoice/payment actions are not available unless a separately approved policy permits queueing an intent; they never become final on the client.
+- Offline commands are nonauthoritative until the server rechecks current identity, tenant/project/document/action permission, workflow state, and base version and commits them. A queued submission must display as pending, not submitted. Offline approval/issue and invoice/payment actions are not available unless a separately approved policy permits queueing an intent; they never become final on the client.
 - Structured local data, pending commands, and attachment work must survive ordinary navigation/reload and recover from a failed network attempt, subject to an approved local-retention policy.
 - Mutations are queued as idempotent commands with command ID and base entity version. The server validates authorization and version on replay.
 - A stale base version returns a conflict; the UI presents local value, server value, and explicit review choices. No last-write-wins or silent overwrite is allowed.
 - Foreground sync is the canonical path; background sync is optional. The UI clearly exposes offline, pending, synced, and error/conflict states.
 - Service Worker Cache Storage is limited to versioned static app assets. Private records/files use an explicit local-data policy; logout, revoked access, shared devices, expiry, and update recovery must be tested.
 - Browser quotas and eviction are user-agent specific. Local storage is best-effort by default; a `persist()` request may be denied, quota estimates are advisory, and users can clear site data. Identify denied persistence as best-effort rather than a failed IndexedDB write. Only show a command as locally queued after its write transaction succeeds; handle unavailable storage, quota/write errors, and recovery visibly without promising indefinite device durability.
+- A disconnected client cannot receive account/project revocation or be remotely wiped immediately. The approved policy must bound offline-access age and define how local records and uncommitted commands are handled on expiry, logout, and reconnection. When a revoked/expired identity reconnects, server denial must prevent command commitment; local cleanup follows the approved policy.
 
 ### FR-08 — Audit and approvals
 
@@ -158,7 +159,7 @@ All scenarios are **Planned / Unimplemented / Unverified**. Product progress is 
 | E2E-04 | Apply contract retention configuration. | Independently checked amount/cap and ledger/read-back. |
 | E2E-05 | Create receivable invoice from certified value. | Certified basis, distinct invoice state, duplicate-retry protection. |
 | E2E-06 | Submit PCAP and issue CCAP. | Payable flow, line variance/reason, role boundaries and audit. |
-| E2E-07 | Create/update allowed work offline, reconnect, synchronize. | Browser E2E, command read-back, pending/error recovery. |
+| E2E-07 | Create/update allowed work offline, reconnect, synchronize. | Browser E2E, command read-back, pending/error recovery; revoke or expire access before replay and verify server denial, no command commitment, and policy-compliant handling of retained local work. |
 | E2E-08 | Concurrent edit with stale base version. | Conflict response and explicit user resolution; no silent overwrite. |
 | E2E-09 | User without project access requests project data/action. | Server denial for list and direct-object routes. |
 | E2E-10 | Tenant A requests Tenant B records/files. | API and storage denial across direct IDs, search, and attachment paths. |
