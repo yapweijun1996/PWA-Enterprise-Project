@@ -35,7 +35,8 @@ Canonical types must not depend on one ERP's abbreviation. Tenant display labels
 - A project identifies its customer, main contract, subcontracts, parties, and assigned users.
 - Internal roles include project admin, QS/contract admin, project manager, site engineer, finance, and management.
 - Customer/consultant and subcontractor participation is part of the blueprint; exact invitation, identity, and cross-organization access behavior must be specified before implementation.
-- Every server read/write must enforce authenticated tenant, project membership, and action/document permission. UI visibility is not authorization.
+- Every protected server read/write must enforce authenticated identity, tenant, project, document, action, and current workflow-state permission. UI visibility is not authorization.
+- Deny any action without an explicit server-side grant; role names or client-supplied tenant/project IDs do not prove authority. External users must be scoped to an explicitly authorized organization/project/document; invitations and exact grants remain open under TASK.md D-002.
 
 ### FR-02 — Contract, SOV, and variation orders
 
@@ -88,7 +89,8 @@ These are **specification fixtures only**, not executable contract tests or a co
 
 ### FR-07 — Offline PWA and synchronization
 
-- Authorized users may download an explicitly bounded assigned-project dataset and create/edit allowed drafts while offline.
+- Authorized users may download an explicitly bounded assigned-project dataset and create/edit allowed drafts while offline only under the approved allowlist/local-retention policy (TASK.md D-003).
+- Offline commands are nonauthoritative until the server rechecks identity, tenant/project/document/action permission, workflow state, and base version and commits them. A queued submission must display as pending, not submitted. Offline approval/issue and invoice/payment actions are not available unless a separately approved policy permits queueing an intent; they never become final on the client.
 - Structured local data, pending commands, and attachment work must survive ordinary navigation/reload and recover from a failed network attempt, subject to an approved local-retention policy.
 - Mutations are queued as idempotent commands with command ID and base entity version. The server validates authorization and version on replay.
 - A stale base version returns a conflict; the UI presents local value, server value, and explicit review choices. No last-write-wins or silent overwrite is allowed.

@@ -44,7 +44,8 @@ They distinguish user-approved product intent, proposed architecture, user-selec
 - Inspected all 24 `ui/*.png` references via contact sheets and full-size views of key screens. No image was modified or staged.
 - Observed local tools: Node.js v25.2.1, npm 11.6.2, Docker CLI 29.8.0, Docker Compose v5.5.1, and psql client 17.10. `docker info` could not connect to the Docker Desktop Linux Engine; the compose client is present but no daemon was available. These are host capabilities only; they do not select a deployment, support matrix, or project runtime.
 - Added three synthetic, exact-integer financial calculation fixtures to `SPEC.md` for the explicitly stated additive formulas. An independent Python `Decimal` spot-check passed; this is not a contract test or completion of T-002.
-- Full documentation consistency recheck after the T-002 fixtures passed: 8/8 required docs; local Markdown targets; ordered E2E-01–E2E-18; unique T-001–T-016 plus documentation task T-017; D-008 mirrored between SPEC.md and TASK.md; all 24 image filenames indexed; no trailing whitespace; GOAL_PROMPT.md is 1,969/2,000 characters. `git diff --check` passed.
+- Clarified T-003's non-negotiable safety floor in `SPEC.md`: explicit server grants default-deny; offline commands remain pending until the server rechecks and commits them; no client-only financial/approval outcome. D-002/D-003 remain unapproved proposals, not a completed permission or retention policy.
+- Latest documentation consistency check after T-001/T-003 proposal updates passed: 8/8 required docs; local Markdown targets; ordered E2E-01–E2E-18; unique T-001–T-016 plus documentation task T-017; D-002/D-003 offline/authorization constraints and D-008 cross-reference synchronized; all 24 image filenames indexed; no trailing whitespace; GOAL_PROMPT.md is 1,969/2,000 characters. `git diff --check` passed.
 - Created the earlier local documentation commit containing only the eight requested files, parented directly to `dbca199`; verified that commit's file list. The current UI-reference change is Markdown-only; the 24 PNGs remain untracked/unstaged. No push or release was performed.
 
 ### Not run / not possible
@@ -58,8 +59,8 @@ These are unavailable checks, not passing checks. See [SPEC.md](SPEC.md) for the
 ## Risks and blockers
 
 1. D-001 now proposes a portability-first stack/host/browser baseline, but it is still unapproved; no organizational hosting/support requirements were found, and the local Docker engine was unavailable.
-2. Tenant/external-user identity and permission semantics require explicit security design before data/API implementation.
-3. Offline retention/revocation on shared devices is unresolved; sensitive offline access must fail closed until approved.
+2. D-002 identity/external-user semantics and the role/action grant matrix remain unapproved; defaults deny unspecified actions.
+3. D-003 offline allowlist/retention/revocation and shared-device policy remain unresolved; sensitive offline downloads stay disabled until approved.
 4. Financial rounding/tax/currency/retention allocation and exact lifecycle transitions need a contract before schema migrations.
 5. Invoice-link meaning, AI data handling, evidence retention, supported browsers, and release operations are not finalized.
 6. No code-based behavior can be confirmed until implementation begins.
