@@ -69,7 +69,7 @@ They distinguish user-approved product intent, proposed architecture, user-selec
 - In Chromium on localhost, verified synthetic home/claims navigation; validation and focus for missing month/invalid amount; successful IndexedDB save, refresh/read-back, deletion and empty state; device-storage failure retained the form and did not claim success. A literal HTML payload in notes remained text rather than an element.
 - Desktop 1280×800 and mobile-emulated 390×844 views rendered without measured horizontal overflow on the sampled routes. Browser checked route titles and active navigation; a standalone iOS device and screen reader were not available.
 - Under a repository-name URL prefix, the static app loaded and the worker registered at the matching subpath. A waiting worker displayed an Update now action; clicking it activated the new version and removed the old cache. This does not prove a deployed GitHub Pages build.
-- Offline `fetch('./index.html')` in a controlled page returned cached HTML. **Offline full-page reload under DevTools network emulation failed with `ERR_INTERNET_DISCONNECTED`**; do not claim offline launch verified. Investigate with a real browser/device and separate network-loss test before demo completion.
+- Offline `fetch('./index.html')` returned cached HTML. With the local server stopped, a regular link navigation to cached `index.html#offline` loaded, but full-page reload still failed (both under DevTools Offline emulation and after stopping the server, including after changing navigation to cache-first). Cold launch/reload on a real device is **not verified**; investigate the reload path/tool behavior before demo completion.
 
 ### Not run / not possible
 

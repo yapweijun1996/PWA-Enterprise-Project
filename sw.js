@@ -1,5 +1,5 @@
 // Bump this identifier with every published demo asset change to offer an explicit update.
-const VERSION = 'constructclaim-demo-7';
+const VERSION = 'constructclaim-demo-8';
 const SHELL = [
   './', './index.html', './app.css', './app.js', './storage.js',
   './manifest.webmanifest', './icon.svg', './icon-192.png', './icon-512.png'
@@ -23,10 +23,8 @@ self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
   if (url.origin !== self.location.origin || !URLS.has(url.href)) return;
   if (event.request.mode === 'navigate') {
-    event.respondWith(Promise.race([
-      fetch(event.request).catch(() => null),
-      new Promise(resolve => setTimeout(() => resolve(null), 3000))
-    ]).then(async response => response || (await caches.match('./index.html')) || Response.error()));
+    // This static demo has no private data. A cached shell avoids waiting on a dead network.
+    event.respondWith(caches.match('./index.html').then(cached => cached || fetch(event.request)));
     return;
   }
   event.respondWith(caches.match(event.request).then(cached => cached || fetch(event.request)));

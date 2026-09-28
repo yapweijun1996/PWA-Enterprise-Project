@@ -13,7 +13,7 @@ The root `index.html` and all asset URLs use relative paths, so a GitHub Pages p
 - Responsive desktop rail / mobile bottom navigation for dashboard, projects, claims, inbox, evidence, device drafts, and settings, inspired by `DESIGN.md`.
 - Synthetic project and claim records, search and receivable/payable filter. Values and document IDs are **illustrative**, not from the reference screenshots or any live tenant.
 - New fictional claim draft: validate a month and illustrative positive amount, then save locally to IndexedDB. The saved state is shown only after the local transaction completes. Refresh to read it back; inspect or delete it under Device drafts/Settings. If storage fails, the form preserves input and reports failure.
-- Static shell Service Worker, install manifest/icons, best-effort offline shell cache and visible user-controlled update prompt. `sw.js` cache version must be changed for each release that changes shell assets. Offline full-page reload failed under DevTools network emulation in the current checks; offline launch is **not verified** and requires a separate network-loss/device test.
+- Static shell Service Worker, install manifest/icons, best-effort offline shell cache and visible user-controlled update prompt. `sw.js` cache version must be changed for each release that changes shell assets. With the local server stopped, a normal link navigation to the cached `index.html` loaded, but a DevTools-driven/full reload still failed. Offline cold launch and reload are **not verified** on a real device; test before calling the demo offline-complete.
 
 ## Deliberately not implemented
 
