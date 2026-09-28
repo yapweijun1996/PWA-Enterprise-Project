@@ -20,7 +20,7 @@ Priorities: **P0** blocks safe foundations or the V1 financial/tenant contract; 
 
 | ID | Task | Dependencies | Definition of Done / evidence |
 |---|---|---|---|
-| T-001 | Resolve baseline platform, runtime, browser/device support, hosting, and deployment constraints. The blueprint's React/Vite, Fastify, PostgreSQL/Drizzle, S3-compatible storage, and Playwright PDF stack is proposed, not selected. | Product/technical decision | Record approved decision and rationale; identify supported test matrix, artifact, environments, migrations, health, backup and rollback. No packages added before this decision. |
+| T-001 | Resolve baseline platform, runtime, browser/device support, hosting, and deployment constraints. The blueprint's React/Vite, Fastify, PostgreSQL/Drizzle, S3-compatible storage, and Playwright PDF stack is proposed, not selected. | Product/technical decision | Complete the T-001 decision-to-verification worksheet below; record owner approval and rationale for each in-scope row before T-004. No packages or scaffold before the platform/runtime decision. |
 | T-002 | Finalize financial/domain invariants and separate claim, certificate, invoice, and payment lifecycles. | User blueprint; may proceed alongside T-001 | Record rules for every in-scope V1 workflow in the T-002 worksheet in `SPEC.md`; exclusions remove affected capabilities rather than leave their money/state rules undefined. Map each rule to independently checked boundary vectors and execute them as contract tests once T-004 establishes the runtime. The three additive fixtures are incomplete and do not complete this task. |
 | T-003 | Define tenant identity, project/action permission matrix, external-user access, local/offline data policy, evidence and AI privacy boundaries. | Security/product decision; may proceed alongside T-001/T-002 | Resolve every in-scope row in the T-003 decision-to-test worksheet in `SPEC.md`; record explicit role/action grants, offline/data policies, evidence boundary, and AI provider boundary; map each to security tests and obtain security review before sensitive persistence or provider integration. Exclusions remove affected capabilities rather than leave access/privacy undefined. Unspecified grants deny by default. |
 | T-004 | Create the chosen PWA/API workspace, local development path, CI, configuration/secrets contract, and basic readiness/health surface. | T-001, T-002, T-003 | Reproducible clean checkout/build/test; no secrets committed; CI evidence; health/readiness behavior documented. |
@@ -83,6 +83,18 @@ Primary documentation supports these maintenance and compatibility constraints; 
 
 **Unresolved:** these sources do not identify the organization's hosting, browser/device minimums, storage provider, artifact, environment, backup/restore, or rollback requirements. T-001 remains Planned pending owner confirmation/replacement of D-001 and the required operational constraints. No packages, scaffold, or migrations are authorized by this research.
 
+### T-001 owner decision-to-verification worksheet (unfilled; proposal not approved)
+
+Use D-001/D-006 to record a selected option (or replacement) and rationale for every in-scope row before T-004. Host tool versions are not product approval. Verification is future evidence for the selected target; this worksheet does not authorize deployment or release.
+
+| Area | Owner input required | Verification after decision |
+|---|---|---|
+| Stack, runtime, and versions | Confirm/replace the client, API, data access, database, file storage, document/PDF approach, supported production runtime line, and release channels/versions. | Pin compatible versions; prove clean-checkout install/build/test and database transactions/migrations in T-004/T-005; verify exact-money vectors against the selected database after T-002 rules are resolved. |
+| Environments and artifacts | Name local/CI/test/production environments, hosting boundary/region, deployable artifact, private storage/network constraints, and approved secret-injection mechanism. | Reproducible isolated build/CI and artifact inspection; no secrets in source/artifacts. Verify target-specific rollout only under T-016 authorization. |
+| Browser/device support | Set minimum supported browser/OS/device versions, desktop/mobile/tablet scope, required install/update/camera/storage APIs, and viewport acceptance. | Run responsive, accessibility, install/update, offline-storage, and recovery checks on the named matrix in T-015; document unsupported/limited capabilities. |
+| Data, migration, and recovery operations | Select database/object-storage service and versions, regions, access boundary, migration approach, backup/restore objectives, readiness/health signals, retention, and rollback/forward-recovery policy. | Exercise tenant-safe migrations and private-file access in T-005; verify restore, readiness, and recovery against the approved objectives in T-016. |
+| Issued document artifact | Specify required output format/generator, print/font/rendering constraints, storage/versioning, and any legal/signature constraints. | Generate and inspect the actual artifact; verify issued snapshot/hash stability after source changes (T-010/E2E-11). |
+
 ### T-003 offline-storage evidence reviewed (2026-09-28; technical constraints, not policy)
 
 - The [WHATWG Storage Standard](https://storage.spec.whatwg.org/#persistence) defines local storage as best-effort by default; changing it to persistent requires the user or user agent on the user's behalf to grant permission. Persistent mode does not remove the user's ability to clear site data.
@@ -93,7 +105,7 @@ Primary documentation supports these maintenance and compatibility constraints; 
 
 Reply with decisions keyed by IDs; partial answers are useful, but unanswered items remain blocked and no proposal is treated as approved:
 
-- **D-001/D-006 (T-001):** adopt or replace the candidate stack; name hosting/deployment environment, supported browser/device versions, and required artifact, data-store, CI, migration, health/readiness, backup/restore, and rollback constraints.
+- **D-001/D-006 (T-001):** complete the unfilled decision-to-verification worksheet in this file: approve or replace each in-scope stack/runtime, environment/artifact, browser/device, data/recovery, and issued-document choice, with rationale and required evidence.
 - **D-004 (T-002):** resolve the no-default decision-to-test worksheet in `SPEC.md` for every in-scope V1 workflow; exclusions remove capability and cannot leave money/state rules undefined. **D-005/D-008:** choose the invoice-link boundary and mandatory-versus-advisory evidence rules.
 - **D-002/D-003/D-007 (T-003):** resolve the unfilled security/privacy decision-to-test worksheet in `SPEC.md` and record the required security review before sensitive persistence or provider integration. Browser support remains under D-001; partial answers do not select remaining policies.
 
