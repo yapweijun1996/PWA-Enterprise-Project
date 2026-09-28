@@ -2,7 +2,7 @@
 
 ## Status and authority
 
-This is the requirements baseline derived from the user-supplied V1 blueprint. It describes intended behavior; it is not evidence that any feature exists. The repository currently contains no application code, schema, API, package manifest, tests, browser build, or deployed runtime.
+This is the requirements baseline derived from the user-supplied V1 blueprint. It describes intended behavior; it is not evidence that any feature exists. The repository now contains a separate static, local-only demo slice described in [README.md](README.md); it does not implement the production schema, API, financial contract, tenant authorization, E2E suite, or deployed runtime.
 
 Words such as **must** define target requirements. Candidate technology is not locked. Open decisions are listed at the end and tracked in [TASK.md](TASK.md).
 
@@ -207,7 +207,7 @@ E2E-13–E2E-18 operationalize explicit VO, AI, PWA, audit, and idempotency requ
 
 | Layer | Required before release | Current evidence |
 |---|---|---|
-| Static/type/lint | Project-configured checks, no unjustified warnings. | Not runnable: no source or package configuration. |
+| Static/type/lint | Production project-configured checks, no unjustified warnings. | Not runnable for production: no production package/configuration. The separate demo has JS syntax and manifest checks only. |
 | Unit/domain | Deterministic calculations, state transitions, retention, snapshots, permissions. | No tests/configuration. |
 | API/integration | Auth, tenant isolation, validation, idempotency, concurrency, transaction/audit behavior. | No API/runtime. |
 | Database | Migration up/down or forward recovery, constraints, backup/restore, tenant-scoped integrity. | No schema/migrations. |

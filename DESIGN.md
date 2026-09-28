@@ -17,7 +17,7 @@ The intended product is a hybrid business system:
 3. Persistent relational business data and object/file storage for evidence and issued documents.
 4. Optional AI assistance and future ERP adapters behind explicit interfaces.
 
-It is currently at the **pre-implementation blueprint** lifecycle stage. No package or deployable boundary exists yet.
+The **production system** remains at the pre-implementation blueprint stage. A separate zero-dependency static demo slice (`index.html`, `app.js`, `storage.js`, `sw.js`) demonstrates navigation and browser-local drafts; it has no production API, authorization, evidence store, or authoritative financial behavior. See [README.md](README.md) for its boundaries. No production package or deployable service boundary exists yet.
 
 ## Proposed system context
 
@@ -102,7 +102,7 @@ Required design constraints:
 
 ### Evidence and status
 
-The user designated the 24 static screen images in `ui/` as the visual/layout anchor for ConstructClaim. They show paired desktop and phone compositions for the main journeys. This pass reads them as **design references**, not screenshots of a running application; their dates, people, amounts, project names, status counts, and settings values are illustrative, not approved seed data or live facts. The assets are currently untracked in this worktree and were not modified. The UI layout spec below is a derived design baseline, not evidence that any route or interaction exists.
+The user designated the 24 static screen images in `ui/` as the visual/layout anchor for ConstructClaim. They show paired desktop and phone compositions for the main journeys. This pass reads them as **design references**, not screenshots of a running application; their dates, people, amounts, project names, status counts, and settings values are illustrative, not approved seed data or live facts. The assets were untracked during the original layout review and were later committed in `89370cd`; this static demo does not alter them. The UI layout spec below is a derived design baseline, not evidence that any route or interaction exists.
 
 ### Shared shell and information architecture
 

@@ -56,6 +56,15 @@ Priorities: **P0** blocks safe foundations or the V1 financial/tenant contract; 
 - **Definition of Done:** `DESIGN.md` maps shared shell, screen families, desktop/mobile adaptation, visible states, and screenshot inventory; `SPEC.md`/`EPIC.md`/`ROADMAP.md`/`TASK.md`/`PROGRESS.md`/`GOAL.md`/`GOAL_PROMPT.md` align; links/IDs/counts/prompt limit pass; `ui/` assets remain untouched and un-staged.
 - **Evidence:** 24/24 image inventory, Markdown targets, E2E/task IDs, D-008 alignment, prompt length, and whitespace checks passed; image-only quality review and runtime limits are recorded in [DESIGN.md](DESIGN.md) and [PROGRESS.md](PROGRESS.md).
 
+## Separate static demo workstream
+
+### DEMO-001 — Device-local GitHub Pages-capable walkthrough
+
+- **Scope:** Owner clarified that the immediate deliverable is a demo, followed by a separate production phase. Use only synthetic examples and browser-local drafts; show a desktop/mobile shell, claim navigation, IndexedDB save/read/delete, explicit empty/error/offline states and a static PWA shell. See [README.md](README.md).
+- **Boundary:** No production security, tenant isolation, certified money, evidence upload, server sync, approval, invoice/payment, AI provider, or release claim. The T-001–T-003 decisions still gate T-004 and production work. Publishing to GitHub Pages is not authorized by this task.
+- **Acceptance evidence:** Syntax/manifest checks, browser navigation and local-write read-back, validation/error and 390×844 layout checks, offline/update checks where tool support permits; record any missing coverage separately from the production E2E matrix.
+- **Status:** Implemented in part; demo verification and the wider screenshot-family journeys remain open.
+
 ## Open decision register
 
 | ID | Decision | Why material | Recommendation / unblock |

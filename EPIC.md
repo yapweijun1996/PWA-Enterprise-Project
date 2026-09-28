@@ -2,7 +2,7 @@
 
 ## Status convention
 
-Every product epic below is **Planned**. Repository inspection found no application source, executable tests, runtime, or deployed product. An epic becomes Implemented only when its scoped behavior exists, Verified only with the stated evidence, and Released only after production/release evidence. See [PROGRESS.md](PROGRESS.md). The 24 user-designated images in `ui/` are static composition references; use the screen-family map and screenshot-only review in [DESIGN.md](DESIGN.md), and do not treat a mockup as runtime or accessibility proof.
+Every product epic below is **Planned**. The separate static demo now has browser source, but there is no production API/schema, executable product E2E suite, or deployed product. An epic becomes Implemented only when its scoped behavior exists, Verified only with the stated evidence, and Released only after production/release evidence. See [PROGRESS.md](PROGRESS.md). The 24 user-designated images in `ui/` are static composition references; use the screen-family map and screenshot-only review in [DESIGN.md](DESIGN.md), and do not treat a mockup as runtime or accessibility proof.
 
 ## EPIC-01 — Tenant, identity, and project foundation
 

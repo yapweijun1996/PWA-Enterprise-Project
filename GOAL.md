@@ -64,10 +64,10 @@ AI may suggest, compare, extract, or summarize evidence. It must not approve cla
 
 ## Current truth and lifecycle
 
-- **Repository evidence:** initial commit `dbca199` contained only `.gitattributes`; prior local documentation commit `5780ee7` added the eight core planning files. The 24 `ui/` PNGs are currently untracked visual references. No application source, dependency manifest, test suite, CI, deployment configuration, or runtime evidence exists.
+- **Repository evidence:** initial commit `dbca199` contained only `.gitattributes`; later commits added the eight core planning files and tracked the 24 `ui/` references (`89370cd`). A separate static demo now has HTML/CSS/JS, a manifest and a Service Worker. No production API, schema, dependency manifest, CI, deployment configuration, or product E2E suite exists.
 - **Product definition:** the user-provided ConstructClaim V1 blueprint is the accepted product-intent source for this documentation pass.
 - **Project type:** intended hybrid of a mobile-first installable/offline-capable PWA, an authoritative API/service, persistent business data, evidence-file storage, and optional AI/ERP integrations. These are target boundaries, not verified implementations.
-- **Lifecycle:** pre-implementation / product-blueprint stage.
+- **Lifecycle:** production product remains pre-implementation; a separate static, local-only demo slice now exists at `index.html` (see [README.md](README.md)). Its synthetic examples and IndexedDB drafts do not satisfy the server-backed V1 criteria.
 - **Implemented / Verified / Released:** no product capability is evidenced in the repository. Documentation status is tracked separately in [PROGRESS.md](PROGRESS.md).
 
 ## Principles

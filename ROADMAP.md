@@ -2,7 +2,7 @@
 
 ## Planning basis
 
-The repository contains the initial `.gitattributes` baseline and a locally committed set of eight planning documents; 24 user-provided UI PNGs are present but untracked. There is no application code, and no product milestone is Implemented, Verified, or Released. The ConstructClaim PWA V1 blueprint defines the intended product. This roadmap sequences work by dependency; it does not assert dates or percent-complete estimates.
+The repository contains the initial `.gitattributes` baseline, eight planning documents, and 24 tracked user-provided UI PNGs. An isolated static demo slice now has application code (see [README.md](README.md)), but no production API/database/security milestone is Implemented, Verified, or Released. The ConstructClaim PWA V1 blueprint defines the intended product. This roadmap sequences work by dependency; it does not assert dates or percent-complete estimates.
 
 ## Milestone status
 
