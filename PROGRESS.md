@@ -46,6 +46,7 @@ They distinguish user-approved product intent, proposed architecture, user-selec
 - Added three synthetic, exact-integer financial calculation fixtures to `SPEC.md` for the explicitly stated additive formulas. An independent Python `Decimal` spot-check passed; this is not a contract test or completion of T-002.
 - Clarified T-003's non-negotiable safety floor in `SPEC.md`: explicit server grants default-deny; offline commands remain pending until the server rechecks and commits them; no client-only financial/approval outcome. D-002/D-003 remain unapproved proposals, not a completed permission or retention policy.
 - Latest documentation consistency check after T-001/T-003 proposal updates passed: 8/8 required docs; local Markdown targets; ordered E2E-01–E2E-18; unique T-001–T-016 plus documentation task T-017; D-002/D-003 offline/authorization constraints and D-008 cross-reference synchronized; all 24 image filenames indexed; no trailing whitespace; GOAL_PROMPT.md is 1,969/2,000 characters. `git diff --check` passed.
+- Reviewed official Node.js, Vite, React, Fastify, PostgreSQL, Drizzle, and Playwright documentation for T-001. Recorded support/runtime caveats and exact source links in [TASK.md](TASK.md); this is advisory research only and does not resolve hosting, browser/device minimums, or owner approval. No stack was selected and no packages were added. Rechecked all eight core docs: local Markdown targets/fragments, E2E-01–E2E-18, task IDs, 24/24 UI inventory, 1,969/2,000-character prompt limit, whitespace, and `git diff --check` passed.
 - Created the earlier local documentation commit containing only the eight requested files, parented directly to `dbca199`; verified that commit's file list. The current UI-reference change is Markdown-only; the 24 PNGs remain untracked/unstaged. No push or release was performed.
 
 ### Not run / not possible
@@ -58,7 +59,7 @@ These are unavailable checks, not passing checks. See [SPEC.md](SPEC.md) for the
 
 ## Risks and blockers
 
-1. D-001 now proposes a portability-first stack/host/browser baseline, but it is still unapproved; no organizational hosting/support requirements were found, and the local Docker engine was unavailable.
+1. D-001 now proposes a portability-first stack/host/browser baseline and has official-documentation evidence recorded, but it remains unapproved; organizational hosting/support requirements are unknown, and the local Docker engine was unavailable.
 2. D-002 identity/external-user semantics and the role/action grant matrix remain unapproved; defaults deny unspecified actions.
 3. D-003 offline allowlist/retention/revocation and shared-device policy remain unresolved; sensitive offline downloads stay disabled until approved.
 4. Financial rounding/tax/currency/retention allocation and exact lifecycle transitions need a contract before schema migrations.
@@ -69,4 +70,4 @@ These are unavailable checks, not passing checks. See [SPEC.md](SPEC.md) for the
 
 ## Next task / resume point
 
-Continue with **T-001** in [TASK.md](TASK.md): confirm or replace the explicitly non-binding D-001 proposal, especially the deployment and browser matrix. Local Node/Compose/PostgreSQL client versions do not satisfy that gate, and Docker Compose cannot run until a daemon is available. T-002 (financial lifecycle/calculation contract) and T-003 (tenant, external access, and offline security policy) remain open; do not scaffold packages or migrations until T-001–T-003 are resolved. No release, push, PR, or deployment is authorized.
+Continue with **T-001** in [TASK.md](TASK.md): technical-document research is recorded, but the owner must confirm or replace the non-binding D-001 proposal, especially hosting and the browser/device matrix. Local Node/Compose/PostgreSQL client versions do not satisfy that gate, and Docker Compose cannot run until a daemon is available. T-002 (financial lifecycle/calculation contract) and T-003 (tenant, external access, and offline security policy) remain open; do not scaffold packages or migrations until T-001–T-003 are resolved. No release, push, PR, or deployment is authorized.

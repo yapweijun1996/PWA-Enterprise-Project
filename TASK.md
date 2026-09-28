@@ -69,6 +69,20 @@ Priorities: **P0** blocks safe foundations or the V1 financial/tenant contract; 
 | D-007 | AI provider, evidence handling, retention, and audit. | Site photos/contracts may be confidential; provider processing changes privacy risk. | No sensitive provider integration until data boundary and human-review controls are approved. |
 | D-008 | When missing photos/documents are blocking versus advisory for submit/certify. | The review mockup shows a warning, but does not establish a business/evidence rule. | Define an explicit rule by evidence type/workflow before implementation; do not infer a universal mandatory-photo policy from the image. |
 
+### T-001 evidence reviewed (2026-09-28; advisory, not a decision)
+
+Primary documentation supports these maintenance and compatibility constraints; it does **not** approve a stack or hosting target:
+
+- [Node.js release policy](https://nodejs.org/en/about/previous-releases) says production should use Active or Maintenance LTS. On this review date, v24 is listed as LTS and v25 as EOL; select a supported LTS line and re-check its status when pinning the runtime.
+- [Vite's guide](https://vite.dev/guide/) currently requires Node.js 20.19+ or 22.12+. The version floor alone is not a reason to choose an EOL runtime; pair Vite with a currently supported Node LTS and verify the selected React template against it.
+- [React's app guidance](https://react.dev/learn/creating-a-react-app) recommends starting new apps with a framework; building from scratch is an option when constraints justify owning routing, data-fetching, and related choices. Record why a Vite client plus separate Fastify API fits better than a React framework alternative, if that boundary is retained.
+- [Fastify's LTS policy](https://fastify.dev/docs/latest/Reference/LTS/) defines major-line and security support windows. Keep a supported Node/Fastify pair and schedule upgrades rather than treating a framework major as indefinitely supported.
+- [PostgreSQL's versioning policy](https://www.postgresql.org/support/versioning/) gives each major version five years of support and recommends the current minor release for that major. Choose a still-supported major, keep its minor current, and plan/test major-version upgrade and recovery procedures.
+- The [Drizzle PostgreSQL guide](https://orm.drizzle.team/docs/get-started-postgresql) documents both `node-postgres` and `postgres.js` drivers, while its current quick-start examples use `@rc` package tags. If Drizzle remains a candidate, explicitly select and lock a supported release channel/driver and verify migrations, transactions, and exact-money handling; do not copy the prerelease tags by default.
+- [Playwright's `page.pdf()` API](https://playwright.dev/docs/api/class-page#page-pdf) renders using print CSS by default. If selected for issued documents, test the actual print stylesheet, fonts, and generated artifact; a successful browser/UI check alone does not establish immutable PDF correctness.
+
+**Unresolved:** these sources do not identify the organization's hosting, browser/device minimums, storage provider, artifact, environment, backup/restore, or rollback requirements. T-001 remains Planned pending owner confirmation/replacement of D-001 and the required operational constraints. No packages, scaffold, or migrations are authorized by this research.
+
 ## Current next task
 
 **T-001 is the first implementation gate** because the blueprint labels its stack as recommended rather than approved. TASK.md D-001 now contains a portability-first proposal, not a selected stack/hosting/browser contract. Confirm or replace it with the owner’s target. T-002 and T-003 can be refined in parallel without changing source. Do not start T-004 until material platform, domain, and security decisions have an explicit record.
