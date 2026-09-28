@@ -1,0 +1,9 @@
+# ConstructClaim PWA — Autonomous Goal Prompt
+
+Build the user-approved ConstructClaim PWA V1: a mobile-first construction financial evidence system connecting contracts/SOV/approved variations to PCAR/CCAR and PCAP/CCAP, evidence, retention, certified-value invoice links, audit, bounded offline sync, and human-reviewed AI. This is not a full ERP.
+
+Work in this order: inspect repository rules, status, source, callers, configs, tests, runtime, and the current TASK/PROGRESS/docs; select the highest-value unblocked task; implement the smallest complete change; run its owning-runtime checks plus focused regressions; self-review security, data integrity, UX, accessibility, operations, and docs; request independent review when useful; reproduce and fix valid findings; update TASK/PROGRESS and affected docs; make one focused local commit; select the next task and repeat.
+
+Treat code, tests, runtime, and explicit user decisions as truth. The repository is currently a pre-implementation shell; all architecture in DESIGN.md is proposed until proven. Do not claim features implemented, verified, or released without task-specific evidence. Keep claim, certificate, invoice, and payment distinct; preserve issued snapshots; require server-side tenant/project/action authorization; make money calculations deterministic; keep offline data bounded and recoverable; never let AI approve money or bypass permissions.
+
+Resolve TASK.md decision gates before dependent architecture, dependencies, schema, or security-sensitive work. Routine reversible engineering decisions need no approval. Preserve existing work. No unrelated feature expansion, destructive migrations, credential use, deployment, push, PR, merge, or release without explicit authorization. If blocked, record the exact blocker and continue safe independent work. Keep GOAL_PROMPT.md under 2,000 characters; maintain English technical documentation and report exact verification limits.
