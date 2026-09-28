@@ -50,6 +50,7 @@ They distinguish user-approved product intent, proposed architecture, user-selec
 - Added a concise owner-response key in `TASK.md` for T-001–T-003, mapping each unresolved decision to its required inputs without selecting defaults. All three tasks remain Planned; implementation gates are unchanged.
 - Reviewed the WHATWG Storage Standard and MDN browser-storage documentation for T-003. Recorded the best-effort default, browser-dependent persistence grant/eviction, estimated quotas, and write-failure consequences in `TASK.md` and `SPEC.md`; expanded T-009/E2E-16 to distinguish denied persistence permission (best-effort storage) from failed local writes (not queued). Also documented that revocation cannot reach a disconnected device, requiring a policy-defined offline-access age and server-denied replay test in T-009/E2E-07. No access window or local-purge rule is selected.
 - Refined T-013/FR-10/E2E-15 to require server-side authorization before AI retrieval/provider payload construction and to treat evidence/model output as untrusted, including adversarial instructions. This is a target requirement only; there is no AI implementation or adversarial runtime test.
+- Added an unfilled T-002 decision-to-test worksheet in `SPEC.md`, covering currency/tax, precision/rounding, negative adjustments, cumulative basis, retention, variance, and separate document lifecycles/snapshots. It assigns no defaults; the task remains Planned until the owner records rules and the boundary vectors are independently checked. Revalidated all eight core docs: local links/fragments, E2E-01–E2E-18, 1,969-character goal prompt, 24/24 image inventory, whitespace, and `git diff --check` passed.
 - Created the earlier local documentation commit containing only the eight requested files, parented directly to `dbca199`; verified that commit's file list. The current UI-reference change is Markdown-only; the 24 PNGs remain untracked/unstaged. No push or release was performed.
 
 ### Not run / not possible
@@ -69,7 +70,7 @@ These are unavailable checks, not passing checks. See [SPEC.md](SPEC.md) for the
 5. Invoice-link meaning, AI data handling, evidence retention, supported browsers, and release operations are not finalized.
 6. No code-based behavior can be confirmed until implementation begins.
 7. The 24 PNG anchors are untracked; they are preserved locally and excluded from documentation commits. A future shareable visual gallery requires the owner to decide whether these assets should be versioned.
-8. T-002 has only synthetic additive fixtures; currency/tax/rounding, negative adjustments, retention, variance convention, and lifecycle rules remain unresolved.
+8. T-002 has three synthetic additive fixtures and an unfilled decision-to-test worksheet; currency/tax/rounding, negative adjustments, retention, variance convention, and lifecycle rules remain unresolved.
 
 ## Next task / resume point
 

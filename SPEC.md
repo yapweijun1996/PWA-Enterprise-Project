@@ -78,7 +78,22 @@ These exact-integer fixtures exercise only the additive equations stated above. 
 | Cumulative claimed (one line) | Previous `100,000 CU`; current `35,000 CU`. | Cumulative claimed `135,000 CU`. |
 | Cumulative certified (same line, separate fact) | Previous `90,000 CU`; current `30,000 CU`. | Cumulative certified `120,000 CU`; do not substitute the claimed total. |
 
-These are **specification fixtures only**, not executable contract tests or a completed T-002. Before tests/schema, the owner must decide the open rules above plus currency/tax, variance convention, line basis, lifecycle/revision behavior, retention cap/release allocation, and rounding. Keep claim/certificate/invoice/payment records distinct regardless of those decisions.
+These are **specification fixtures only**, not executable contract tests or a completed T-002. Keep claim/certificate/invoice/payment records distinct regardless of the decisions below.
+
+#### T-002 owner decision-to-test worksheet (unfilled; no defaults)
+
+For each row, record the selected rule for in-scope V1 behavior before schema or contract tests. An exclusion must remove the affected capability from V1; it cannot leave an in-scope workflow's amounts or state transitions undefined. Then create independent expected-value/state vectors for the listed boundaries using an exact-decimal oracle separate from production calculation.
+
+| Topic | Owner input required | Minimum vector coverage after decision |
+|---|---|---|
+| Currency and tax | Contract/reporting currency scope, tax jurisdiction/rules, inclusive/exclusive treatment, tax codes and aggregation limits. | Currency precision/exponent boundaries; zero-tax and applicable-tax cases; prohibit combining unlike currencies without an approved conversion rule. |
+| Precision and rounding | Accepted input/storage precision, rounding mode, and whether/where rounding occurs (line, tax, document, or cumulative). | Exact values and midpoint/tie cases at each selected rounding boundary, including negative values if allowed. |
+| Negative adjustments and cumulative basis | Whether negative claim/certification values are allowed, their correction/reversal mechanism, and the source/version used for prior/current/cumulative line totals. | Positive and zero cases; accept negative/full reversal only if allowed, otherwise verify rejection; cover correction/supersession and keep claimed/certified totals separate. |
+| Retention | Eligible base, rate(s), cap and when it applies, release triggers, and allocation across lines/periods. | Below/at/above cap, partial and final release, repeated release, and corrected source version. |
+| Variance | Sign convention (`certified − claimed` or `claimed − certified`), any tolerance, and when a reason blocks issue. | Over-certification, under-certification, zero/tolerance boundary, and missing/present reason. |
+| Document lifecycle and snapshots | Separate states, permitted transitions and actor authority for each claim/certificate/invoice/payment type; correction, void, reissue/supersession, and immutable snapshot/version contents. | Allowed and denied transitions, stale-version rejection, retry, and issued-snapshot equality after source edits/correction. |
+
+The additive fixtures above remain the only selected arithmetic invariants. This worksheet records questions and test coverage only; it does not choose the answers.
 
 ### FR-06 — Evidence and documents
 
@@ -194,7 +209,7 @@ E2E-13–E2E-18 operationalize explicit VO, AI, PWA, audit, and idempotency requ
 1. Approve or replace the proposed stack and select hosting/deployment/runtime.
 2. Define supported browsers/devices and offline download allowlist, expiry, logout/revocation, and shared-device policy.
 3. Define identity provider, tenant topology, external customer/consultant/subcontractor onboarding, and permission matrix.
-4. Specify currency, tax, precision/rounding, partial/negative values, retention cap/release rules, and exact document state transitions.
+4. Complete the unfilled T-002 decision-to-test worksheet above: record rules for every in-scope V1 workflow; exclusions remove affected capabilities rather than leave their money/state rules undefined.
 5. Clarify V1 invoice link semantics and whether any ERP adapter is included.
 6. Approve evidence-file retention/access, immutable PDF generation, AI provider/data handling, and any legal/signature requirements.
 7. Define when photos/documents are mandatory versus advisory for submission/certification; the UI reference shows a missing-photo warning but does not establish a blocking rule. Track as TASK.md D-008.
