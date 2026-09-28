@@ -42,7 +42,9 @@ They distinguish user-approved product intent, proposed architecture, user-selec
 - During the initial documentation pass, inspected repository files, Git status/history/refs, and candidate rule/document paths; at that point `main` and `origin/main` were both at `dbca199` and no unrelated work was present. The later UI-reference images are separately preserved as untracked user assets.
 - Checked KB-MCP context and retrieved the registered visual-design lifecycle guidance; unrelated project records were excluded from repository claims.
 - Inspected all 24 `ui/*.png` references via contact sheets and full-size views of key screens. No image was modified or staged.
-- Documentation-only checks passed: 8/8 required docs; local Markdown targets; ordered E2E-01–E2E-18; unique T-001–T-016 plus documentation task T-017; D-008 mirrored between SPEC.md and TASK.md; all 24 image filenames indexed; no trailing whitespace; GOAL_PROMPT.md is 1,969/2,000 characters. `git diff --check` passed.
+- Observed local tools: Node.js v25.2.1, npm 11.6.2, Docker 29.8.0, and psql client 17.10. These are host capabilities only; they do not select a deployment, support matrix, or project runtime.
+- Added three synthetic, exact-integer financial calculation fixtures to `SPEC.md` for the explicitly stated additive formulas. An independent Python `Decimal` spot-check passed; this is not a contract test or completion of T-002.
+- Full documentation consistency recheck after the T-002 fixtures passed: 8/8 required docs; local Markdown targets; ordered E2E-01–E2E-18; unique T-001–T-016 plus documentation task T-017; D-008 mirrored between SPEC.md and TASK.md; all 24 image filenames indexed; no trailing whitespace; GOAL_PROMPT.md is 1,969/2,000 characters. `git diff --check` passed.
 - Created the earlier local documentation commit containing only the eight requested files, parented directly to `dbca199`; verified that commit's file list. The current UI-reference change is Markdown-only; the 24 PNGs remain untracked/unstaged. No push or release was performed.
 
 ### Not run / not possible
@@ -62,6 +64,7 @@ These are unavailable checks, not passing checks. See [SPEC.md](SPEC.md) for the
 5. Invoice-link meaning, AI data handling, evidence retention, supported browsers, and release operations are not finalized.
 6. No code-based behavior can be confirmed until implementation begins.
 7. The 24 PNG anchors are untracked; they are preserved locally and excluded from documentation commits. A future shareable visual gallery requires the owner to decide whether these assets should be versioned.
+8. T-002 has only synthetic additive fixtures; currency/tax/rounding, negative adjustments, retention, variance convention, and lifecycle rules remain unresolved.
 
 ## Next task / resume point
 

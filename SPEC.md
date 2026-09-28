@@ -67,6 +67,18 @@ Canonical types must not depend on one ERP's abbreviation. Tenant display labels
 - Balance-to-complete, progress, claim/certification variance, retained/released amounts, outstanding certification, and outstanding payment must show their calculation basis.
 - Currency, tax, precision/rounding, negative adjustment, multi-currency, and release-allocation rules are open business decisions. Money calculations are server-authoritative and must use deterministic decimal-safe rules.
 
+#### T-002 arithmetic fixtures (synthetic and incomplete)
+
+These exact-integer fixtures exercise only the additive equations stated above. `CU` means an abstract calculation unit, not a selected currency. They do not define tax, decimal precision, rounding, negative adjustments, retention, progress basis, or variance sign. Values are invented test data and are not taken from the UI screenshots.
+
+| Invariant | Inputs | Expected result |
+|---|---|---|
+| Revised contract sum | Original `1,000,000 CU`; active approved VO `+125,000 CU`; draft `+40,000 CU`; submitted `+30,000 CU`; rejected `+10,000 CU`; void `+5,000 CU`. | `1,125,000 CU`; only the active approved VO contributes. |
+| Cumulative claimed (one line) | Previous `100,000 CU`; current `35,000 CU`. | Cumulative claimed `135,000 CU`. |
+| Cumulative certified (same line, separate fact) | Previous `90,000 CU`; current `30,000 CU`. | Cumulative certified `120,000 CU`; do not substitute the claimed total. |
+
+These are **specification fixtures only**, not executable contract tests or a completed T-002. Before tests/schema, the owner must decide the open rules above plus currency/tax, variance convention, line basis, lifecycle/revision behavior, retention cap/release allocation, and rounding. Keep claim/certificate/invoice/payment records distinct regardless of those decisions.
+
 ### FR-06 — Evidence and documents
 
 - Claim lines may reference photographs, PDFs, drawings, delivery orders, inspection records, site notes, timesheets, measurements, and comments.
