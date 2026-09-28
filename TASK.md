@@ -33,7 +33,7 @@ Priorities: **P0** blocks safe foundations or the V1 financial/tenant contract; 
 | T-006 | Implement parties, projects, main contracts/subcontracts, versioned SOV, and VO lifecycle. | T-005 | E2E-01 and E2E-13 pass; only approved VO changes revised sums; source snapshots are readable and immutable. |
 | T-007 | Implement canonical PCAR/PCAP claim lifecycle, line calculations, review/submission/revise/void, and version preconditions. | T-002, T-005, T-006 | Claimed values remain separate; unauthorized transitions fail; retries are idempotent; E2E-02 and E2E-06 pass. |
 | T-008 | Implement mobile evidence capture, access-controlled storage, metadata/hash, and attachment retry/recovery. | T-003, T-005, T-007 | Authorized file read/write only; upload failure is visible/recoverable; file bytes and metadata reconcile. |
-| T-009 | Implement bounded offline project data, IndexedDB draft/command queue, foreground sync, conflicts, and PWA install/update. | T-001, T-003, T-007, T-008 | No private business data in static cache; version conflicts are explicit; logout/revocation/update behavior follows policy; E2E-07, E2E-08, E2E-12, E2E-16 pass. |
+| T-009 | Implement bounded offline project data, IndexedDB draft/command queue, foreground sync, conflicts, and PWA install/update. | T-001, T-003, T-007, T-008 | No private business data in static cache; version conflicts are explicit; logout/revocation/update behavior follows policy; E2E-07, E2E-08, and E2E-16 pass. |
 | T-010 | Implement independent CCAR/CCAP certificate documents, variance reasons, contract-configured retention ledger, and immutable issued output. | T-002, T-006, T-007 | E2E-03, E2E-04, E2E-11 pass; historical certificate/PDF is unchanged by later edits. |
 | T-011 | Implement invoice/payment records or approved external links from certified values; prevent duplicate creation. | T-002, T-010, D-005 decision | Idempotency/concurrency/error handling; no claimed-value invoicing; E2E-05, E2E-18 pass. |
 
@@ -41,11 +41,20 @@ Priorities: **P0** blocks safe foundations or the V1 financial/tenant contract; 
 
 | ID | Task | Dependencies | Definition of Done / evidence |
 |---|---|---|---|
-| T-012 | Deliver responsive project, claims, inbox, evidence, certification, and reconciliation UX with accessible states. | T-006–T-010 | Real-browser keyboard/screen-reader-oriented checks, loading/empty/error/success/conflict/offline states; 390×844 and desktop layout; E2E-12 pass. |
+| T-012 | Deliver responsive project, claims, inbox, evidence, certification, and reconciliation UX following the screen-family anchors in DESIGN.md. | T-006–T-010 | Real-browser keyboard/screen-reader-oriented checks; loading/empty/error/success/permission/conflict/offline states; desktop and 390×844 deliberate reflow, safe-area and non-obscured actions; E2E-12 pass. Mockup-only content is never treated as live data. |
 | T-013 | Implement evidence-grounded AI assistance behind an approved provider/data boundary. | T-003, T-007, T-010, D-007 decision | Human confirmation required; permissions applied to retrieval; source links shown; manual workflow works during AI failure; E2E-14/E2E-15 pass. |
 | T-014 | Implement search, inbox, receivable/payable project position, retention and cash-exposure reporting. | T-006–T-011 | Figures reconcile to source records; report clearly distinguishes certified/invoiced/paid and states margin basis. |
 | T-015 | Build full automated acceptance, integration, browser, PWA, security/privacy, accessibility, and recovery verification. | T-004–T-014 | E2E-01–E2E-18 pass on agreed matrix; independent review findings resolved or explicitly accepted; artifact/package inspection completed. |
 | T-016 | Establish authorized deployment/release process, migrations, backup/restore, health, rollback, and post-deploy smoke verification. | T-001, T-004, T-005, T-015 | Release version/artifact, migration/backup evidence, readiness and rollback verified in an approved target. Deployment is not authorized by this backlog. |
+
+## Documentation-maintenance task
+
+### T-017 — Integrate the user-provided UI reference set into project SSOT
+
+- **Priority:** P1 — **Status:** Verified.
+- **Scope:** Inspect all 24 `ui/*.png` screens and synchronize the existing core Markdown with an evidence-bounded UI layout anchor; preserve the PNGs unchanged and do not claim runtime verification.
+- **Definition of Done:** `DESIGN.md` maps shared shell, screen families, desktop/mobile adaptation, visible states, and screenshot inventory; `SPEC.md`/`EPIC.md`/`ROADMAP.md`/`TASK.md`/`PROGRESS.md`/`GOAL.md`/`GOAL_PROMPT.md` align; links/IDs/counts/prompt limit pass; `ui/` assets remain untouched and un-staged.
+- **Evidence:** 24/24 image inventory, Markdown targets, E2E/task IDs, D-008 alignment, prompt length, and whitespace checks passed; image-only quality review and runtime limits are recorded in [DESIGN.md](DESIGN.md) and [PROGRESS.md](PROGRESS.md).
 
 ## Open decision register
 
@@ -58,6 +67,7 @@ Priorities: **P0** blocks safe foundations or the V1 financial/tenant contract; 
 | D-005 | Meaning of invoice link in V1. | Internal invoice, external ERP deep link, and ERP posting are different products/contracts. | Keep V1 to an auditable certified-value invoice record/link; do not add ERP posting without an explicit adapter contract. |
 | D-006 | Supported browser/device and install/update matrix. | Determines PWA storage, sync and test guarantees. | Name target browsers and minimum versions before PWA acceptance is claimed. |
 | D-007 | AI provider, evidence handling, retention, and audit. | Site photos/contracts may be confidential; provider processing changes privacy risk. | No sensitive provider integration until data boundary and human-review controls are approved. |
+| D-008 | When missing photos/documents are blocking versus advisory for submit/certify. | The review mockup shows a warning, but does not establish a business/evidence rule. | Define an explicit rule by evidence type/workflow before implementation; do not infer a universal mandatory-photo policy from the image. |
 
 ## Current next task
 

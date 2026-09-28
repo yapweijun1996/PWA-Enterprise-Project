@@ -105,10 +105,14 @@ Canonical types must not depend on one ERP's abbreviation. Tenant display labels
 
 ### FR-11 — Responsive and accessible workflows
 
-- Mobile claim detail uses readable cards rather than forcing a wide desktop grid; desktop may expose spreadsheet-style SOV editing.
-- Main tasks include opening a project, claim creation/review, evidence capture, certification, and sync resolution.
-- Loading, empty, validation/error, success, disabled, conflict, offline, keyboard focus, screen-reader labels, safe-area, touch-target, and small-viewport states must be verified in a real browser.
-- 390×844 is the blueprint's minimum named mobile viewport; final supported browser/device matrix remains to be approved.
+- Use the user-designated static references in `ui/` as the screen-composition anchor indexed in [DESIGN.md](DESIGN.md). They guide hierarchy and layout; they do not prove that routes, interactions, or browser behavior exist.
+- Desktop app shell uses persistent primary navigation and a global utility/search bar. Mobile uses a compact header and Home/Projects/Claims/Inbox/More navigation; preserve project context and active location.
+- Desktop tables are appropriate for SOV/claim/certification comparison. Mobile must recompose into readable cards, focused line forms, stacked inspectors, or deliberate detail routes; do not shrink desktop tables until labels/values become unusable.
+- Follow the screen-family patterns for dashboard, Projects/Project 360, Claims/Create/Review, Certification/Certificate Detail, SOV/VO, Evidence, Inbox, Parties, Timeline/Search, Offline Queue/Conflict, and Settings in DESIGN.md.
+- Primary actions, save-draft, wizard progress, selected-record context, warning/error states, and offline/sync status must be visible. Sticky mobile controls must not cover fields, errors, keyboard, or bottom navigation.
+- Loading, empty, no-results, validation/error, success, disabled, permission-denied, conflict, offline, upload retry, keyboard focus, screen-reader labels, safe-area, touch-target, zoom/reflow, and long-content states must be verified in a real browser. Status must not be communicated by color alone.
+- 390×844 is the blueprint's minimum named mobile viewport; verify desktop plus this mobile viewport and approve the wider browser/device matrix before release.
+- Screenshot sample values are not live data. Demo mode must visibly identify sample records; define financial KPI labels/formulas before displaying them as authoritative.
 
 ### FR-12 — Search, dashboards, and notifications
 
@@ -144,7 +148,7 @@ All scenarios are **Planned / Unimplemented / Unverified**. Product progress is 
 | E2E-09 | User without project access requests project data/action. | Server denial for list and direct-object routes. |
 | E2E-10 | Tenant A requests Tenant B records/files. | API and storage denial across direct IDs, search, and attachment paths. |
 | E2E-11 | Edit contract after certificate issuance. | Issued certificate/PDF hash and displayed contents remain unchanged. |
-| E2E-12 | Mobile 390×844 main workflow. | Real-browser no page-level horizontal overflow; usable primary controls/focus. |
+| E2E-12 | Compare the main claim journey and representative anchored page families on desktop and at mobile 390×844. | Real-browser evidence shows intentional mobile recomposition (not scaled desktop), no page-level horizontal overflow or obscured sticky actions, usable keyboard/focus, and correct primary-navigation/context. |
 | E2E-13 | Draft/submit VO, then approve and claim it. | Only approved VO changes revised sum and eligible claim lines. |
 | E2E-14 | AI suggests progress from evidence. | Provenance links; human confirmation required; no autonomous approval. |
 | E2E-15 | AI summarizes a certification gap. | Citations point to authorized records; unauthorized tenant/project evidence excluded. |
@@ -175,3 +179,4 @@ E2E-13–E2E-18 operationalize explicit VO, AI, PWA, audit, and idempotency requ
 4. Specify currency, tax, precision/rounding, partial/negative values, retention cap/release rules, and exact document state transitions.
 5. Clarify V1 invoice link semantics and whether any ERP adapter is included.
 6. Approve evidence-file retention/access, immutable PDF generation, AI provider/data handling, and any legal/signature requirements.
+7. Define when photos/documents are mandatory versus advisory for submission/certification; the UI reference shows a missing-photo warning but does not establish a blocking rule. Track as TASK.md D-008.

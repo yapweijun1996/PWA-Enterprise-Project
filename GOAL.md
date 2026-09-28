@@ -54,7 +54,7 @@ No numeric time-saving, financial accuracy, uptime, or market-adoption target ha
 
 Projects, parties, contracts, SOVs, approved variations, PCAR/CCAR and PCAP/CCAP workflows, evidence/documents, approval inbox, invoice links/records, retention, audit trail, offline synchronization, and human-reviewed AI assistance.
 
-The exact invoice integration boundary, identity provider, browser matrix, deployment environment, and offline-data retention policy remain open decisions; see [TASK.md](TASK.md).
+The 24 user-provided `ui/` screenshots are the visual layout reference for the screen families documented in [DESIGN.md](DESIGN.md); they are static comps, not proof of a running UI. The exact invoice integration boundary, identity provider, browser matrix, deployment environment, offline-data retention policy, and mandatory-evidence policy remain open decisions; see [TASK.md](TASK.md).
 
 ### Explicit non-goals
 
@@ -64,7 +64,7 @@ AI may suggest, compare, extract, or summarize evidence. It must not approve cla
 
 ## Current truth and lifecycle
 
-- **Repository evidence:** the initial commit `dbca199` contains only `.gitattributes`; there is no application source, dependency manifest, test suite, CI, deployment configuration, or runtime evidence.
+- **Repository evidence:** initial commit `dbca199` contained only `.gitattributes`; prior local documentation commit `5780ee7` added the eight core planning files. The 24 `ui/` PNGs are currently untracked visual references. No application source, dependency manifest, test suite, CI, deployment configuration, or runtime evidence exists.
 - **Product definition:** the user-provided ConstructClaim V1 blueprint is the accepted product-intent source for this documentation pass.
 - **Project type:** intended hybrid of a mobile-first installable/offline-capable PWA, an authoritative API/service, persistent business data, evidence-file storage, and optional AI/ERP integrations. These are target boundaries, not verified implementations.
 - **Lifecycle:** pre-implementation / product-blueprint stage.
@@ -78,3 +78,4 @@ AI may suggest, compare, extract, or summarize evidence. It must not approve cla
 4. Keep issued financial documents and audit history immutable; correct by revision, void, or supersession rather than silent overwrite.
 5. Make offline capability explicit, bounded, observable, and recoverable.
 6. Keep the first release focused on reliable PCAR → CCAR and PCAP → CCAP flows rather than expanding into a general ERP.
+7. Use the user-selected `ui/` images as composition anchors while verifying actual accessibility, trust, responsive behavior, and interaction states in a real browser.

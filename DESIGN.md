@@ -4,7 +4,7 @@
 
 This document separates product intent from repository facts.
 
-- **Verified repository state:** `main` and `origin/main` point to initial commit `dbca199`; the only tracked file is `.gitattributes`. No `AGENTS.md`, `CLAUDE.md`, `CONTRIBUTING.md`, README, ADR, source, package/configuration, tests, CI, or release workflow exists in this checkout.
+- **Verified repository state before this UI-documentation update:** `main` was at local documentation commit `5780ee7`, one commit ahead of `origin/main` at `dbca199`; the earlier commit tracks `.gitattributes` and the eight core planning documents. The 24 PNGs under `ui/` are untracked and were preserved. No app source, package/configuration, tests, CI, or release workflow exists in this checkout; no `AGENTS.md`, `CLAUDE.md`, `CONTRIBUTING.md`, README, or ADR was found.
 - **User-defined target:** the ConstructClaim PWA V1 blueprint supplied in the task conversation.
 - **Not verified:** every runtime, framework, database, API, storage service, browser behavior, PWA capability, and integration described below. Target architecture is a design proposal, not a claim about existing code.
 
@@ -98,11 +98,87 @@ Required design constraints:
 - Preserve drafts across compatible app updates; do not activate a new worker in a way that discards queued user work.
 - Attachment upload must be resumable/retryable or expose a clear failed state; metadata and file bytes must not diverge silently.
 
-## PWA and UX target
+## UI/UX layout anchor — user-provided `ui/` references
 
-The intended interface is mobile-first and responsive. Mobile claim lines use cards rather than forcing a wide spreadsheet table; desktop may use an SOV-style grid. Primary navigation, safe areas, keyboard behavior, accessible labels/focus, touch targets, long content, empty/error/loading/success states, and clear sync status require real-browser verification. The repository has no UI, so none of these properties are currently verified.
+### Evidence and status
 
-The app-shell install/update/offline experience, manifest, service worker versioning, cache strategy, supported browsers, and update recovery remain unimplemented and must be selected and tested as a coherent release contract.
+The user designated the 24 static screen images in `ui/` as the visual/layout anchor for ConstructClaim. They show paired desktop and phone compositions for the main journeys. This pass reads them as **design references**, not screenshots of a running application; their dates, people, amounts, project names, status counts, and settings values are illustrative, not approved seed data or live facts. The assets are currently untracked in this worktree and were not modified. The UI layout spec below is a derived design baseline, not evidence that any route or interaction exists.
+
+### Shared shell and information architecture
+
+**Desktop shell**
+
+- Persistent left rail: ConstructClaim branding, primary navigation, and a low-priority construction-brand image/motto area.
+- Global utility bar: global search, notification entry with count, signed-in user/organization context, and account menu.
+- Main work area: breadcrumb/context, page title and purpose, one primary action, then task-specific summary, list/table, or editor.
+- Use a right-side inspector/summary only where it supports the current selection (for example selected claim, evidence item, inbox item); keep the main work area dominant.
+
+**Primary navigation shown in the anchors:** Dashboard, Projects, Claims, Inbox, Parties, Reports, Settings. Global Search remains available from the top bar. Project context uses its own tabs: Overview, SOV, Claims, Variations, Evidence, Team, and Activity. Do not turn each data table or entity into a new global navigation item.
+
+**Mobile shell**
+
+- Compact top bar with brand/context, notifications, and menu or back navigation.
+- Bottom navigation for Home, Projects, Claims, Inbox, and More; keep the active destination obvious and reserve safe-area space.
+- Recompose the content to one column: project/list cards, stacked form fields, selected-record details, and explicit accordions/tabs where long detail must be deferred.
+- Keep the current task's primary action visible without covering the last field, validation message, or keyboard. Do not merely shrink a desktop table or split-view panel.
+
+### Screen-family layout contract
+
+| User task / page family | Reference screens | Layout anchor |
+|---|---|---|
+| Authenticate | `ui/01-Login.png` | Desktop split layout: sign-in form plus product/context panel; mobile becomes a single-column sign-in flow. Email/password, remember, recovery, and SSO are visual affordances only; the actual identity provider is undecided. |
+| Orient and triage | `ui/02-Home Dashboard.png` | Greeting/context, a small row of separate receivable/payable/retention/task summaries, claim-position chart, attention queue, projects, and financial snapshot. Mobile prioritizes My Tasks and vertically stacked overview cards. |
+| Find a project / project workspace | `ui/03-Projects.png`, `ui/04-Project-360.png` | Search/filter/sort projects; desktop project cards/grid and mobile project cards. Project 360 begins with identity/status/manager/revised contract context, then project tabs, receivable/payable/retention indicators, progress and contract snapshot, recent claims, approvals, and activity. |
+| Find and inspect claims | `ui/05-Claims.png`, `ui/06-Claim-Detail.png` | Receivable/Payable switch, status summaries, search and filters, then a desktop comparison table. On mobile use claim cards with number, project, period, amount, status, and next action. Detail starts with document identity/status/actions, separately labeled totals, claim-line/evidence/activity tabs or sections, and a contextual summary. |
+| Create and edit a claim | `ui/07-New-Claim.png`, `ui/08-Claim-Line-Editor.png`, `ui/09-Submit-Claim-Review.png` | Four-step journey: Claim Details → SOV Lines → Evidence → Review. Preserve draft/save-and-continue. Claim-line editing shows the SOV basis, previous/current/cumulative values, progress/quantity/unit rate, balance, notes, evidence, and calculation summary. Review groups source info, line totals, evidence checklist/warnings, explicit acknowledgement, and Submit. Desktop may use a dense SOV grid; mobile uses a focused line form and stacked summary. |
+| Review and issue certification | `ui/10-Certification.png`, `ui/11-Certificate-Detail.png` | Separate Receivable CCAR / Payable CCAP queues with status counts, filters, comparison table, and selected-claim inspector. Certificate detail leads with issued state/source claim version and separate certified/retention/deduction/net metrics; show line variance/reason, certificate preview/download, revision history, and audit events. Mobile stacks these sections. |
+| Reconcile SOV and variations | `ui/12-Schedule-of-Values.png`, `ui/13-SOV-Detail.png`, `ui/14-Variation-Orders.png`, `ui/15-Variation-Order-Detail.png` | SOV list emphasizes project/contract context and line-by-line values; use table for desktop comparison and cards/stacked rows on mobile. SOV detail groups line facts, value breakdown, claim history, linked evidence, and related variations. VO list uses lifecycle filters; VO detail groups status/authority actions, financial summary, approval progress, affected SOV lines, and evidence. |
+| Capture and find evidence | `ui/16-Evidence-Gallery.png`, `ui/17-Evidence-Capture.png` | Gallery uses type tabs/filters, a visual grid on desktop, and a compact list on mobile with a selected-item detail panel. Capture prioritizes photo preview, Retake/Use Photo, required project/claim/SOV/type/time links, note, optional location, upload state, retry/remove, Add Another, and Save Evidence. |
+| Work an approval | `ui/18-Approval-Inbox.png` | Needs My Action / Assigned / Completed queue, filters and priority/due state; desktop list plus selected-item panel, mobile task cards and a record-detail route. Show only actions permitted to the signed-in actor. |
+| Manage parties and audit | `ui/19-Parties.png`, `ui/20-Activity-Timeline.png` | Party type filters and searchable list with selected organization/contact/project context. Timeline uses date/actor/action filters, event list, and selected-event detail including before/after or reason; avoid presenting a visual feed as a substitute for authoritative audit records. |
+| Find records globally | `ui/21-Global-Search.png` | Query and filters at top; group results by record type (projects, claims, parties, documents, variations) with enough status/context to identify the right record. Results remain permission-scoped. |
+| Recover offline work | `ui/22-Offline-Queue.png`, `ui/23-Sync-Conflict.png` | Queue starts with prominent connectivity/last-sync state, pending command and attachment counts, approved project scope, operation states, and Retry/View Conflict actions. Conflict detail compares preserved local/base and current server versions, identifies changed fields, and offers Use Local / Use Server / Edit & Merge. No choice is applied until explicit confirmation. Stack the comparison on mobile. |
+| Configure account and device data | `ui/24-Settings.png` | Group Profile, Organization, Notifications, Security & Sessions, Offline Data, and Preferences. Offline downloads/retention/sync controls must explain policy and consequences. The pictured 30-day retention and storage limit are examples, not defaults. |
+
+### Visual language inferred from pixels
+
+- A restrained construction brand: navy headings/text, white and pale-blue work surfaces, blue primary actions, and a small orange brand accent.
+- Status color is supported by a text label and/or icon (for example Draft, Awaiting Certification, Issued, Offline, Conflict); color alone must never carry business meaning.
+- Green, orange, red, and purple appear as semantic accents for positive/issued, pending/attention, variance/error, and supplementary metrics. Establish actual accessible design tokens from measured contrast before implementation; do not infer hex values from compressed PNGs.
+- Use cards for independent summaries/actions, tables where users compare SOV or claim lines, and a side inspector only for a selected record. Avoid nested-card proliferation and KPI cards that obscure the next business action.
+- Keep charts subordinate to the underlying values; label units, period, and series. Treat “Claim Gap” as an undefined label until its calculation and business meaning are approved.
+
+### Required behavior beyond what static anchors prove
+
+The screen set illustrates populated/normal states and selected offline/conflict cases. It does **not** prove working navigation, permissions, keyboard behavior, accessible names/focus order, contrast ratios, zoom/reflow, loading/empty/no-results/validation/permission-denied states, attachment failure recovery, or safe-area behavior. Those remain release acceptance criteria and must be added to the implemented flows. The Review & Submit image shows a warning for lines without photo evidence but does not define whether any missing evidence blocks submission; that rule remains a business decision, not a visual inference.
+
+Financial status must remain truthful in every component: claimed, certified, invoiced, paid, retention held/released, and net certified are separate measures. All screenshot values and January 2024 records must be treated as sample presentation data; demo data must be visibly identified and must never masquerade as a tenant's live records.
+
+### Screenshot-only design self-review
+
+This is a bounded review of the **reference compositions**, not of an implemented UI. Evidence is the 24 static images; no browser, keyboard, assistive-technology, or task-completion test was possible.
+
+| Dimension | Score | Visual evidence / limitation |
+|---|---:|---|
+| User purpose and task success | 14/15 | Page titles and actions map clearly to project, claim, certification, evidence, and sync jobs; actual task success is untested. |
+| Information architecture | 9/10 | Persistent work areas, breadcrumbs, project tabs, and queue categories are visible; mobile More-menu reachability needs testing. |
+| Visual hierarchy | 13/15 | Strong page title/status/primary action and separate summary/data regions; some dense screens have many equally prominent cards. |
+| Layout, spacing, density | 8/10 | Desktop tables/inspectors and mobile stacked cards are intentionally different; tablet and small-device variants are absent. |
+| Typography and content | 8/10 | Clear headings/field labels; dense secondary/table text may be too small at real device scale. |
+| Interaction, feedback, recovery | 7/10 | Wizard, save/submit, upload status, offline queue, and conflict choices are pictured; behavior and focus feedback are not evidenced. |
+| Responsive/adaptive | 8/10 | Many screens show desktop and phone recomposition; no tablet, landscape, zoom, or real browser layout evidence. |
+| Accessibility/inclusive UX | 6/10 | Visible labels and multiple text/icon status cues help; contrast, keyboard, focus, screen-reader order, and zoom remain unverified. **Hard gate not met.** |
+| Trust and data truth | 3/5 | Certificate/history/evidence provenance is represented, but sample data is not visibly labeled and “Claim Gap” has no defined formula. **High-trust hard gate not met.** |
+| Craft, consistency, restraint | 4/5 | Brand, navigation, controls, and desktop/mobile vocabulary are coherent; production tokens are not specified. |
+| **Total** | **80/100** | **REVISE before production/implementation approval.** Accessibility and trust hard gates fail on missing evidence. The user-designated screenshots remain the layout reference; the score does not reject their use as inspiration. |
+
+### Reference inventory
+
+All listed assets are user-provided files currently present under `ui/` in this worktree:
+
+`01-Login.png`, `02-Home Dashboard.png`, `03-Projects.png`, `04-Project-360.png`, `05-Claims.png`, `06-Claim-Detail.png`, `07-New-Claim.png`, `08-Claim-Line-Editor.png`, `09-Submit-Claim-Review.png`, `10-Certification.png`, `11-Certificate-Detail.png`, `12-Schedule-of-Values.png`, `13-SOV-Detail.png`, `14-Variation-Orders.png`, `15-Variation-Order-Detail.png`, `16-Evidence-Gallery.png`, `17-Evidence-Capture.png`, `18-Approval-Inbox.png`, `19-Parties.png`, `20-Activity-Timeline.png`, `21-Global-Search.png`, `22-Offline-Queue.png`, `23-Sync-Conflict.png`, and `24-Settings.png`.
+
+The static references are the layout anchor for the screen families above; they are not a pixel-perfect implementation mandate or runtime/browser verification. The PWA app-shell install/update/offline experience, manifest, service-worker versioning, cache strategy, supported browsers, and update recovery remain unimplemented and must be selected and tested as a coherent release contract.
 
 ## AI and integrations
 
@@ -128,3 +204,4 @@ Track and resolve in [TASK.md](TASK.md) before dependent implementation:
 - Currency, tax, precision/rounding, claim/certificate versioning, retention ledger, and exact lifecycle transitions.
 - Whether invoice links are internal records or external ERP references.
 - Evidence storage/link expiry, immutable PDF generation, and AI provider/data handling.
+- Which evidence types are mandatory versus advisory before claim submission or certification; see TASK.md D-008.

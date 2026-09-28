@@ -2,7 +2,7 @@
 
 ## Status convention
 
-Every epic below is **Planned**. Repository inspection found no application source, executable tests, runtime, or deployed product. An epic becomes Implemented only when its scoped behavior exists, Verified only with the stated evidence, and Released only after production/release evidence. See [PROGRESS.md](PROGRESS.md).
+Every product epic below is **Planned**. Repository inspection found no application source, executable tests, runtime, or deployed product. An epic becomes Implemented only when its scoped behavior exists, Verified only with the stated evidence, and Released only after production/release evidence. See [PROGRESS.md](PROGRESS.md). The 24 user-designated images in `ui/` are static composition references; use the screen-family map and screenshot-only review in [DESIGN.md](DESIGN.md), and do not treat a mockup as runtime or accessibility proof.
 
 ## EPIC-01 — Tenant, identity, and project foundation
 
@@ -30,7 +30,7 @@ Every epic below is **Planned**. Repository inspection found no application sour
 
 **Scope:** Canonical document types, claim periods, SOV/VO references, claimed totals, review inbox, state transitions, validation, versions, idempotent submit, mobile claim screens.
 
-**Acceptance:** E2E-02 and E2E-06 prerequisites pass; submitted claims cannot be silently deleted; claimed values remain distinct from certified/invoiced/paid values.
+**Acceptance:** E2E-02 and E2E-06 prerequisites pass; desktop claim comparison follows the Claims/Claim Detail anchors and mobile uses record cards/forms; submitted claims cannot be silently deleted; claimed values remain distinct from certified/invoiced/paid values.
 
 **Dependencies:** EPIC-01 and EPIC-02.
 
@@ -50,7 +50,7 @@ Every epic below is **Planned**. Repository inspection found no application sour
 
 **Scope:** Mobile capture, evidence metadata/storage, bounded project download, IndexedDB/command queue implementation, version conflicts, retry/status UX, PWA install/update/recovery.
 
-**Acceptance:** E2E-07, E2E-08, E2E-10, E2E-12, and E2E-16 pass on the agreed browser/device matrix; private data is not placed in static caches; revoked/offline access follows approved policy.
+**Acceptance:** E2E-07, E2E-08, E2E-10, E2E-12, and E2E-16 pass on the agreed browser/device matrix; evidence capture/gallery, offline queue, and sync conflict follow their mapped screen anchors with accessible feedback; private data is not placed in static caches; revoked/offline access follows approved policy.
 
 **Dependencies:** EPIC-01 plus approved local-data and browser decisions. Evidence store is a candidate, not selected infrastructure.
 

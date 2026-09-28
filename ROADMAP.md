@@ -2,7 +2,7 @@
 
 ## Planning basis
 
-The repository is a clean one-commit shell with only `.gitattributes`. The user-provided ConstructClaim PWA V1 blueprint defines the intended product. No application milestone is Implemented, Verified, or Released. This roadmap sequences work by dependency; it does not assert dates or percent-complete estimates.
+The repository contains the initial `.gitattributes` baseline and a locally committed set of eight planning documents; 24 user-provided UI PNGs are present but untracked. There is no application code, and no product milestone is Implemented, Verified, or Released. The ConstructClaim PWA V1 blueprint defines the intended product. This roadmap sequences work by dependency; it does not assert dates or percent-complete estimates.
 
 ## Milestone status
 
@@ -46,8 +46,8 @@ The repository is a clean one-commit shell with only `.gitattributes`. The user-
 ### M3 — Claims and field capture
 
 - Implement PCAR/PCAP, draft/review/submit/revise/void behavior, SOV/VO-linked lines, and claim snapshots.
-- Build mobile-first project/claim/evidence experience.
-- Implement attachment handling and only the approved offline dataset and command types; add conflict/retry UX and PWA install/update behavior.
+- Build the mobile-first project/claim/evidence experience from the user-designated screen-family anchors in [DESIGN.md](DESIGN.md): desktop tables/inspectors, mobile cards/forms, project context, and clear primary actions.
+- Implement attachment handling and only the approved offline dataset and command types; add conflict/retry UX and PWA install/update behavior. Treat the PNGs as design references, then verify real browser behavior rather than pixel-copying sample data.
 
 **Exit:** E2E-02, E2E-06, E2E-07, E2E-08, E2E-12, and E2E-16 pass. Submitted claims are not silently deleted or overwritten.
 
@@ -68,7 +68,7 @@ The repository is a clean one-commit shell with only `.gitattributes`. The user-
 
 ### M6 — Release readiness
 
-- Complete the full E2E suite and supported browser/device matrix.
+- Complete the full E2E suite and supported browser/device matrix; compare implemented desktop/mobile screens to the anchors while verifying accessibility, empty/error/loading, permission, and trust states not shown in the images.
 - Inspect built artifacts, PWA manifest/cache/update behavior, dependency/license/security surface, migrations, backup/restore, readiness/health and rollback.
 - Verify an actual deployed release and version only after deployment is separately authorized.
 
