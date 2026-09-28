@@ -136,6 +136,18 @@ The additive fixtures above remain the only selected arithmetic invariants. This
 - AI must not approve/reject, issue certification, authorize an invoice, or invent financial facts. Unavailable/low-confidence AI must fail visibly without blocking manual workflows.
 - Data sent to any AI provider, retention, tenant isolation, model/version audit, and deletion behavior require approval before integration.
 
+## T-003 security and privacy decision-to-test worksheet (unfilled; no grants or policy selected)
+
+This worksheet makes no identity, role, offline-retention, evidence-sharing, or AI-provider choice. Before sensitive data is persisted, downloaded for offline use, or sent to a provider, record the policy for every in-scope workflow and obtain the T-003 security review. Exclusions must remove the affected capability from V1 rather than leave access or privacy rules undefined. The FR-01 server-side default-deny, FR-07 pending-command, and FR-10 human-review requirements remain in force.
+
+| Topic | Owner input required | Minimum security/test vectors after decision |
+|---|---|---|
+| Identity, tenant, and invitation lifecycle | Identity/account assurance, tenant/company boundaries, membership and external-party model, invitation acceptance/expiry/revocation, session invalidation. | Accept/expire/revoke invitations; verify membership changes and account/session revocation cannot retain server authority. |
+| Project/document/action grants | Explicit role × tenant/project/document/state × action grants for every supported operation, including contract/SOV administration, claim draft/edit/submit/revise/void, VO approval, certificate issue, invoice/payment, evidence, offline sync, and AI retrieval. | Exercise each grant and its denial; wrong project/document/state, revoked or changed role, direct IDs, and client-supplied scope cannot broaden server authorization. Unspecified grants deny. |
+| External parties, objects, and evidence files | Customer/consultant/subcontractor scope; list/search/direct-object and file read/write/download rules; any public/expiring link policy; metadata (including optional GPS/EXIF) and retention/deletion rules. | Compare permitted access with wrong-tenant/project/object and guessed file IDs across lists, search, direct routes, and storage. Verify link scope/expiry/revocation if links are allowed, and incomplete upload cannot appear complete. |
+| Offline data, devices, and commands | Per-role/project entity, field, attachment, and command allowlist; maximum offline-access age; local retention and any at-rest protection; logout, revocation, shared/lost-device, app-update, storage-denial/eviction/quota/write-failure handling. | Test allowed/denied downloads and commands; logout/expiry/revocation and replay denial; storage permission denied versus actual write failure/quota; no command appears queued before a successful local transaction, and no client-only final outcome. |
+| AI provider and evidence boundary | Provider/model, exact evidence/fields permitted for retrieval and payload, data location, retention/training/logging/deletion, tenant isolation, audit, and failure behavior. | Deny unauthorized retrieval before provider construction; prove payload scope/provenance, injection cannot expand retrieval or cause writes, suggestions require human confirmation, and unavailable AI leaves manual work available. |
+
 ### FR-11 — Responsive and accessible workflows
 
 - Use the user-designated static references in `ui/` as the screen-composition anchor indexed in [DESIGN.md](DESIGN.md). They guide hierarchy and layout; they do not prove that routes, interactions, or browser behavior exist.
@@ -207,9 +219,9 @@ E2E-13–E2E-18 operationalize explicit VO, AI, PWA, audit, and idempotency requ
 ## Open decisions
 
 1. Approve or replace the proposed stack and select hosting/deployment/runtime.
-2. Define supported browsers/devices and offline download allowlist, expiry, logout/revocation, and shared-device policy.
-3. Define identity provider, tenant topology, external customer/consultant/subcontractor onboarding, and permission matrix.
+2. Define supported browsers/devices under D-001 and complete the T-003 worksheet for offline scope, expiry, logout/revocation, storage failure, and shared-device behavior.
+3. Complete the T-003 worksheet for identity/tenant topology, invitations, external-party access, explicit permission grants, and object/file boundaries.
 4. Complete the unfilled T-002 decision-to-test worksheet above: record rules for every in-scope V1 workflow; exclusions remove affected capabilities rather than leave their money/state rules undefined.
 5. Clarify V1 invoice link semantics and whether any ERP adapter is included.
-6. Approve evidence-file retention/access, immutable PDF generation, AI provider/data handling, and any legal/signature requirements.
+6. Complete the T-003 worksheet for evidence access/retention and AI provider/data handling; separately resolve immutable PDF generation and any legal/signature requirements before implementation.
 7. Define when photos/documents are mandatory versus advisory for submission/certification; the UI reference shows a missing-photo warning but does not establish a blocking rule. Track as TASK.md D-008.
