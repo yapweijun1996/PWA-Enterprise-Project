@@ -117,7 +117,7 @@ Reply with decisions keyed by IDs; partial answers are useful, but unanswered it
 
 ## Current next task
 
-**T-001 is the first implementation gate** because the blueprint labels its stack as recommended rather than approved. TASK.md D-001 now contains a portability-first proposal, not a selected stack/hosting/browser contract. Confirm or replace it with the owner’s target. T-002 and T-003 can be refined in parallel without changing source. Do not start T-004 until material platform, domain, and security decisions have an explicit record.
+**Blocked on owner input: no product implementation task is currently unblocked.** T-001 is the first implementation gate because the blueprint labels its stack as recommended rather than approved. D-001 contains a portability-first proposal, not a selected stack/hosting/browser contract; the owner must confirm or replace it. T-002 and T-003 can be resolved in parallel without changing source. Do not start T-004 until material platform, domain, and security/privacy decisions have an explicit record.
 
 ## V1 acceptance mapping
 
