@@ -116,6 +116,8 @@ These are **specification fixtures only**, not executable contract tests or a co
 
 - AI may suggest progress from site notes/photos, compare claimed progress against prior state/evidence, and summarize certification gaps.
 - AI output is a proposal with links to permission-checked supporting evidence; a human must confirm any operational change.
+- Enforce user/tenant/project/document/action permissions server-side before retrieving evidence or constructing any provider payload. Client/model-supplied identifiers never grant access.
+- Treat site notes, documents, OCR, images, and model output as untrusted data, not instructions. Embedded instructions must not override policy, widen retrieval, or trigger state changes; the model has no direct authority to approve/reject, issue certification, authorize invoices, or mutate records.
 - AI must not approve/reject, issue certification, authorize an invoice, or invent financial facts. Unavailable/low-confidence AI must fail visibly without blocking manual workflows.
 - Data sent to any AI provider, retention, tenant isolation, model/version audit, and deletion behavior require approval before integration.
 
@@ -167,7 +169,7 @@ All scenarios are **Planned / Unimplemented / Unverified**. Product progress is 
 | E2E-12 | Compare the main claim journey and representative anchored page families on desktop and at mobile 390×844. | Real-browser evidence shows intentional mobile recomposition (not scaled desktop), no page-level horizontal overflow or obscured sticky actions, usable keyboard/focus, and correct primary-navigation/context. |
 | E2E-13 | Draft/submit VO, then approve and claim it. | Only approved VO changes revised sum and eligible claim lines. |
 | E2E-14 | AI suggests progress from evidence. | Provenance links; human confirmation required; no autonomous approval. |
-| E2E-15 | AI summarizes a certification gap. | Citations point to authorized records; unauthorized tenant/project evidence excluded. |
+| E2E-15 | AI summarizes a certification gap. | Citations and provider input contain only server-authorized records; adversarial instructions embedded in evidence cannot reveal unauthorized data, widen retrieval, or cause writes; human review remains required. |
 | E2E-16 | Install/update PWA with an offline draft queued. | Supported browser install/update flow preserves or safely recovers draft/queue; denied persistence is identified as best-effort, while quota/write failure never masquerades as a successfully queued command. |
 | E2E-17 | Perform consequential workflow actions. | Append-only audit evidence identifies actor, time, target, version, and reason. |
 | E2E-18 | Retry submit/certify/invoice after timeout. | Idempotent result; no duplicate authoritative business documents. |
