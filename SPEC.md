@@ -96,6 +96,7 @@ These are **specification fixtures only**, not executable contract tests or a co
 - A stale base version returns a conflict; the UI presents local value, server value, and explicit review choices. No last-write-wins or silent overwrite is allowed.
 - Foreground sync is the canonical path; background sync is optional. The UI clearly exposes offline, pending, synced, and error/conflict states.
 - Service Worker Cache Storage is limited to versioned static app assets. Private records/files use an explicit local-data policy; logout, revoked access, shared devices, expiry, and update recovery must be tested.
+- Browser quotas and eviction are user-agent specific. Local storage is best-effort by default; a `persist()` request may be denied, quota estimates are advisory, and users can clear site data. Identify denied persistence as best-effort rather than a failed IndexedDB write. Only show a command as locally queued after its write transaction succeeds; handle unavailable storage, quota/write errors, and recovery visibly without promising indefinite device durability.
 
 ### FR-08 — Audit and approvals
 
@@ -166,7 +167,7 @@ All scenarios are **Planned / Unimplemented / Unverified**. Product progress is 
 | E2E-13 | Draft/submit VO, then approve and claim it. | Only approved VO changes revised sum and eligible claim lines. |
 | E2E-14 | AI suggests progress from evidence. | Provenance links; human confirmation required; no autonomous approval. |
 | E2E-15 | AI summarizes a certification gap. | Citations point to authorized records; unauthorized tenant/project evidence excluded. |
-| E2E-16 | Install/update PWA with an offline draft queued. | Supported browser install/update flow preserves or safely recovers draft/queue. |
+| E2E-16 | Install/update PWA with an offline draft queued. | Supported browser install/update flow preserves or safely recovers draft/queue; denied persistence is identified as best-effort, while quota/write failure never masquerades as a successfully queued command. |
 | E2E-17 | Perform consequential workflow actions. | Append-only audit evidence identifies actor, time, target, version, and reason. |
 | E2E-18 | Retry submit/certify/invoice after timeout. | Idempotent result; no duplicate authoritative business documents. |
 

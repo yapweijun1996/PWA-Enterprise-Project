@@ -48,6 +48,7 @@ They distinguish user-approved product intent, proposed architecture, user-selec
 - Latest documentation consistency check after T-001/T-003 proposal updates passed: 8/8 required docs; local Markdown targets; ordered E2E-01–E2E-18; unique T-001–T-016 plus documentation task T-017; D-002/D-003 offline/authorization constraints and D-008 cross-reference synchronized; all 24 image filenames indexed; no trailing whitespace; GOAL_PROMPT.md is 1,969/2,000 characters. `git diff --check` passed.
 - Reviewed official Node.js, Vite, React, Fastify, PostgreSQL, Drizzle, and Playwright documentation for T-001. Recorded support/runtime caveats and exact source links in [TASK.md](TASK.md); this is advisory research only and does not resolve hosting, browser/device minimums, or owner approval. No stack was selected and no packages were added. Rechecked all eight core docs: local Markdown targets/fragments, E2E-01–E2E-18, task IDs, 24/24 UI inventory, 1,969/2,000-character prompt limit, whitespace, and `git diff --check` passed.
 - Added a concise owner-response key in `TASK.md` for T-001–T-003, mapping each unresolved decision to its required inputs without selecting defaults. All three tasks remain Planned; implementation gates are unchanged.
+- Reviewed the WHATWG Storage Standard and MDN browser-storage documentation for T-003. Recorded the best-effort default, browser-dependent persistence grant/eviction, estimated quotas, and write-failure consequences in `TASK.md` and `SPEC.md`; expanded T-009/E2E-16 to distinguish denied persistence permission (best-effort storage) from failed local writes (not queued). These are technical constraints, not an approved local-data/retention policy.
 - Created the earlier local documentation commit containing only the eight requested files, parented directly to `dbca199`; verified that commit's file list. The current UI-reference change is Markdown-only; the 24 PNGs remain untracked/unstaged. No push or release was performed.
 
 ### Not run / not possible
@@ -62,7 +63,7 @@ These are unavailable checks, not passing checks. See [SPEC.md](SPEC.md) for the
 
 1. D-001 now proposes a portability-first stack/host/browser baseline and has official-documentation evidence recorded, but it remains unapproved; organizational hosting/support requirements are unknown, and the local Docker engine was unavailable.
 2. D-002 identity/external-user semantics and the role/action grant matrix remain unapproved; defaults deny unspecified actions.
-3. D-003 offline allowlist/retention/revocation and shared-device policy remain unresolved; sensitive offline downloads stay disabled until approved.
+3. D-003 offline allowlist/retention/revocation and shared-device policy remain unresolved; sensitive offline downloads stay disabled until approved. Browser storage can be denied or evicted and must not be described as durable merely because a local write succeeded.
 4. Financial rounding/tax/currency/retention allocation and exact lifecycle transitions need a contract before schema migrations.
 5. Invoice-link meaning, AI data handling, evidence retention, supported browsers, and release operations are not finalized.
 6. No code-based behavior can be confirmed until implementation begins.
