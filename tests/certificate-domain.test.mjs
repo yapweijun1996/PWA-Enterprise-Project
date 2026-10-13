@@ -40,3 +40,20 @@ test('source and reviewed snapshots survive later claim edits and reject mutable
   assert.throws(() => checkCertificateWrite(saved, { ...saved, updatedAt: 'changed' }), /read-only/);
   assert.throws(() => savedCertificate(saved, false), /read-only/);
 });
+test('blank claimed values share totals zero semantics without hiding invalid or real differences', () => {
+  for (const claimed of ['', '   ', '0', '0.00', '0.10']) {
+    const certificate = normalizeCertificate(null, source(), 'LOCAL-CERT-blank');
+    certificate.source.lines[0].current = claimed;
+    certificate.assessments = certificate.source.lines.map(line => ({ certified: String(line.current).trim() || '0', reason: '' }));
+    assert.deepEqual(validateCertificate(certificate, true), [], JSON.stringify(claimed));
+    assert.equal(assessmentTotals(certificate).variance, 0);
+    certificate.assessments[0].certified = claimed.trim() === '0.10' ? '0.11' : '0.01';
+    assert.ok(validateCertificate(certificate, true).some(error => error.field === 'reason-0'));
+    certificate.assessments[0].reason = 'Different measured value';
+    assert.deepEqual(validateCertificate(certificate, true), []);
+  }
+  const invalid = normalizeCertificate(null, source(), 'LOCAL-CERT-invalid');
+  invalid.source.lines[0].current = 'invalid';
+  invalid.assessments = invalid.source.lines.map(() => ({ certified: '0', reason: 'Difference' }));
+  assert.ok(validateCertificate(invalid, true).some(error => /source snapshot/.test(error.message)));
+});

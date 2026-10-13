@@ -29,7 +29,7 @@ export function validateCertificate(certificate, reviewed = false) {
     const value = toCents(row.certified);
     if ((reviewed || String(row.certified || '').trim()) && value === null) errors.push({ field: 'certified-' + index, message: line.id + ': enter a non-negative amount with up to two decimals.' });
     if (String(row.reason || '').length > 300) errors.push({ field: 'reason-' + index, message: line.id + ': keep the reason within 300 characters.' });
-    if (reviewed && value !== null && value !== toCents(line.current || '0') && !String(row.reason || '').trim()) errors.push({ field: 'reason-' + index, message: line.id + ': explain the difference between certified and claimed.' });
+    if (reviewed && value !== null && value !== (toCents(line.current || '0') ?? 0) && !String(row.reason || '').trim()) errors.push({ field: 'reason-' + index, message: line.id + ': explain the difference between certified and claimed.' });
   });
   return errors;
 }

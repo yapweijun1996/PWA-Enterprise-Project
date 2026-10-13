@@ -21,6 +21,7 @@ export function createEvidenceEditor({ root, claims, context, onSave, onDone, an
   let projectId = context.project || projects[0].id;
   let claimId = context.claim || claims.find(claim => claim.project === projectId)?.id || '';
   let lineId = context.line || '', file = null, dirty = false, busy = false, alive = true, attempted = null;
+  let baseRevision = null, baseGeneration = null, knownCommit = false;
   const id = 'LOCAL-EVIDENCE-' + crypto.randomUUID();
   const date = new Date(); const localTime = new Date(date.valueOf() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
   const back = '#project/' + projectId + '/evidence';
@@ -40,18 +41,21 @@ export function createEvidenceEditor({ root, claims, context, onSave, onDone, an
   }
   function update() {
     form.setAttribute('aria-busy', String(busy));
-    form.querySelectorAll('input,select,textarea,button').forEach(el => { el.disabled = busy; });
-    root.querySelector('[data-save-image]').disabled = busy || !file || !currentClaim();
-    root.querySelector('[data-capture-status]').textContent = busy ? 'Reading / saving on this device…' : dirty ? 'Unsaved evidence · Not uploaded' : 'Not saved yet · Not uploaded';
+    form.querySelectorAll('input,select,textarea,button').forEach(el => { el.disabled = busy || knownCommit; });
+    const save = root.querySelector('[data-save-image]');
+    save.disabled = busy || (!attempted && (!file || !currentClaim()));
+    save.textContent = attempted ? 'Retry save confirmation' : 'Save on this device';
+    root.querySelector('[data-capture-status]').textContent = busy ? 'Reading / saving on this device…' : knownCommit ? 'Saved write · Confirmation pending · Not uploaded' : dirty ? 'Unsaved evidence · Not uploaded' : 'Not saved yet · Not uploaded';
     root.querySelector('[data-note-count]').textContent = form.elements.namedItem('note').value.length + ' / 500';
-    const ready = root.querySelector('[data-capture-ready]'); ready.textContent = file ? 'Ready to save. The image and details have not been saved yet.' : 'Select an image to preview; no file is saved yet.';
+    const ready = root.querySelector('[data-capture-ready]'); ready.textContent = knownCommit ? 'The write committed, but could not be confirmed. Details are locked; retry the exact saved image before leaving.' : file ? 'Ready to save. The image and details have not been saved yet.' : 'Select an image to preview; no file is saved yet.';
     const link = '#project/' + projectId + '/evidence';
     root.querySelector('.editor-breadcrumb a').href = link; root.querySelector('.editor-actions a').href = link;
   }
   function error(message) { feedback.hidden = false; feedback.textContent = message; feedback.focus(); announce(message); }
-  function changed() { dirty = true; attempted = null; feedback.hidden = true; update(); }
-  form.addEventListener('input', event => { if (['note', 'location', 'capturedAt'].includes(event.target.name)) changed(); });
+  function changed() { if (busy || knownCommit) return; dirty = true; attempted = null; feedback.hidden = true; update(); }
+  form.addEventListener('input', event => { if (busy || knownCommit) return; if (['note', 'location', 'capturedAt'].includes(event.target.name)) changed(); });
   form.addEventListener('change', event => {
+    if (busy || knownCommit) return;
     if (event.target.name === 'project') { projectId = event.target.value; claimId = ''; lineId = ''; setClaims(); changed(); }
     if (event.target.name === 'claim') { claimId = event.target.value; lineId = ''; setLines(); changed(); }
     if (event.target.name === 'line') { lineId = event.target.value; changed(); }
@@ -59,7 +63,7 @@ export function createEvidenceEditor({ root, claims, context, onSave, onDone, an
   });
   form.addEventListener('focusin', event => { if (!event.target.closest('.editor-actions') && event.target.getBoundingClientRect().bottom > root.querySelector('.editor-actions').getBoundingClientRect().top - 12) event.target.scrollIntoView({ block: 'center' }); });
   async function selectImage(selected) {
-    if (!selected || busy) return;
+    if (!selected || busy || knownCommit) return;
     busy = true; feedback.hidden = true; update();
     try {
       const image = await readImage(typeof selected === 'function' ? await selected() : selected);
@@ -71,15 +75,20 @@ export function createEvidenceEditor({ root, claims, context, onSave, onDone, an
     } catch (failure) { if (alive) error('Image selection failed: ' + failure.message + (file ? ' The previous valid preview is retained.' : '')); }
     finally { busy = false; if (alive) update(); }
   }
-  form.elements.namedItem('photo').addEventListener('change', event => { selectImage(event.target.files[0]); event.target.value = ''; });
+  form.elements.namedItem('photo').addEventListener('change', event => { const pending = selectImage(event.target.files[0]); event.target.value = ''; return pending; });
   root.querySelector('[data-demo-image]').addEventListener('click', () => selectImage(demoImage));
   form.addEventListener('submit', async event => {
-    event.preventDefault(); if (busy || !file || !currentClaim()) return;
+    event.preventDefault(); if (busy || (!attempted && (!file || !currentClaim()))) return;
     busy = true; feedback.hidden = true; update();
     try {
-      attempted ||= savedEvidence({ id, claim: currentClaim(), lineId, file, kind: form.elements.namedItem('kind').value, note: form.elements.namedItem('note').value, location: form.elements.namedItem('location').value, capturedAt: form.elements.namedItem('capturedAt').value ? new Date(form.elements.namedItem('capturedAt').value).toISOString() : '' });
-      await onSave(attempted); dirty = false; busy = false; announce('Image and context saved on this device. Not uploaded.'); onDone(id);
-    } catch (failure) { busy = false; if (alive) { update(); error('Local save could not be confirmed: ' + failure.message + ' The preview and details remain here; retry before leaving.'); } }
+      if (!attempted) {
+        attempted = savedEvidence({ id, claim: currentClaim(), lineId, file, kind: form.elements.namedItem('kind').value, note: form.elements.namedItem('note').value, location: form.elements.namedItem('location').value, capturedAt: form.elements.namedItem('capturedAt').value ? new Date(form.elements.namedItem('capturedAt').value).toISOString() : '' });
+        if (baseGeneration !== null) attempted.storageGeneration = baseGeneration;
+      }
+      const persisted = await onSave(attempted, baseRevision, committed => { attempted = committed; baseRevision = committed.storageRevision; baseGeneration = committed.storageGeneration ?? null; knownCommit = true; });
+      attempted = persisted; baseRevision = persisted.storageRevision; baseGeneration = persisted.storageGeneration ?? null;
+      dirty = false; busy = false; if (alive) { announce('Image and context saved on this device. Not uploaded.'); onDone(attempted.id); }
+    } catch (failure) { busy = false; if (alive) { update(); error('Local save could not be confirmed: ' + failure.message + (knownCommit ? ' The write committed. Editing is locked; retry the exact saved image to confirm it.' : ' The preview and details remain here. Retry or correct them before leaving.')); } }
   });
   if (context.error) root.querySelector('.page-head').insertAdjacentHTML('afterend', '<div class="notice error" role="alert">Local claim drafts unavailable: ' + e(context.error) + '. Only readable sample claims can be selected.</div>');
   setClaims(); update();

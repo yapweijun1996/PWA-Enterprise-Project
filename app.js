@@ -1,25 +1,26 @@
-import { listVariations, saveVariation, removeVariation, clearVariations } from './variation-storage.js';
+import { listVariations, getVariation, saveVariation, removeVariation, clearVariations } from './variation-storage.js';
 import { createVariationEditor } from './variation-editor.js';
 import { projects } from './demo-contracts.js';
 import { projectTabs, contractCards, renderProjectPage, bindProjectPages } from './project-pages.js';
-import { listDrafts, saveDraft, removeDraft, clearDrafts } from './storage.js';
+import { listDrafts, getDraft, saveDraft, removeDraft, clearDrafts } from './storage.js';
 import { escapeHtml, icon, money, displayDate, draftLabel } from './ui.js';
 import { createDraftEditor, evidenceCards } from './draft-editor.js';
 import { lineTotals, fromCents } from './demo-domain.js';
 import { sampleClaims } from './demo-claims.js';
-import { listCertificates, saveCertificate, removeCertificate, clearCertificates } from './certificate-storage.js';
+import { listCertificates, getCertificate, saveCertificate, removeCertificate, clearCertificates } from './certificate-storage.js';
 import { createCertificateEditor } from './certificate-editor.js';
 import { canAssess } from './certificate-domain.js';
 import { sampleCertificates } from './demo-certificates.js';
 import { sampleEvidence } from './sample-evidence.js';
 import { loadPracticeRecords, resetPracticeRecords } from './demo-practice.js';
 import { certificateRecords, certificateDetail } from './certificate-pages.js';
-import { listEvidence, saveEvidence, removeEvidence, clearEvidence } from './evidence-storage.js';
+import { listEvidence, getEvidence, saveEvidence, removeEvidence, clearEvidence } from './evidence-storage.js';
 import { createEvidenceEditor } from './evidence-editor.js';
 import { linkedEvidence } from './evidence-domain.js';
 import { captureLink, evidenceGallery, bindEvidenceGallery, evidenceDetail } from './evidence-pages.js';
 import { settingsPage } from './settings-page.js';
 import { createPwaUpdates } from './pwa-updates.js';
+import { subscribeRecordChanges } from './record-store.js';
 
 const pages = [
   ['home', 'Overview', 'home'], ['projects', 'Projects', 'projects'], ['claims', 'Claims', 'claims'],
@@ -42,22 +43,107 @@ const claimTitle = claim => claim.local ? draftLabel(claim) : claim.id;
 let activeEditor = null;
 let currentHash = location.hash || '#home';
 let deviceChanges = 0;
+let navigationGeneration = 0;
+let refreshPromise = null;
+let refreshAgain = false;
 const pwa = createPwaUpdates({ isBusy: () => Boolean(activeEditor?.dirty || activeEditor?.busy || deviceChanges), document, navigator, window });
 function beginDeviceChange() {
   deviceChanges++;
   return () => { deviceChanges--; pwa.reconsider(); };
 }
 
-async function refreshDrafts() {
-  const results = await Promise.allSettled([listDrafts(), listVariations(), listCertificates(), listEvidence()]);
-  for (const [index, records, error] of [[0, 'drafts', 'storageError'], [1, 'variations', 'variationError'], [2, 'certificates', 'certificateError'], [3, 'evidence', 'evidenceError']]) {
-    state[records] = results[index].status === 'fulfilled' ? results[index].value : [];
-    state[error] = results[index].status === 'rejected' ? results[index].reason.message || 'Device storage unavailable.' : '';
+function refreshDrafts() {
+  if (refreshPromise) { refreshAgain = true; return refreshPromise; }
+  refreshPromise = (async () => {
+    do {
+      refreshAgain = false;
+      const results = await Promise.allSettled([listDrafts(), listVariations(), listCertificates(), listEvidence()]);
+      for (const [index, records, error] of [[0, 'drafts', 'storageError'], [1, 'variations', 'variationError'], [2, 'certificates', 'certificateError'], [3, 'evidence', 'evidenceError']]) {
+        state[records] = results[index].status === 'fulfilled' ? results[index].value : [];
+        state[error] = results[index].status === 'rejected' ? results[index].reason.message || 'Device storage unavailable.' : '';
+      }
+    } while (refreshAgain);
+    const count = state.drafts.length + state.variations.length + state.certificates.length + state.evidence.length;
+    const unavailable = state.storageError || state.variationError || state.certificateError || state.evidenceError;
+    document.querySelector('#draft-count').textContent = unavailable ? '—' : String(count);
+    document.querySelector('#draft-count').parentElement.setAttribute('aria-label', unavailable ? 'Some device drafts unavailable' : count + ' device draft' + (count === 1 ? '' : 's'));
+  })().finally(() => { refreshPromise = null; });
+  return refreshPromise;
+}
+
+async function saveAndConfirm(save, get, record, expectedRevision, onCommitted) {
+  const finish = beginDeviceChange();
+  try {
+    const stored = await save(record, expectedRevision);
+    onCommitted(stored);
+    let confirmed;
+    try {
+      confirmed = await get(stored.id);
+      if (!confirmed || JSON.stringify(confirmed) !== JSON.stringify(stored)) throw new Error('The stored record is missing or changed.');
+    } catch (error) {
+      const failure = new Error('The write completed, but device confirmation failed: ' + error.message + ' Retry to confirm the same record.');
+      failure.code = 'READBACK_FAILED';
+      throw failure;
+    }
+    await refreshDrafts();
+    return confirmed;
+  } finally { finish(); }
+}
+
+function browsingOwner() {
+  const generation = navigationGeneration;
+  const hash = currentHash;
+  return () => generation === navigationGeneration && hash === currentHash && !activeEditor;
+}
+
+function actionError(ownsView, message) {
+  if (ownsView()) main.insertAdjacentHTML('afterbegin', notice(escapeHtml(message), 'error'));
+  else announce(message);
+}
+
+function recordStateKey() {
+  return JSON.stringify([['drafts', 'variations', 'certificates', 'evidence'].map(key => state[key].map(record => [record.id, record.storageGeneration, record.storageRevision ?? 0, record.updatedAt])), state.storageError, state.variationError, state.certificateError, state.evidenceError]);
+}
+
+async function refreshBrowsingView() {
+  if (deviceChanges) return;
+  const ownsView = browsingOwner();
+  const previous = recordStateKey();
+  await refreshDrafts();
+  if (!ownsView() || previous === recordStateKey()) return;
+  const filters = [...main.querySelectorAll('input[type="search"], select')].map(field => ({
+    id: field.id, value: field.value, focused: field === document.activeElement,
+    start: field.selectionStart, end: field.selectionEnd
+  }));
+  route();
+  for (const filter of filters) {
+    if (!filter.id) continue;
+    const field = main.querySelector('#' + CSS.escape(filter.id));
+    if (!field || (field.tagName === 'SELECT' && ![...field.options].some(option => option.value === filter.value))) continue;
+    field.value = filter.value;
+    field.dispatchEvent(new Event(field.tagName === 'SELECT' ? 'change' : 'input', { bubbles: true }));
+    if (filter.focused) {
+      field.focus({ preventScroll: true });
+      if (filter.start != null) field.setSelectionRange(filter.start, filter.end);
+    }
   }
-  const count = state.drafts.length + state.variations.length + state.certificates.length + state.evidence.length;
-  const unavailable = state.storageError || state.variationError || state.certificateError || state.evidenceError;
-  document.querySelector('#draft-count').textContent = unavailable ? '—' : String(count);
-  document.querySelector('#draft-count').parentElement.setAttribute('aria-label', unavailable ? 'Some device drafts unavailable' : count + ' device draft' + (count === 1 ? '' : 's'));
+}
+
+async function navigate() {
+  const generation = ++navigationGeneration;
+  currentHash = location.hash || '#home';
+  activeEditor?.dispose();
+  activeEditor = null;
+  document.body.classList.remove('task-mode');
+  main.innerHTML = notice('Reading saved device records…');
+  const finish = beginDeviceChange();
+  try {
+    await refreshDrafts();
+    if (generation !== navigationGeneration) return;
+    route();
+    main.focus({ preventScroll: true });
+    window.scrollTo(0, 0);
+  } finally { finish(); }
 }
 function snapshotControls() {
   return '<div class="segmented" role="group" aria-label="Financial direction">' + ['Receivable', 'Payable'].map(direction => '<button type="button" data-financial-direction="' + direction + '" aria-pressed="' + (state.snapshotDirection === direction) + '">' + direction + '</button>').join('') + '</div>';
@@ -179,11 +265,7 @@ function route() {
       const context = { project: selectedProject.id, direction: ['Payable', 'Receivable'].includes(direction) ? direction : selectedProject.defaultDirection };
       activeEditor = createDraftEditor({
         root: main, record, context, projects, linkedAttachments: record ? linkedEvidence(state.evidence, record.id, record.project) : [], linkedImageError: state.evidenceError, announce,
-        onSave: async draft => {
-          await saveDraft(draft);
-          await refreshDrafts();
-          if (state.storageError || !state.drafts.some(item => item.id === draft.id && item.updatedAt === draft.updatedAt)) throw new Error('Device read-back failed after the write.');
-        },
+        onSave: (draft, revision, onCommitted) => saveAndConfirm(saveDraft, getDraft, draft, revision, onCommitted),
         onRouteChange: id => { currentHash = '#edit/' + encodeURIComponent(id); history.replaceState(null, '', currentHash); },
         onDone: id => { location.hash = '#claim/' + encodeURIComponent(id); }
       });
@@ -196,11 +278,7 @@ function route() {
     } else {
       activeEditor = createVariationEditor({
         root: main, record, projectId, announce,
-        onSave: async proposal => {
-          await saveVariation(proposal);
-          await refreshDrafts();
-          if (state.variationError || !state.variations.some(item => item.id === proposal.id && item.updatedAt === proposal.updatedAt)) throw new Error('Device read-back failed after the write.');
-        },
+        onSave: (proposal, revision, onCommitted) => saveAndConfirm(saveVariation, getVariation, proposal, revision, onCommitted),
         onRouteChange: id => { currentHash = '#variation-edit/' + encodeURIComponent(id); history.replaceState(null, '', currentHash); },
         onDone: id => { location.hash = '#project/' + projectId + '/variations/' + encodeURIComponent(id); }
       });
@@ -212,7 +290,7 @@ function route() {
     if (record?.reviewedAt) main.innerHTML = certificateDetail(record, allClaims().find(item => item.id === record.source.id), record.source.id.startsWith('LOCAL-') ? state.storageError : '');
     else if ((active === 'certificate-edit' && !record) || (!record && (!canAssess(claim) || state.evidenceError))) main.innerHTML = heading('Assessment unavailable', 'Open a locally reviewed claim with readable evidence to start an assessment.') + (state.certificateError || state.storageError || state.evidenceError ? notice(escapeHtml(state.certificateError || state.storageError || state.evidenceError), 'error') : '') + pageLink('claims', 'Open claims');
     else activeEditor = createCertificateEditor({ root: main, record, claim, announce,
-      onSave: async preview => { await saveCertificate(preview); await refreshDrafts(); if (state.certificateError || !state.certificates.some(item => item.id === preview.id && item.updatedAt === preview.updatedAt)) throw new Error('Device read-back failed after the write.'); },
+      onSave: (preview, revision, onCommitted) => saveAndConfirm(saveCertificate, getCertificate, preview, revision, onCommitted),
       onRouteChange: id => { currentHash = '#certificate-edit/' + encodeURIComponent(id); history.replaceState(null, '', currentHash); },
       onDone: id => { location.hash = '#certificate/' + encodeURIComponent(id); }
     });
@@ -225,7 +303,7 @@ function route() {
       main.innerHTML = heading('Evidence context unavailable', 'Choose a known project and saved claim.') + (state.storageError ? notice(escapeHtml(state.storageError), 'error') : '') + pageLink('evidence', 'Open evidence');
       document.body.classList.remove('task-mode');
     } else activeEditor = createEvidenceEditor({ root: main, claims: allClaims(), context: { project: projectId, claim: claim?.id || '', line: query.get('line') || '', error: state.storageError }, announce,
-      onSave: async image => { await saveEvidence(image); await refreshDrafts(); if (state.evidenceError || !state.evidence.some(item => item.id === image.id && item.updatedAt === image.updatedAt)) throw new Error('Device read-back failed after the write.'); },
+      onSave: (image, revision, onCommitted) => saveAndConfirm(saveEvidence, getEvidence, image, revision, onCommitted),
       onDone: id => { location.hash = '#evidence/' + encodeURIComponent(id); }
     });
   } else {
@@ -243,6 +321,7 @@ function route() {
     if ((active === 'evidence' && !path[1]) || (active === 'project' && path[2] === 'evidence')) bindEvidenceGallery(main, evidenceData(active === 'project' ? path[1] : ''));
     if (active === 'project') bindProjectPages(main, path[1], state.variations);
   }
+  document.body.classList.toggle('task-mode', Boolean(activeEditor));
   document.title = (main.querySelector('h1')?.textContent || 'Demo') + ' — ConstructClaim Demo';
   updateConnectivity();
   pwa.reconsider();
@@ -252,6 +331,7 @@ function bindPage() {
     document.querySelector('#' + id)?.addEventListener('click', async () => {
       if (deviceChanges) return;
       if (reset && !confirm('Delete only the 16 reserved practice records, including your edits to them? Other device records and bundled samples are kept.')) return;
+      const ownsView = browsingOwner();
       const finish = beginDeviceChange();
       const controls = main.querySelectorAll('#load-practice, #reset-practice');
       controls.forEach(button => { button.disabled = true; });
@@ -266,53 +346,59 @@ function bindPage() {
         finish();
       }
       state.practiceFeedback = message;
-      if (currentHash === '#settings') route();
+      if (ownsView()) route();
       announce(message);
     });
   }
   document.querySelector('#delete-evidence')?.addEventListener('click', async event => {
     const { id, project } = event.currentTarget.dataset;
     if (!confirm('Permanently delete this device-only image? Claims and saved certificate snapshots are kept.')) return;
+    const ownsView = browsingOwner();
     const finish = beginDeviceChange();
-    try { await removeEvidence(id); await refreshDrafts(); if (state.evidenceError || state.evidence.some(item => item.id === id)) throw new Error('Device read-back failed after deletion.'); location.hash = '#project/' + project + '/evidence'; announce('Local image deleted. Other records kept.'); }
-    catch (error) { main.insertAdjacentHTML('afterbegin', notice('Deletion failed: ' + escapeHtml(error.message), 'error')); }
+    try { await removeEvidence(id); await refreshDrafts(); if (state.evidenceError || state.evidence.some(item => item.id === id)) throw new Error('Device read-back failed after deletion.'); if (ownsView()) location.hash = '#project/' + project + '/evidence'; announce('Local image deleted. Other records kept.'); }
+    catch (error) { actionError(ownsView, 'Deletion failed: ' + error.message); }
     finally { finish(); }
   });
   document.querySelector('#clear-evidence')?.addEventListener('click', async () => {
     if (!confirm('Permanently delete all device-only images? Claim documents and certificate snapshots are kept.')) return;
+    const ownsView = browsingOwner();
     const finish = beginDeviceChange();
-    try { await clearEvidence(); await refreshDrafts(); if (state.evidenceError || state.evidence.length) throw new Error('Device read-back failed after deletion.'); route(); announce('Local images deleted.'); }
-    catch (error) { main.insertAdjacentHTML('afterbegin', notice('Deletion failed: ' + escapeHtml(error.message), 'error')); }
+    try { await clearEvidence(); await refreshDrafts(); if (state.evidenceError || state.evidence.length) throw new Error('Device read-back failed after deletion.'); if (ownsView()) route(); announce('Local images deleted.'); }
+    catch (error) { actionError(ownsView, 'Deletion failed: ' + error.message); }
     finally { finish(); }
   });
   document.querySelector('#delete-certificate')?.addEventListener('click', async event => {
     const id = event.currentTarget.dataset.id;
     if (!confirm('Permanently delete this device-only certificate preview? Its source claim is kept.')) return;
+    const ownsView = browsingOwner();
     const finish = beginDeviceChange();
-    try { await removeCertificate(id); await refreshDrafts(); if (state.certificateError || state.certificates.some(item => item.id === id)) throw new Error('Device read-back failed after deletion.'); location.hash = '#certificates'; announce('Local preview deleted. Source claim kept.'); }
-    catch (error) { main.insertAdjacentHTML('afterbegin', notice('Deletion failed: ' + escapeHtml(error.message), 'error')); }
+    try { await removeCertificate(id); await refreshDrafts(); if (state.certificateError || state.certificates.some(item => item.id === id)) throw new Error('Device read-back failed after deletion.'); if (ownsView()) location.hash = '#certificates'; announce('Local preview deleted. Source claim kept.'); }
+    catch (error) { actionError(ownsView, 'Deletion failed: ' + error.message); }
     finally { finish(); }
   });
   document.querySelector('#clear-certificates')?.addEventListener('click', async () => {
     if (!confirm('Permanently delete all device-only certificate previews? Claims and proposals are kept.')) return;
+    const ownsView = browsingOwner();
     const finish = beginDeviceChange();
-    try { await clearCertificates(); await refreshDrafts(); if (state.certificateError || state.certificates.length) throw new Error('Device read-back failed after deletion.'); route(); announce('Local previews deleted.'); }
-    catch (error) { main.insertAdjacentHTML('afterbegin', notice('Deletion failed: ' + escapeHtml(error.message), 'error')); }
+    try { await clearCertificates(); await refreshDrafts(); if (state.certificateError || state.certificates.length) throw new Error('Device read-back failed after deletion.'); if (ownsView()) route(); announce('Local previews deleted.'); }
+    catch (error) { actionError(ownsView, 'Deletion failed: ' + error.message); }
     finally { finish(); }
   });
   document.querySelector('#delete-variation')?.addEventListener('click', async event => {
     const { id, project } = event.currentTarget.dataset;
     if (!confirm('Permanently delete this device-only variation proposal?')) return;
+    const ownsView = browsingOwner();
     const finish = beginDeviceChange();
-    try { await removeVariation(id); await refreshDrafts(); if (state.variationError || state.variations.some(item => item.id === id)) throw new Error('Device read-back failed after deletion.'); location.hash = '#project/' + project + '/variations'; announce('Local proposal deleted.'); }
-    catch (error) { main.insertAdjacentHTML('afterbegin', notice('Deletion failed: ' + escapeHtml(error.message), 'error')); }
+    try { await removeVariation(id); await refreshDrafts(); if (state.variationError || state.variations.some(item => item.id === id)) throw new Error('Device read-back failed after deletion.'); if (ownsView()) location.hash = '#project/' + project + '/variations'; announce('Local proposal deleted.'); }
+    catch (error) { actionError(ownsView, 'Deletion failed: ' + error.message); }
     finally { finish(); }
   });
   document.querySelector('#clear-variations')?.addEventListener('click', async () => {
     if (!confirm('Permanently delete all device-only variation proposals?')) return;
+    const ownsView = browsingOwner();
     const finish = beginDeviceChange();
-    try { await clearVariations(); await refreshDrafts(); if (state.variationError || state.variations.length) throw new Error('Device read-back failed after deletion.'); route(); announce('Local variation proposals deleted.'); }
-    catch (error) { main.insertAdjacentHTML('afterbegin', notice('Deletion failed: ' + escapeHtml(error.message), 'error')); }
+    try { await clearVariations(); await refreshDrafts(); if (state.variationError || state.variations.length) throw new Error('Device read-back failed after deletion.'); if (ownsView()) route(); announce('Local variation proposals deleted.'); }
+    catch (error) { actionError(ownsView, 'Deletion failed: ' + error.message); }
     finally { finish(); }
   });
   document.querySelectorAll('[data-financial-direction]').forEach(button => button.addEventListener('click', () => {
@@ -326,16 +412,18 @@ function bindPage() {
   document.querySelector('#delete-draft')?.addEventListener('click', async event => {
     const id = event.currentTarget.dataset.id;
     if (!confirm('Permanently delete this device-only draft?')) return;
+    const ownsView = browsingOwner();
     const finish = beginDeviceChange();
-    try { await removeDraft(id); await refreshDrafts(); if (state.storageError) throw new Error('Device read-back failed after deletion.'); location.hash = '#offline'; announce('Device draft deleted.'); }
-    catch (error) { main.insertAdjacentHTML('afterbegin', notice('Deletion failed: ' + escapeHtml(error.message), 'error')); }
+    try { await removeDraft(id); await refreshDrafts(); if (state.storageError || state.drafts.some(item => item.id === id)) throw new Error('Device read-back failed after deletion.'); if (ownsView()) location.hash = '#offline'; announce('Device draft deleted.'); }
+    catch (error) { actionError(ownsView, 'Deletion failed: ' + error.message); }
     finally { finish(); }
   });
   document.querySelector('#clear-drafts')?.addEventListener('click', async () => {
     if (!confirm('Permanently delete all device-only claim drafts?')) return;
+    const ownsView = browsingOwner();
     const finish = beginDeviceChange();
-    try { await clearDrafts(); await refreshDrafts(); if (state.storageError) throw new Error('Device read-back failed after deletion.'); route(); announce('All device claim drafts deleted.'); }
-    catch (error) { main.insertAdjacentHTML('afterbegin', notice('Deletion failed: ' + escapeHtml(error.message), 'error')); }
+    try { await clearDrafts(); await refreshDrafts(); if (state.storageError || state.drafts.length) throw new Error('Device read-back failed after deletion.'); if (ownsView()) route(); announce('All device claim drafts deleted.'); }
+    catch (error) { actionError(ownsView, 'Deletion failed: ' + error.message); }
     finally { finish(); }
   });
 }
@@ -355,15 +443,16 @@ window.addEventListener('hashchange', () => {
   if ((location.hash || '#home') === currentHash) return;
   if (activeEditor && !activeEditor.canLeave()) { history.replaceState(null, '', currentHash); return; }
   collapseNavigation();
-  route();
-  main.focus({ preventScroll: true });
-  window.scrollTo(0, 0);
+  void navigate();
 });
 window.addEventListener('beforeunload', event => {
   if (activeEditor?.dirty || activeEditor?.busy) { event.preventDefault(); event.returnValue = ''; }
 });
 window.addEventListener('online', updateConnectivity);
 window.addEventListener('offline', updateConnectivity);
+subscribeRecordChanges(() => { void refreshBrowsingView(); });
+window.addEventListener('focus', () => { void refreshBrowsingView(); });
+document.addEventListener('visibilitychange', () => { if (!document.hidden) void refreshBrowsingView(); });
 window.addEventListener('scroll', () => { document.querySelector('#scroll-top').hidden = window.scrollY < window.innerHeight; }, { passive: true });
 document.querySelector('.skip-link').addEventListener('click', event => { event.preventDefault(); main.focus({ preventScroll: true }); main.scrollIntoView(); });
 const menu = document.querySelector('#menu-toggle');
@@ -377,6 +466,5 @@ window.addEventListener('keydown', event => { if (event.key === 'Escape') collap
 window.addEventListener('resize', collapseNavigation);
 document.querySelector('#scroll-top').innerHTML = icon('up');
 document.querySelector('#scroll-top').addEventListener('click', () => window.scrollTo({ top: 0, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' }));
-await refreshDrafts();
-route();
+await navigate();
 pwa.start();

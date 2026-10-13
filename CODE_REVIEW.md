@@ -2,6 +2,8 @@
 
 ## Scope and evidence
 
+The review observations below are historical evidence from v0.4.0. **All 13 confirmed findings are now fixed and locally verified in v0.5.0**, following the approved full-remediation option. See [Local remediation and verification](#local-remediation-and-verification). Original reproduction text and baseline line references are retained; they do not describe the current implementation.
+
 - **Reviewed runtime baseline:** `e9e3b09` on `main`, worker version `0.4.0`; review performed on 2026-10-13. The worktree was clean at intake.
 - **Goal:** identify current codebase defects, including pre-existing defects, document them, and commit documentation locally. This is not limited to regressions introduced by the latest feature commit.
 - **Coverage:** all 27 runtime JavaScript modules and their consumers; 11 existing test files; application HTML/CSS/manifest; Pages packaging and workflow; the two Python asset generators and generated-image metadata; static design-gallery HTML. Generated `_site` duplicates and visual design images were not independently re-audited as application implementations.
@@ -13,7 +15,7 @@
 
 ## Result
 
-**13 unique confirmed defects: 2 High / P1, 10 Medium / P2, 1 Low / P3. All remain open.** Multiple symptoms with the same correction boundary are grouped instead of counted twice.
+**Historical findings: 13 unique confirmed defects — 2 High / P1, 10 Medium / P2, 1 Low / P3. Current status: 13 locally verified fixes, none of these findings open.** Multiple symptoms with the same correction boundary remain grouped. The SCMC assessment below describes the reviewed v0.4.0 baseline, not a new post-remediation audit.
 
 | SCMC dimension | Status | Evidence-backed reason |
 |---|---|---|
@@ -23,6 +25,8 @@
 | Consistent | FAIL | Normal and practice assessment creation snapshot different evidence; display and review disagree on blank amounts. |
 
 ## Findings
+
+The following source locations and failing-before observations refer to baseline `e9e3b09`. Current correction symbols and passing-after evidence are recorded in the remediation table.
 
 ### BUG-001
 
@@ -171,7 +175,7 @@
 
 ## Unverified risks and exclusions
 
-- **RISK-01 — Delete confirmation under concurrent mutation:** claim delete/clear readback at `app.js:330` / `app.js:337` checks read errors but not residual ID/length, unlike other families. A competing write between deletion and readback could make success feedback false. That exact interleaving was not exercised; do not count it separately as a confirmed defect. The observed stale-editor resurrection is already covered by BUG-001.
+- **RISK-01 — Delete confirmation under concurrent mutation:** historical claim deletion checked read errors but not residual ID/length. Remediation adds both checks. A real delayed clear followed by a new committed claim was exercised: the new record remained, and the clear reported a failed readback rather than false empty-store success. This is verified hardening within BUG-001/002, not another numbered finding.
 - **RISK-02 — Changed proposal basis version:** changing the affected line clears the old source snapshot but retains its sourceVersion before capturing the current line. Current fixtures do not provide two active basis versions for a supported-UI reproduction. Verify this before introducing contract source revisions; do not count it as a present demonstrated bug.
 - Physical phone camera/installation, Safari/iOS standalone, real screen-reader acceptance, prolonged stress/storage eviction, live deployment and server-backed production security were not verified.
 - Controllerchange deferred reload was investigated and rejected as a finding: `pwa-updates.js` exports `reconsider: resume`, so app save/route completion does process pending safe reloads. Intentional query-bearing URL cache exclusions, fixed illustrative financial snapshots and missing production workflows are also not bugs.
@@ -179,7 +183,37 @@
 
 ## Overall
 
-- **Decision:** FAIL — the current implementation has confirmed correctness/data-loss defects despite passing its existing contract suite.
-- **Main reason:** mutable writes and old-page completion callbacks do not protect newer user work; several recovery and display paths disagree with their existing invariants.
-- **Highest-value next action:** fix BUG-001 and BUG-002 first, then immutable-write recovery (BUG-003/004), evidence snapshot parity (BUG-005) and version-safe cache recovery (BUG-006). No runtime fix was performed in this review.
+- **Decision:** the 13 confirmed findings are fixed and locally verified; the original baseline failed review. This is not a release or an exhaustive absence-of-bugs assertion.
+- **Evidence:** 96 passing Node behavior contracts, 43 JavaScript syntax targets, a validated 35-file artifact and the real browser/storage/recovery scenarios below.
+- **Next acceptance:** publication and the unverified device/browser/product boundaries remain separate. RISK-02 is unchanged and must be checked before introducing source-version transitions.
 - **Preserve throughout remediation:** existing fixture arithmetic and snapshots, unrelated device records, explicit practice reset boundaries, immutable reviewed previews/images, exact-cent calculations, truthful unknown/zero distinctions, local-only state labels and scope-specific cache ownership.
+
+## Local remediation and verification
+
+Completed on 2026-10-13 after review commit `ac794ba`; repository worker version is **0.5.0**. All statuses below mean **Verified locally**, not Released.
+
+| Finding | Current correction boundary | Passing-after evidence |
+|---|---|---|
+| BUG-001 | `record-store.js` transactional `prepareRecordWrite`/`save`; explicit create/update revision and generation; editor commit receipts and explicit new-record recovery | Real simultaneous writes from two tabs for claims, proposals and incomplete assessments each produced one success and one `RECORD_CONFLICT`. Deleted updates failed; same-ID/same-revision replacement received a fresh generation and resisted the old token. Claim and assessment recovery preserved input in fresh unreviewed records. |
+| BUG-002 | `app.js` `browsingOwner`, guarded completion/error feedback and navigation generations | Real transaction completion delayed for each of the four category clears; navigating and typing in a new claim retained the later marker and editor. Concurrent post-clear insertion was retained and produced truthful readback failure. |
+| BUG-003 | `evidence-editor.js` pending persisted receipt and locked immutable attempt | Native readonly confirmation aborted after the image write committed. Fields locked, exact retry stayed available, and healthy retry opened detail with one image at revision 1 and its original note/context. Aborted writes remain editable in behavior contracts. |
+| BUG-004 | `certificate-editor.js` retained snapshot/mode, exact retries and explicit unreviewed conflict fork | Native confirmation aborted after reviewed write; draft mode and amount fields disabled while reviewed retry remained available. Retry opened readonly detail at revision 1. An unconfirmed draft deleted elsewhere was explicitly recovered under a new ID with its value/reason preserved. |
+| BUG-005 | `demo-practice.js` readable same-project/claim image merge only for missing previews | Recreated Harbor practice assessment included its independently saved image; deleting original images retained that source snapshot. Aborted evidence listing stopped a missing Cedar preview after 0 created/13 kept; healthy retry created only the missing preview. |
+| BUG-006 | `sw.js` installed SHA256 authority, per-consumer response ownership, bounded matching repair; independent `bootstrap.js`; guarded isolated reinstall in `pwa-updates.js` | Deleted module healed online and later cold boot worked with HTTP cache cleared and server stopped. Different deployment bytes were rejected while a dirty tab stayed intact. Missing integrity authority refused repair but complete reinstall restored it. Both HTML keys repaired. Two real tabs received the correct verified response body concurrently. |
+| BUG-007 | `app.js` single-flight refresh, navigation/focus refresh and committed cross-tab invalidation | Another tab's new claim appeared without reload; active search text remained. A dirty new editor retained its note while counts refreshed. Real family mutations also refreshed device counts. |
+| BUG-008 | `draft-editor.js` selected error index before pager/row/control synchronization | At 390px, invalid A01 `x` and valid A02 `1` with A02 selected returned to A01, Line 1 of 2, previous disabled/next enabled; both amounts remained. Amount/note boundaries also pass behavior contracts. |
+| BUG-009 | `certificate-domain.js` canonical accepted blank-as-zero comparison | Real review of claimed `1`/whitespace and certified `1`/`0` completed with empty reasons and zero variance. Empty, whitespace, true zero, equal positives and real differences are covered by contracts. |
+| BUG-010 | Nullable cents in `certificate-pages.js` and `project-pages.js` | Actual desktop/mobile assessment rows showed whitespace as Not assessed and entered zero as SGD 0.00. Proposal whitespace detail showed No amount yet; entered zero remained SGD 0.00. |
+| BUG-011 | `project-pages.js` includes displayed local reference | Searching the full displayed `Proposal XXXXXXXX` found the same local proposal in both list representations; ID/title and project isolation contracts pass. |
+| BUG-012 | `evidence-pages.js` includes `context.id` | `PCAR-WILLOW-2026-10` returned its two image tiles and document despite a different displayed reference; sample/device context and scope contracts pass. |
+| BUG-013 | `app.js` task mode reflects the actual editor | Three missing claim/proposal/new-project routes at 390px showed Page not found, no form/task mode and mobile navigation as a grid; screenshots inspected. |
+
+### Additional recovery boundaries
+
+- Commit receipts are issued immediately after the IndexedDB transaction succeeds; exact per-record readback must succeed before claiming a confirmed save. A changed/deleted record cannot be silently recreated by retry.
+- `storageRevision` and `storageGeneration` are device persistence metadata, not financial/source versions. Legacy records start at revision 0 without being bulk rewritten; first changed writes/new inserts gain identity metadata. Source fixtures and all four database/store names remain unchanged.
+- Reinstallation uses a fresh UUID script identity and a separate cache, then the existing all-client readiness protocol. Startup reuses the existing registration rather than re-registering an older active script over a staged release. Partial-boot forms/task mode block acknowledgement and reopening.
+- A new concurrent-body regression failed before the per-consumer clone with `Body is unusable: Body has already been read`, then passed after correction. Browser consumers independently received the installed SHA256.
+- Synthetic 0.5.1/0.5.2 releases were served only from owned temporary artifacts to test version mismatch, missing authority and current recovery code; they are not repository releases. Final server-stopped fresh-tab boot retained the same claim/note at revision 1.
+- Cleanup: all four isolated stores returned to zero; owned scoped cache/registration removed; managed tabs and both services closed; all three temporary build/synthetic-release directories removed. Existing `_site`, generated illustration/icon bytes and deployment settings were untouched.
+- Limits: no configured LSP/project impact graph, remote deployment, physical phone/iOS/Safari, full accessibility/security acceptance or prolonged eviction/stress proof. RISK-02 remains unverified; no production task/E2E state changed.

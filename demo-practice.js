@@ -6,6 +6,8 @@ import { normalizeCertificate, savedCertificate } from './certificate-domain.js'
 import { getDraft, createDraftIfAbsent, removeDraftIfPresent } from './storage.js';
 import { getVariation, createVariationIfAbsent, removeVariationIfPresent } from './variation-storage.js';
 import { getCertificate, createCertificateIfAbsent, removeCertificateIfPresent } from './certificate-storage.js';
+import { listEvidence } from './evidence-storage.js';
+import { linkedEvidence } from './evidence-domain.js';
 
 // These exact reserved identifiers are the complete reset boundary, not a prefix match.
 const claimSpecs = [
@@ -62,8 +64,9 @@ function practiceVariation(spec) {
   }), false, SAVED_AT);
 }
 
-function practiceAssessment(project, source) {
-  const certificate = normalizeCertificate(null, source, certificateId(project));
+function practiceAssessment(project, source, deviceEvidence = []) {
+  const claim = { ...source, attachments: [...(source.attachments || []), ...linkedEvidence(deviceEvidence, source.id, source.project)] };
+  const certificate = normalizeCertificate(null, claim, certificateId(project));
   certificate.assessments[0].certified = certificate.source.lines[0].current || '0.00';
   // The remaining amounts deliberately stay unknown; this preview cannot be issued.
   certificate.assessments[certificate.assessments.length - 1].certified = '';
@@ -78,12 +81,12 @@ export function practiceRecordIds() {
   };
 }
 
-export function practiceRecords() {
+export function practiceRecords(deviceEvidence = []) {
   const drafts = claimSpecs.map(practiceClaim);
   return {
     drafts,
     variations: variationSpecs.map(practiceVariation),
-    certificates: assessmentProjects.map(project => practiceAssessment(project, drafts.find(record => record.id === claimId(project))))
+    certificates: assessmentProjects.map(project => practiceAssessment(project, drafts.find(record => record.id === claimId(project)), deviceEvidence))
   };
 }
 
@@ -103,7 +106,7 @@ async function createAndVerify(record, create, get, progress, current) {
   const result = await create(record);
   current.mutation = result.created ? 'creation' : null;
   const stored = await get(record.id);
-  if (!stored || stored.id !== record.id || (result.created && JSON.stringify(stored) !== JSON.stringify(record))) {
+  if (!stored || stored.id !== record.id || (result.created && JSON.stringify(stored) !== JSON.stringify(result.record))) {
     throw new Error('Device read-back failed for ' + record.id + '.');
   }
   progress[result.created ? 'created' : 'kept'] += 1;
@@ -118,6 +121,7 @@ export async function loadPracticeRecords() {
   try {
     const records = practiceRecords();
     const storedDrafts = new Map();
+    let deviceEvidence;
     for (const draft of records.drafts) {
       current = { recordType: 'claim draft', recordId: draft.id, mutation: null };
       storedDrafts.set(draft.id, await createAndVerify(draft, createDraftIfAbsent, getDraft, progress, current));
@@ -130,7 +134,12 @@ export async function loadPracticeRecords() {
       current = { recordType: 'assessment preview', recordId: certificateId(project), mutation: null };
       // A kept edited preview is never reconstructed from a different source.
       const existing = await getCertificate(current.recordId);
-      const certificate = existing || practiceAssessment(project, storedDrafts.get(claimId(project)));
+      let certificate = existing;
+      if (!certificate) {
+        // Read only for missing previews; unreadable images stop this load with verified progress.
+        deviceEvidence ??= await listEvidence();
+        certificate = practiceAssessment(project, storedDrafts.get(claimId(project)), deviceEvidence);
+      }
       await createAndVerify(certificate, createCertificateIfAbsent, getCertificate, progress, current);
     }
     return progress;

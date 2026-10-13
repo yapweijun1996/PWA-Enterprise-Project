@@ -5,6 +5,10 @@ import { escapeHtml as e, money, icon } from './ui.js';
 
 export function createVariationEditor({ root, record, projectId, onSave, onRouteChange, onDone, announce }) {
   let draft = normalizeVariation(record, projectId, 'LOCAL-VO-' + crypto.randomUUID());
+  let baseRevision = record ? record.storageRevision ?? 0 : null;
+  let baseGeneration = record?.storageGeneration;
+  let pendingAttempt = null;
+  let conflict = false;
   const project = projects.find(item => item.id === draft.project);
   let dirty = false, busy = false, saved = Boolean(record), alive = true;
   const back = '#project/' + project.id + '/variations';
@@ -12,13 +16,36 @@ export function createVariationEditor({ root, record, projectId, onSave, onRoute
   const form = root.querySelector('form');
   const acknowledgement = root.querySelector('[name=acknowledgement]');
   const feedback = root.querySelector('#vo-feedback');
+  const recovery = document.createElement('button');
+  recovery.type = 'button';
+  recovery.className = 'button secondary';
+  recovery.dataset.saveNewProposal = '';
+  recovery.textContent = 'Save as new proposal';
+  recovery.hidden = true;
+  feedback.after(recovery);
+  recovery.addEventListener('click', () => {
+    if (busy || !conflict) return;
+    draft.id = 'LOCAL-VO-' + crypto.randomUUID();
+    draft.reviewedAt = null;
+    delete draft.storageRevision;
+    delete draft.storageGeneration;
+    baseRevision = null;
+    baseGeneration = undefined;
+    pendingAttempt = null;
+    acknowledgement.checked = false;
+    saved = false;
+    dirty = true;
+    conflict = false;
+    persist(false);
+  });
   function update() {
     root.querySelector('[data-vo-status]').textContent = busy ? 'Saving on this device…' : dirty ? 'Unsaved changes' : saved ? 'Saved on this device · Not approved' : 'Not saved yet';
     form.setAttribute('aria-busy', String(busy));
     form.querySelectorAll('input,select,textarea,button').forEach(el => { el.disabled = busy; });
     root.querySelector('[data-review-vo]').disabled = busy || !acknowledgement.checked;
+    recovery.hidden = !conflict;
     const cents = toCents(draft.amount);
-    root.querySelector('#vo-amount-summary').textContent = cents === null ? draft.amount ? 'Correct the proposed amount' : 'No amount yet' : money(fromCents(cents));
+    root.querySelector('#vo-amount-summary').textContent = cents === null ? draft.amount.trim() ? 'Correct the proposed amount' : 'No amount yet' : money(fromCents(cents));
   }
   function error(message, field) {
     feedback.hidden = false; feedback.textContent = message;
@@ -27,6 +54,7 @@ export function createVariationEditor({ root, record, projectId, onSave, onRoute
   }
   for (const field of ['title', 'reason', 'lineId', 'amount']) form.elements.namedItem(field).addEventListener(field === 'lineId' ? 'change' : 'input', event => {
     draft[field] = event.target.value;
+    pendingAttempt = null;
     if (field === 'lineId') draft.sourceSnapshot = null;
     draft.reviewedAt = null; acknowledgement.checked = false; dirty = true;
     feedback.hidden = true; feedback.textContent = ''; event.target.removeAttribute('aria-invalid'); update();
@@ -38,14 +66,29 @@ export function createVariationEditor({ root, record, projectId, onSave, onRoute
   });
   acknowledgement.addEventListener('change', update);
   async function persist(reviewed) {
-    if (busy || (reviewed && !acknowledgement.checked)) return;
-    const errors = validateVariation(draft, reviewed);
-    if (errors.length) { error(errors[0].message, errors[0].field); return; }
+    if (busy) return;
+    if (!pendingAttempt) {
+      if (reviewed && !acknowledgement.checked) return;
+      const errors = validateVariation(draft, reviewed);
+      if (errors.length) { error(errors[0].message, errors[0].field); return; }
+      pendingAttempt = { snapshot: savedVariation(draft, reviewed), reviewed };
+      if (baseGeneration !== undefined) pendingAttempt.snapshot.storageGeneration = baseGeneration;
+    }
     busy = true; feedback.hidden = true; update();
     try {
-      const snapshot = savedVariation(draft, reviewed);
-      await onSave(snapshot);
-      draft = snapshot; saved = true; dirty = false; busy = false;
+      const attempt = pendingAttempt;
+      const persisted = await onSave(attempt.snapshot, baseRevision, committed => {
+        baseRevision = committed.storageRevision;
+        baseGeneration = committed.storageGeneration;
+        attempt.snapshot = committed;
+      });
+      draft = persisted;
+      baseRevision = persisted.storageRevision;
+      baseGeneration = persisted.storageGeneration;
+      reviewed = attempt.reviewed;
+      pendingAttempt = null;
+      conflict = false;
+      saved = true; dirty = false; busy = false;
       onRouteChange(draft.id); update();
       root.querySelector('h1').textContent = 'Edit variation proposal';
       document.title = 'Edit variation proposal — ConstructClaim Demo';
@@ -53,7 +96,14 @@ export function createVariationEditor({ root, record, projectId, onSave, onRoute
       if (reviewed) onDone(draft.id);
     } catch (failure) {
       busy = false;
-      if (alive) { update(); error('Local save could not be confirmed: ' + failure.message + '. Your inputs remain here. Retry before leaving.'); }
+      dirty = true;
+      conflict = failure.code === 'RECORD_CONFLICT';
+      if (alive) {
+        update();
+        error(conflict
+          ? 'This proposal changed or was deleted on this device. Your inputs remain here. Save as new proposal to keep a separate unreviewed copy; the newer record will not be overwritten.'
+          : 'Local save could not be confirmed: ' + failure.message + '. Your inputs remain here. Retry before leaving.');
+      }
     }
   }
   root.querySelector('[data-save-vo]').addEventListener('click', () => persist(false));

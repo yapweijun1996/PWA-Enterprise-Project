@@ -9,16 +9,32 @@ function request(worker, message, timeout = 4000) {
   });
 }
 
-export function createPwaUpdates({ isBusy, document, navigator, window }) {
-  let registration, applying = false, checking = false, lock = '', lockTimer, retryAfter = 0, previousFocus;
+// A rejected app import can leave a partially initialized editor without its busy state.
+export function createBootRecoveryGuard({ document, window }) {
+  const isBusy = () => Boolean(document.querySelector('#main form') || document.body?.classList.contains('task-mode'));
+  const openApp = () => {
+    if (isBusy()) {
+      const detail = document.querySelector('#boot-recovery [data-pwa="detail"]');
+      if (detail) detail.textContent = 'App files are repaired, but this page contains an unfinished task. Keep it open and save or copy your input before opening the recovered app.';
+      return;
+    }
+    window.location.replace(new URL('./', window.location.href).href);
+  };
+  return { isBusy, onRepaired: openApp, onReload: openApp };
+}
+
+export function createPwaUpdates({ isBusy, document, navigator, window, onRepaired, onReload }) {
+  let registration, applying = false, checking = false, repairing = false, recovering = false, lock = '', lockTimer, retryAfter = 0, previousFocus;
   let hadController = Boolean(navigator.serviceWorker?.controller), reloaded = false;
-  const state = { version: 'Not available', title: 'Preparing offline app', detail: 'Checking this browser’s app status.', offline: 'Not ready', checked: '', pending: '', next: '' };
+  const state = { version: 'Not available', title: 'Preparing offline app', detail: 'Checking this browser’s app status.', offline: 'Not ready', cacheState: '', checked: '', pending: '', next: '' };
   const shell = [...document.querySelectorAll('.app-shell, .mobile-nav, #scroll-top')];
 
   function paint() {
     const values = { ...state, connection: navigator.onLine ? 'Browser reports online' : 'Browser reports offline', mode: window.matchMedia('(display-mode: standalone)').matches || navigator.standalone ? 'Installed app' : 'Browser tab' };
     document.querySelectorAll('[data-pwa]').forEach(element => { element.textContent = values[element.dataset.pwa]; });
-    document.querySelectorAll('[data-pwa-check]').forEach(button => { button.disabled = checking || applying || !registration || !navigator.onLine; button.textContent = checking ? 'Checking…' : 'Check for updates'; });
+    document.querySelectorAll('[data-pwa-check]').forEach(button => { button.disabled = checking || repairing || recovering || applying || !registration || !navigator.onLine; button.textContent = checking ? 'Checking…' : 'Check for updates'; });
+    document.querySelectorAll('[data-pwa-repair]').forEach(button => { button.disabled = checking || repairing || recovering || applying || !registration?.active || !navigator.onLine || state.cacheState === 'complete'; button.textContent = repairing ? 'Repairing…' : 'Repair offline app'; });
+    document.querySelectorAll('[data-pwa-recover]').forEach(button => { button.disabled = checking || repairing || recovering || applying || !registration || !navigator.onLine; button.textContent = recovering ? 'Downloading complete release…' : 'Install complete release'; });
     const banner = document.querySelector('#update-notice');
     banner.hidden = !state.pending;
     document.querySelector('#update-message').textContent = state.pending ? state.detail : '';
@@ -32,16 +48,24 @@ export function createPwaUpdates({ isBusy, document, navigator, window }) {
     if (previousFocus?.isConnected) previousFocus.focus({ preventScroll: true });
     previousFocus = null;
   }
+  function useMetadata(info) {
+    state.version = 'v' + info.version;
+    state.cacheState = info.cacheState || (info.offlineReady ? 'complete' : 'unverified');
+    state.offline = info.offlineReady ? 'Ready on this device'
+      : state.cacheState === 'repairable' ? 'Incomplete · repair available online'
+      : state.cacheState === 'mismatch' ? 'Different server release · complete install required'
+      : 'Integrity unavailable · complete install required';
+  }
   async function metadata(worker) {
     if (!worker) return;
     try {
       const info = await request(worker, { type: 'GET_VERSION' });
       if (typeof info.version !== 'string') throw new Error('Release identity unavailable.');
-      state.version = 'v' + info.version;
-      state.offline = info.offlineReady ? 'Ready on this device' : 'Cache incomplete · reconnect and reopen';
+      useMetadata(info);
     } catch {
-      state.version = 'Older release · reopen the app';
-      state.offline = 'Could not verify cached app';
+      state.version = 'Release identity unavailable';
+      state.cacheState = 'unverified';
+      state.offline = 'Could not verify cached app · complete install available online';
     }
     paint();
   }
@@ -80,7 +104,7 @@ export function createPwaUpdates({ isBusy, document, navigator, window }) {
     });
   }
   async function check() {
-    if (!registration || checking || lock) return;
+    if (!registration || checking || repairing || recovering || applying || lock) return;
     if (!navigator.onLine) { status('You are offline', 'The cached app remains available. Updates will be checked when you reconnect.'); return; }
     checking = true;
     status('Checking for updates', 'Looking for a newer version. Your work stays on this device.');
@@ -88,9 +112,50 @@ export function createPwaUpdates({ isBusy, document, navigator, window }) {
       await registration.update();
       state.checked = 'Last checked ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       if (registration.waiting) { retryAfter = 0; await ready(); }
-      else if (!registration.installing) status('Up to date', 'Updates apply automatically when all open pages have saved their work.');
+      else if (!registration.installing) {
+        await metadata(navigator.serviceWorker.controller || registration.active);
+        status(state.cacheState === 'complete' ? 'Up to date' : 'Offline app needs recovery', state.cacheState === 'complete'
+          ? 'Updates apply automatically when all open pages have saved their work.'
+          : 'Repair missing files online, or install a complete release if verification is unavailable. Device records are kept.');
+      }
     } catch { status('Could not check for updates', 'The current app is still available. Reconnect to retry automatically, or check again.'); }
     finally { checking = false; paint(); }
+  }
+  async function repair() {
+    if (!registration?.active || checking || repairing || recovering || applying || lock) return;
+    if (!navigator.onLine) { status('Repair needs a connection', 'Reconnect to verify missing app files. Your device records are kept.'); return; }
+    repairing = true;
+    status('Repairing offline app', 'Downloading missing files and verifying them against the installed release.');
+    try {
+      const result = await request(navigator.serviceWorker.controller || registration.active, { type: 'REPAIR_SHELL' }, 120000);
+      if (typeof result.version === 'string') useMetadata(result);
+      if (!result.ok || !result.offlineReady) {
+        status('Offline repair incomplete', (result.error || 'Missing files could not be restored.') + ' Reconnect and retry, or install a complete release. Device records are kept.');
+        return;
+      }
+      status('Offline app repaired', 'The complete installed release is verified on this device. Your saved records are unchanged.');
+      if (onRepaired) onRepaired();
+    } catch {
+      await metadata(navigator.serviceWorker.controller || registration.active);
+      status('Offline repair could not finish', 'The cache could not be confirmed complete. Reconnect and retry, or install a complete release. Your device records are kept.');
+    } finally { repairing = false; paint(); }
+  }
+  async function recover() {
+    if (!registration || checking || repairing || recovering || applying || lock) return;
+    if (!navigator.onLine) { status('Complete install needs a connection', 'Reconnect to download the complete app. Your device records are kept.'); return; }
+    recovering = true;
+    status('Preparing complete release', 'Downloading a separate complete app snapshot. It will replace this release only after every open app page is ready.');
+    try {
+      // A distinct script identity forces a fresh install, even when sw.js bytes are unchanged.
+      // Its isolated cache remains separate until the existing readiness protocol permits activation.
+      const script = new URL('./sw.js', window.location.href);
+      script.searchParams.set('recovery', crypto.randomUUID());
+      registration = await navigator.serviceWorker.register(script.href, { scope: './', updateViaCache: 'none' });
+      watch(registration.installing);
+      if (registration.waiting) { retryAfter = 0; await ready(); }
+    } catch {
+      status('Complete install could not start', 'Reconnect and retry. The installed app and your device records have not been deleted.');
+    } finally { recovering = false; paint(); }
   }
   async function start() {
     if (!navigator.serviceWorker || window.location.protocol === 'file:') { status('Offline app unavailable', 'Use HTTPS or localhost in a browser that supports offline apps.'); return; }
@@ -115,15 +180,20 @@ export function createPwaUpdates({ isBusy, document, navigator, window }) {
       if (hadController) {
         // External/older pages may activate a worker. Never reload an unsaved editor.
         if (isBusy()) { unlock(); state.pending = 'reload'; status('Update ready', 'The new app is ready. This page will reload automatically after you save.'); return; }
-        if (!reloaded) { reloaded = true; window.location.reload(); }
+        if (!reloaded) { reloaded = true; if (onReload) onReload(); else window.location.reload(); }
       } else {
         hadController = true;
         await metadata(controller);
         status('Offline app ready', 'Updates apply automatically when all open pages have saved their work.');
+        if (onReload && !reloaded && !isBusy()) { reloaded = true; onReload(); }
       }
     });
     try {
-      registration = await navigator.serviceWorker.register('./sw.js', { scope: './', updateViaCache: 'none' });
+      const existing = await navigator.serviceWorker.getRegistration('./');
+      const scope = new URL('./', window.location.href).href;
+      // Reuse the registration's newest worker; do not replace a staged recovery with the active script.
+      registration = existing?.scope === scope ? existing
+        : await navigator.serviceWorker.register('./sw.js', { scope: './', updateViaCache: 'none' });
       registration.addEventListener('updatefound', () => watch(registration.installing));
       watch(registration.installing);
       await metadata(navigator.serviceWorker.controller || registration.active);
@@ -141,9 +211,13 @@ export function createPwaUpdates({ isBusy, document, navigator, window }) {
     paint();
   }
   function resume() {
-    if (state.pending === 'reload' && !isBusy() && !reloaded) { reloaded = true; window.location.reload(); }
+    if (state.pending === 'reload' && !isBusy() && !reloaded) { reloaded = true; if (onReload) onReload(); else window.location.reload(); }
     else reconsider();
   }
-  document.addEventListener('click', event => { if (event.target.closest('[data-pwa-check]')) check(); });
+  document.addEventListener('click', event => {
+    if (event.target.closest('[data-pwa-check]')) check();
+    else if (event.target.closest('[data-pwa-repair]')) repair();
+    else if (event.target.closest('[data-pwa-recover]')) recover();
+  });
   return { start, paint, reconsider: resume };
 }

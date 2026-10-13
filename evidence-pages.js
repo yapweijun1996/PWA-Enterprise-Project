@@ -12,7 +12,7 @@ function photo(file, alt, lazy = true) {
 export function evidenceResults(records, claims, currentClaims, query = '', type = 'All') {
   const search = query.trim().toLocaleLowerCase();
   const matches = value => value.toLocaleLowerCase().includes(search);
-  const images = type === 'Documents' ? [] : records.filter(record => matches([record.file.name, record.note, record.location, record.context.reference, record.context.lineId, record.context.lineTitle].join(' ')));
+  const images = type === 'Documents' ? [] : records.filter(record => matches([record.file.name, record.note, record.location, record.context.id, record.context.reference, record.context.lineId, record.context.lineTitle].join(' ')));
   const documents = type === 'Photos' ? [] : claims.map(claim => ({ ...claim, attachments: (claim.attachments || []).filter(file => matches([file.name, file.content, claim.reference, claim.id, file.lineId].join(' '))) })).filter(claim => claim.attachments.length);
   if (!images.length && !documents.length) return '<div class="notice" role="note">No matching evidence. Clear the filters or add a fictional image.</div>';
   const currentById = new Map(currentClaims.map(claim => [claim.id, claim]));

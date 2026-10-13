@@ -27,17 +27,17 @@
         <button class="menu-toggle" id="menu-toggle" type="button" aria-label="Expand navigation" aria-controls="desktop-nav" aria-expanded="false"></button>
         <a class="mobile-brand brand" href="#home" aria-label="ConstructClaim demo home"><img src="./icon.svg" width="28" height="28" alt=""><span>Construct<span class="brand-blue">Claim</span></span></a>
         <span class="topbar-label">Atlas Construction <span class="demo-pill">DEMO</span></span>
-        <div class="utility-actions"><a class="connection" href="#offline" data-connectivity></a><a class="topbar-link" href="#offline"><span class="draft-label">Device drafts</span> <span id="draft-count">0</span></a><span class="avatar" aria-label="Demo user Alex Lee">AL</span></div>
+        <div class="utility-actions"><a class="connection" href="#offline" data-connectivity></a><a class="topbar-link" href="#offline"><span class="draft-label">Device drafts</span> <span id="draft-count">—</span></a><span class="avatar" aria-label="Demo user Alex Lee">AL</span></div>
       </header>
       <div class="demo-notice" role="note"><span>Synthetic examples · Device-local demo</span><a href="#settings">Demo details</a></div>
       <div id="update-notice" class="update-notice" hidden role="status"><span id="update-message"></span><a href="#settings">App status</a></div>
-      <main id="main" tabindex="-1"></main>
+      <main id="main" tabindex="-1"><section id="boot-recovery" class="panel" role="status"><h1>ConstructClaim is starting</h1><p>If the app cannot load, reconnect to repair its installed files or install a complete release. Your device records are kept.</p><p data-pwa="detail">Loading the app…</p><p data-pwa="offline"></p><div class="form-actions"><button class="button secondary" type="button" data-pwa-repair>Repair offline app</button><button class="button secondary" type="button" data-pwa-recover>Install complete release</button><a class="text-link" href="./index.html?recovery=1">Retry recovery online</a></div><noscript>Enable JavaScript to open the app and recovery controls.</noscript></section></main>
     </div>
   </div>
   <nav class="mobile-nav" id="mobile-nav" aria-label="Mobile navigation"></nav>
   <button class="scroll-top" id="scroll-top" type="button" hidden aria-label="Scroll to top"></button>
   <div id="live-status" class="sr-only" role="status" aria-live="polite"></div>
   <div id="update-overlay" class="update-overlay" hidden role="status" aria-live="polite"><div class="spinner" aria-hidden="true"></div><strong>Updating ConstructClaim demo…</strong></div>
-  <script type="module" src="./app.js"></script>
+  <script type="module" src="./bootstrap.js"></script>
 </body>
 </html>

@@ -18,6 +18,10 @@ export function evidenceCards(attachments, pending = false, editable = false) {
 
 export function createDraftEditor({ root, record, context, projects, linkedAttachments = [], linkedImageError = '', onSave, onDone, onRouteChange, announce }) {
   let draft = normalizeDraft(record, context, 'LOCAL-' + crypto.randomUUID());
+  let baseRevision = record ? record.storageRevision ?? 0 : null;
+  let baseGeneration = record?.storageGeneration;
+  let pendingAttempt = null;
+  let conflict = false;
   if (!projects.some(project => project.id === draft.project)) draft.project = projects[0].id;
   let dirty = false;
   let busy = false;
@@ -30,6 +34,7 @@ export function createDraftEditor({ root, record, context, projects, linkedAttac
   const saveStatus = () => busy ? 'Saving on this device…' : dirty ? 'Unsaved changes' : saved ? 'Saved on this device · Not submitted' : 'Not saved yet';
   const markDirty = () => {
     dirty = true;
+    pendingAttempt = null;
     draft.reviewedAt = null;
     acknowledged = false;
     feedback = '';
@@ -53,6 +58,17 @@ export function createDraftEditor({ root, record, context, projects, linkedAttac
     root.querySelectorAll('[data-save-status]').forEach(el => { el.textContent = saveStatus(); el.classList.toggle('is-saved', saved && !dirty && !busy); });
     const alert = root.querySelector('#editor-feedback');
     if (alert) { alert.textContent = feedback; alert.hidden = !feedback; }
+    let recovery = root.querySelector('[data-save-new-draft]');
+    if (!recovery && alert) {
+      recovery = document.createElement('button');
+      recovery.type = 'button';
+      recovery.className = 'button secondary';
+      recovery.dataset.saveNewDraft = '';
+      recovery.textContent = 'Save as new draft';
+      alert.after(recovery);
+      recovery.addEventListener('click', saveAsNew);
+    }
+    if (recovery) recovery.hidden = !conflict;
     root.querySelectorAll('button, input, select, textarea').forEach(el => { el.disabled = busy; });
     root.querySelector('#draft-editor-form')?.setAttribute('aria-busy', String(busy));
     const previous = root.querySelector('[data-line-prev]');
@@ -117,7 +133,14 @@ function render(focus = false) {
     let field = root.querySelector('[name="' + error.field + '"]') || root.querySelector('#' + error.field);
     if (error.field.startsWith('line-')) {
       selectedLine = Number(error.field.replace('line-note-', '').replace('line-', ''));
+      const pager = root.querySelector('.line-pager');
+      const line = draft.lines[selectedLine];
+      if (pager && line) {
+        pager.querySelector('strong').textContent = line.id + ' · ' + line.title;
+        pager.querySelector('.meta').textContent = 'Line ' + (selectedLine + 1) + ' of ' + draft.lines.length;
+      }
       root.querySelectorAll('[data-line-row]').forEach(el => el.classList.toggle('is-selected', Number(el.dataset.lineRow) === selectedLine));
+      updateStatus();
     }
     if (field && getComputedStyle(field).display !== 'none') { field.setAttribute('aria-invalid', 'true'); field.focus(); }
     else root.querySelector('#editor-feedback').focus();
@@ -149,18 +172,46 @@ function render(focus = false) {
     render();
     root.querySelector('[name="' + field + '"]').focus();
   }
+  function saveAsNew() {
+    if (busy || !conflict) return;
+    draft.id = 'LOCAL-' + crypto.randomUUID();
+    draft.reviewedAt = null;
+    delete draft.storageRevision;
+    delete draft.storageGeneration;
+    baseRevision = null;
+    baseGeneration = undefined;
+    pendingAttempt = null;
+    acknowledged = false;
+    saved = false;
+    dirty = true;
+    conflict = false;
+    persist(false);
+  }
   async function persist(reviewed) {
     if (busy) return;
-    const errors = validateDraft(draft, { requireDetails: reviewed, requireLines: reviewed });
-    if (errors.length) { showErrors(errors); return; }
-    if (reviewed && !acknowledged) return;
+    if (!pendingAttempt) {
+      const errors = validateDraft(draft, { requireDetails: reviewed, requireLines: reviewed });
+      if (errors.length) { showErrors(errors); return; }
+      if (reviewed && !acknowledged) return;
+      pendingAttempt = { snapshot: savedRecord(draft, reviewed), reviewed };
+      if (baseGeneration !== undefined) pendingAttempt.snapshot.storageGeneration = baseGeneration;
+    }
     busy = true;
     feedback = '';
     updateStatus();
     try {
-      const snapshot = savedRecord(draft, reviewed);
-      await onSave(snapshot);
-      draft = snapshot;
+      const attempt = pendingAttempt;
+      const persisted = await onSave(attempt.snapshot, baseRevision, committed => {
+        baseRevision = committed.storageRevision;
+        baseGeneration = committed.storageGeneration;
+        attempt.snapshot = committed;
+      });
+      draft = persisted;
+      baseRevision = persisted.storageRevision;
+      baseGeneration = persisted.storageGeneration;
+      reviewed = attempt.reviewed;
+      pendingAttempt = null;
+      conflict = false;
       saved = true;
       dirty = false;
       busy = false;
@@ -176,7 +227,11 @@ function render(focus = false) {
       }
     } catch (error) {
       busy = false;
-      feedback = 'Local save could not be confirmed: ' + error.message + '. Your inputs remain here. Retry or copy them before leaving. Nothing was submitted.';
+      dirty = true;
+      conflict = error.code === 'RECORD_CONFLICT';
+      feedback = conflict
+        ? 'This claim changed or was deleted on this device. Your inputs remain here. Save as new draft to keep a separate unreviewed copy; the newer record will not be overwritten.'
+        : 'Local save could not be confirmed: ' + error.message + '. Your inputs remain here. Retry before leaving. Nothing was submitted.';
       if (alive) { updateStatus(); root.querySelector('#editor-feedback').focus(); announce(feedback); }
     }
   }

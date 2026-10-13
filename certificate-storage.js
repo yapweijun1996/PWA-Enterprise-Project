@@ -5,6 +5,6 @@ export const listCertificates = records.list;
 export const getCertificate = records.get;
 export const createCertificateIfAbsent = record => records.createIfAbsent(record, checkCertificateWrite);
 export const removeCertificateIfPresent = records.removeIfPresent;
-export const saveCertificate = record => records.saveChecked(record, checkCertificateWrite);
+export const saveCertificate = (record, expectedRevision) => records.save(record, expectedRevision, checkCertificateWrite);
 export const removeCertificate = records.remove;
 export const clearCertificates = records.clear;
