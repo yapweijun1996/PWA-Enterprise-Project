@@ -1,5 +1,4 @@
 {
-  "id": "./",
   "name": "ConstructClaim Demo",
   "short_name": "Claim Demo",
   "description": "Synthetic, device-local construction claims PWA demo",

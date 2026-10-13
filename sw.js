@@ -1,5 +1,8 @@
 // Bump this identifier with every published demo asset change to offer an explicit update.
-const VERSION = 'constructclaim-demo-26';
+const VERSION = 'constructclaim-demo-29';
+// Cache Storage is shared by every application on an origin, including Pages projects.
+const CACHE_PREFIX = `constructclaim-demo:${self.registration.scope}:`;
+const CACHE_NAME = CACHE_PREFIX + VERSION;
 const SHELL = [
   './', './index.html', './app.css', './app.js', './storage.js', './ui.js', './demo-domain.js', './draft-editor.js', './demo-contracts.js', './project-pages.js', './record-store.js', './variation-storage.js', './variation-domain.js', './variation-editor.js',
   './demo-claims.js', './certificate-domain.js', './certificate-storage.js', './certificate-editor.js', './certificate-pages.js',
@@ -9,14 +12,16 @@ const SHELL = [
 const URLS = new Set(SHELL.map(path => new URL(path, self.registration.scope).href));
 
 self.addEventListener('install', event => {
-  event.waitUntil(caches.open(VERSION).then(cache => cache.addAll(SHELL)));
+  // Refresh HTTP-cached URLs so a new release cannot precache the previous release's bytes.
+  const requests = SHELL.map(path => new Request(new URL(path, self.registration.scope), { cache: 'reload' }));
+  event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(requests)));
 });
 self.addEventListener('message', event => {
   if (event.data?.type === 'SKIP_WAITING') self.skipWaiting();
 });
 self.addEventListener('activate', event => {
   event.waitUntil(Promise.all([
-    caches.keys().then(keys => Promise.all(keys.filter(key => key.startsWith('constructclaim-demo-') && key !== VERSION).map(key => caches.delete(key)))),
+    caches.keys().then(keys => Promise.all(keys.filter(key => key.startsWith(CACHE_PREFIX) && key !== CACHE_NAME).map(key => caches.delete(key)))),
     self.clients.claim()
   ]));
 });
@@ -28,8 +33,8 @@ self.addEventListener('fetch', event => {
   if (url.origin !== self.location.origin || !URLS.has(url.href)) return;
   if (event.request.mode === 'navigate') {
     // This static demo has no private data. A cached shell avoids waiting on a dead network.
-    event.respondWith(caches.match('./index.html').then(cached => cached || fetch(event.request)));
+    event.respondWith(caches.open(CACHE_NAME).then(cache => cache.match(new URL('./index.html', self.registration.scope).href)).then(cached => cached || fetch(event.request)));
     return;
   }
-  event.respondWith(caches.match(event.request).then(cached => cached || fetch(event.request)));
+  event.respondWith(caches.open(CACHE_NAME).then(cache => cache.match(event.request)).then(cached => cached || fetch(event.request)));
 });
