@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import vm from 'node:vm';
+import { MessageChannel } from 'node:worker_threads';
 
 async function worker(scope = 'https://example.test/demo/', options = {}) {
   const handlers = {};
@@ -9,13 +10,15 @@ async function worker(scope = 'https://example.test/demo/', options = {}) {
   const opened = [];
   const deleted = [];
   const precached = [];
+  let skipped = 0;
   const self = {
     registration: { scope }, location: { origin: new URL(scope).origin },
     addEventListener: (name, callback) => { handlers[name] = callback; },
-    clients: { claim: async () => {} }
+    clients: { claim: async () => {}, matchAll: async () => typeof options.clients === 'function' ? options.clients() : options.clients || [] },
+    skipWaiting: async () => { skipped++; }
   };
   vm.runInNewContext(await readFile(new URL('../sw.js', import.meta.url), 'utf8'), {
-    self, URL, Request, Set, Promise,
+    self, URL, Request, Set, Promise, MessageChannel, setTimeout, clearTimeout,
     caches: {
       open: async name => {
         opened.push(name);
@@ -34,6 +37,13 @@ async function worker(scope = 'https://example.test/demo/', options = {}) {
   });
   return {
     network, opened, deleted, precached,
+    get skipped() { return skipped; },
+    async message(data, source = { url: scope }) {
+      let pending, reply;
+      handlers.message({ data, source, ports: [{ postMessage: value => { reply = value; } }], waitUntil: promise => { pending = promise; } });
+      await pending;
+      return reply;
+    },
     async lifecycle(name) {
       let pending;
       handlers[name]({ waitUntil: promise => { pending = promise; } });
@@ -103,4 +113,52 @@ test('worker does not intercept unknown, foreign, query-bearing or mutating requ
   const app = await worker();
   for (const url of ['https://example.test/api/claims', 'https://other.test/demo/', 'https://example.test/demo/?private=1']) assert.equal(app.fetch(url), undefined);
   assert.equal(app.fetch('https://example.test/demo/', 'navigate', 'POST'), undefined);
+});
+
+function client(id, ready = true, url = 'https://example.test/demo/#home') {
+  const messages = [];
+  return { id, url, messages, postMessage(message, ports) {
+    messages.push(message);
+    if (message.type === 'PREPARE_UPDATE' && ready !== null) { ports[0].postMessage({ ready }); ports[0].close(); }
+  } };
+}
+test('automatic activation requires every open app page to be ready and ignores other projects', async () => {
+  const first = client('a'), second = client('b'), unrelated = client('other', false, 'https://example.test/another/');
+  const app = await worker(undefined, { clients: [first, second, unrelated] });
+  assert.equal((await app.message({ type: 'APPLY_UPDATE' })).ok, true);
+  assert.equal(app.skipped, 1);
+  assert.equal(first.messages[0].type, 'PREPARE_UPDATE');
+  assert.equal(second.messages[0].type, 'PREPARE_UPDATE');
+  assert.equal(unrelated.messages.length, 0);
+});
+test('a dirty or saving page defers activation and releases the ready pages', async () => {
+  const ready = client('a'), dirty = client('b', false);
+  const app = await worker(undefined, { clients: [ready, dirty] });
+  assert.equal((await app.message({ type: 'APPLY_UPDATE' })).ok, false);
+  assert.equal(app.skipped, 0);
+  assert.equal(ready.messages.at(-1).type, 'CANCEL_UPDATE');
+  assert.equal(ready.messages[0].attempt, ready.messages.at(-1).attempt);
+});
+test('a tab opened during readiness prevents switching until that tab participates', async () => {
+  const first = client('a'), newcomer = client('b');
+  let reads = 0;
+  const app = await worker(undefined, { clients: () => ++reads === 1 ? [first] : [first, newcomer] });
+  assert.equal((await app.message({ type: 'APPLY_UPDATE' })).ok, false);
+  assert.equal(app.skipped, 0);
+  assert.equal(first.messages.at(-1).type, 'CANCEL_UPDATE');
+});
+test('an older or suspended page that cannot respond blocks activation', async () => {
+  const app = await worker(undefined, { clients: [client('old', null)] });
+  assert.equal((await app.message({ type: 'APPLY_UPDATE' })).ok, false);
+  assert.equal(app.skipped, 0);
+});
+test('worker metadata reports the active release and detects an incomplete offline cache', async () => {
+  const app = await worker();
+  const info = await app.message({ type: 'GET_VERSION' });
+  assert.match(info.version, /^\d+\.\d+\.\d+$/);
+  assert.equal(info.offlineReady, true);
+  const incomplete = await worker(undefined, { lookup: (_name, url) => url.endsWith('app.js') ? undefined : { cached: url } });
+  assert.equal((await incomplete.message({ type: 'GET_VERSION' })).offlineReady, false);
+  assert.equal(await app.message({ type: 'APPLY_UPDATE' }, { url: 'https://example.test/another/' }), undefined);
+  assert.equal(app.skipped, 0);
 });

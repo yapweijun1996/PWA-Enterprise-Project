@@ -1,0 +1,18 @@
+import { escapeHtml, icon } from './ui.js';
+
+export function settingsPage(state) {
+  const families = [
+    ['drafts', 'storageError', 'claim drafts', 'Claim drafts', 'Saved claim details, lines and local reviews.'],
+    ['variations', 'variationError', 'variation proposals', 'Variation proposals', 'Local proposals only; approved sample variations stay available.'],
+    ['certificates', 'certificateError', 'certificate previews', 'Certificates', 'Saved assessment snapshots; source claims stay available.'],
+    ['evidence', 'evidenceError', 'local images', 'Evidence', 'Device-only image files; saved certificate snapshots stay available.']
+  ];
+  return '<div class="settings-layout"><div class="page-head"><div><p class="eyebrow">WORKSPACE PREFERENCES</p><h1>Settings</h1><p class="subtitle">App updates and data saved on this device.</p></div></div>'
+    + '<section class="panel settings-app" aria-labelledby="app-settings-title"><div class="settings-section-head"><div class="task-icon">' + icon('settings') + '</div><div><h2 id="app-settings-title">Application</h2><p class="meta">ConstructClaim Demo <span class="settings-version" data-pwa="version">Checking version…</span></p></div><span class="status issued">Automatic updates</span></div>'
+    + '<div class="settings-update"><div><h3 data-pwa="title">Preparing offline app</h3><p class="meta" data-pwa="detail">Checking this browser’s app status.</p><p class="meta settings-check-time" data-pwa="checked"></p></div><button class="button secondary" type="button" data-pwa-check>Check for updates</button></div>'
+    + '<dl class="settings-facts"><div><dt>Offline app</dt><dd data-pwa="offline">Checking…</dd></div><div><dt>Connection</dt><dd data-pwa="connection">Checking…</dd></div><div><dt>App mode</dt><dd data-pwa="mode">Browser tab</dd></div></dl>'
+    + '<p class="meta settings-install-help">To install, use your browser’s install menu. On iPhone or iPad, use Share → Add to Home Screen.</p></section>'
+    + '<section class="panel settings-data" aria-labelledby="device-settings-title"><div class="panel-head"><h2 id="device-settings-title">Data on this device</h2><a class="text-link" href="#offline">View saved records' + icon('arrow') + '</a></div><p class="meta">Each category is independent. Deleting records cannot be undone and keeps synthetic examples.</p><ul class="settings-data-list">'
+    + families.map(([key, error, label, title, description]) => '<li><div><h3>' + title + '</h3><p class="meta">' + description + '</p><span class="settings-record-count">' + (state[error] ? 'Count unavailable · ' + escapeHtml(state[error]) : state[key].length + ' saved on this device') + '</span></div><button class="button danger" id="clear-' + key + '" type="button" ' + (state[error] || !state[key].length ? 'disabled' : '') + '>Delete all ' + label + '</button></li>').join('')
+    + '</ul></section><section class="settings-scope" aria-labelledby="demo-scope-title"><span class="demo-pill">DEMO</span><div><h2 id="demo-scope-title">A local demo workspace</h2><p class="meta">Use fictional information. Submission, certificate issue, invoicing, payment and synchronization are not connected. Browser storage is not a secure business record or backup.</p></div></section></div>';
+}

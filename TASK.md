@@ -188,8 +188,16 @@ Acceptance IDs E2E-01–E2E-18 are defined in [SPEC.md](SPEC.md). Their current 
 
 ### DEMO-007 — Static Pages deployment preparation
 
-- **Status:** Implemented and verified locally for the static artifact/PWA contract; not released.
+- **Status:** Baseline `4578f0d` published by the owner; Actions and HTTPS verification passed on 2026-10-13. Subsequent amendments require another successful deployment.
 - **Scope:** Official GitHub Actions validation/deployment workflow, runtime-only artifact preparation, repository-subpath manifest identity, scope-specific cache ownership and HTTP-cache refresh. Deployment instructions and update/recovery guidance are in README.md.
 - **Evidence:** Thirty-two Node tests, 31 JavaScript syntax checks, manifest/workflow parsing, artifact byte equality/dependency/icon validation and focused Chromium root/subpath manifest diagnostics. Guarded updates preserved a device draft; server-stopped reload, new-tab SOV navigation and local write/read-back passed. See PROGRESS.md.
-- **Remaining release acceptance:** Select GitHub Actions as the Pages source, publish the reviewed workflow to `main`, obtain a successful remote run, and verify the resulting HTTPS origin. Real phone installation/camera, iOS safe areas and the wider browser/accessibility matrix remain unverified.
+- **Remaining release acceptance:** Deploy subsequent amendments after review. Real phone installation/camera, iOS safe areas and the wider browser/accessibility matrix remain unverified.
 - **Boundary:** Preparation and local commits are authorized by the current request. It does not select a production API/database platform, satisfy T-001–T-003 or production E2E checks, or authorize push, remote settings changes or deployment.
+
+
+### DEMO-008 - Settings and safe automatic PWA updates
+
+- **Status:** Implemented and verified on the isolated `4578f0d` baseline; local amendment, not deployed.
+- **Scope:** Settings hierarchy/counts/version/cache status, optional check action, automatic update detection and activation only when every open page is ready; editor/device-write guards, interaction lock/cancel, retry/failure feedback and same-route reload.
+- **Evidence:** 39 Node tests, 34 syntax checks and validated 30-file Pages artifact; Chromium 1440/768/390/320px layouts, two-page dirty/busy deferral, save/read-back before automatic reload, failure feedback and server-stopped/offline cache recovery. See PROGRESS.md.
+- **Boundary:** The user's automatic-update preference is project-specific. Older v29 pages need a saved/reopened migration; old/suspended pages defer automatic activation. Other-session fixture/storage changes were preserved and excluded from this amendment's acceptance and commit. Production E2E states and physical-device acceptance remain unchanged.

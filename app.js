@@ -15,6 +15,8 @@ import { listEvidence, saveEvidence, removeEvidence, clearEvidence } from './evi
 import { createEvidenceEditor } from './evidence-editor.js';
 import { linkedEvidence } from './evidence-domain.js';
 import { captureLink, evidenceGallery, bindEvidenceGallery, evidenceDetail } from './evidence-pages.js';
+import { settingsPage } from './settings-page.js';
+import { createPwaUpdates } from './pwa-updates.js';
 
 const pages = [
   ['home', 'Overview', 'home'], ['projects', 'Projects', 'projects'], ['claims', 'Claims', 'claims'],
@@ -26,7 +28,7 @@ const live = document.querySelector('#live-status');
 const state = { drafts: [], storageError: '', variations: [], variationError: '', certificates: [], certificateError: '', evidence: [], evidenceError: '', filter: '', direction: 'All', snapshotDirection: 'Receivable' };
 
 const projectName = id => projects.find(project => project.id === id)?.name || 'Unknown demo project';
-const announce = message => { live.textContent = ''; requestAnimationFrame(() => { live.textContent = message; }); };
+const announce = message => { live.textContent = ''; requestAnimationFrame(() => { live.textContent = message; pwa.reconsider(); }); };
 const heading = (title, subtitle, action = '') => '<div class="page-head"><div><h1>' + title + '</h1><p class="subtitle">' + subtitle + '</p></div>' + action + '</div>';
 const notice = (text, type = '') => '<div class="notice ' + type + '" role="' + (type === 'error' ? 'alert' : 'note') + '">' + text + '</div>';
 const pageLink = (route, text) => '<a class="text-link" href="#' + route + '">' + text + icon('arrow') + '</a>';
@@ -36,6 +38,12 @@ const mobileLink = ([route, label, glyph], active) => '<a href="#' + route + '" 
 const claimTitle = claim => claim.local ? draftLabel(claim) : claim.id;
 let activeEditor = null;
 let currentHash = location.hash || '#home';
+let deviceChanges = 0;
+const pwa = createPwaUpdates({ isBusy: () => Boolean(activeEditor?.dirty || activeEditor?.busy || deviceChanges), document, navigator, window });
+function beginDeviceChange() {
+  deviceChanges++;
+  return () => { deviceChanges--; pwa.reconsider(); };
+}
 
 async function refreshDrafts() {
   const results = await Promise.allSettled([listDrafts(), listVariations(), listCertificates(), listEvidence()]);
@@ -129,11 +137,12 @@ function layoutEvidence(projectId = '') {
 function layoutMore() { return heading('More', 'Tools and workspace settings.') + '<div class="grid cards">' + [['parties','Parties'],['reports','Reports'],['evidence','Evidence'],['offline','Device drafts'],['settings','Settings']].map(([r,l]) => '<div class="card"><h2>' + l + '</h2>' + pageLink(r, 'Open') + '</div>').join('') + '</div>'; }
 function layoutParties() { return heading('Parties', 'Synthetic counterparties for the demo projects.') + '<div class="grid cards">' + projects.map(p => '<article class="card"><h2>' + p.party + '</h2><p>' + p.name + ' · ' + p.contract + '</p><span class="status">Sample counterparty</span></article>').join('') + '</div>'; }
 function layoutReports() { return heading('Reports', 'Independent synthetic financial positions.') + snapshotPanel() + '<p class="meta">This snapshot is not calculated from device drafts. No financial ledger or production reporting service is connected.</p>'; }
-function layoutSettings() { return heading('Settings', 'Local demo controls.') + '<section class="panel"><h2>Device data</h2><p class="meta">Each action deletes only its own record family in this browser. This cannot be undone and does not affect synthetic examples.</p><button class="button danger" id="clear-drafts" type="button" ' + (state.drafts.length ? '' : 'disabled') + '>Delete all claim drafts</button><button class="button danger" id="clear-variations" type="button" ' + (state.variations.length ? '' : 'disabled') + '>Delete all variation proposals</button><button class="button danger" id="clear-certificates" type="button" ' + (state.certificates.length ? '' : 'disabled') + '>Delete all certificate previews</button><button class="button danger" id="clear-evidence" type="button" ' + (state.evidence.length ? '' : 'disabled') + '>Delete all local images</button><h2 class="section-gap">Demo scope</h2><p class="meta">Use fictional information. Identity, project permissions, submission, certificate issue, invoicing, payment and synchronization are not connected. Browser storage is not a secure business record or backup.</p></section>'; }
+function layoutSettings() { return settingsPage(state); }
 function layoutMissing() { return heading('Page not found', 'No demo record exists for this address.') + '<a class="button secondary" href="#home">Back to overview</a>'; }
 function updateConnectivity() {
   document.querySelectorAll('[data-connectivity]').forEach(el => { el.textContent = navigator.onLine ? 'Online' : 'Offline'; el.classList.toggle('is-offline', !navigator.onLine); el.setAttribute('aria-label', (navigator.onLine ? 'Online' : 'Offline') + ' · Open device drafts'); });
   document.querySelectorAll('[data-connection-description]').forEach(el => { el.textContent = navigator.onLine ? 'Browser reports online. Drafts remain on this device only.' : 'Browser reports offline. Cached app and saved drafts remain available on this device.'; });
+  pwa.paint();
 }
 function route() {
   activeEditor?.dispose();
@@ -227,40 +236,53 @@ function route() {
   }
   document.title = (main.querySelector('h1')?.textContent || 'Demo') + ' — ConstructClaim Demo';
   updateConnectivity();
+  pwa.reconsider();
 }
 function bindPage() {
   document.querySelector('#delete-evidence')?.addEventListener('click', async event => {
     const { id, project } = event.currentTarget.dataset;
     if (!confirm('Permanently delete this device-only image? Claims and saved certificate snapshots are kept.')) return;
+    const finish = beginDeviceChange();
     try { await removeEvidence(id); await refreshDrafts(); if (state.evidenceError || state.evidence.some(item => item.id === id)) throw new Error('Device read-back failed after deletion.'); location.hash = '#project/' + project + '/evidence'; announce('Local image deleted. Other records kept.'); }
     catch (error) { main.insertAdjacentHTML('afterbegin', notice('Deletion failed: ' + escapeHtml(error.message), 'error')); }
+    finally { finish(); }
   });
   document.querySelector('#clear-evidence')?.addEventListener('click', async () => {
     if (!confirm('Permanently delete all device-only images? Claim documents and certificate snapshots are kept.')) return;
+    const finish = beginDeviceChange();
     try { await clearEvidence(); await refreshDrafts(); if (state.evidenceError || state.evidence.length) throw new Error('Device read-back failed after deletion.'); route(); announce('Local images deleted.'); }
     catch (error) { main.insertAdjacentHTML('afterbegin', notice('Deletion failed: ' + escapeHtml(error.message), 'error')); }
+    finally { finish(); }
   });
   document.querySelector('#delete-certificate')?.addEventListener('click', async event => {
     const id = event.currentTarget.dataset.id;
     if (!confirm('Permanently delete this device-only certificate preview? Its source claim is kept.')) return;
+    const finish = beginDeviceChange();
     try { await removeCertificate(id); await refreshDrafts(); if (state.certificateError || state.certificates.some(item => item.id === id)) throw new Error('Device read-back failed after deletion.'); location.hash = '#certificates'; announce('Local preview deleted. Source claim kept.'); }
     catch (error) { main.insertAdjacentHTML('afterbegin', notice('Deletion failed: ' + escapeHtml(error.message), 'error')); }
+    finally { finish(); }
   });
   document.querySelector('#clear-certificates')?.addEventListener('click', async () => {
     if (!confirm('Permanently delete all device-only certificate previews? Claims and proposals are kept.')) return;
+    const finish = beginDeviceChange();
     try { await clearCertificates(); await refreshDrafts(); if (state.certificateError || state.certificates.length) throw new Error('Device read-back failed after deletion.'); route(); announce('Local previews deleted.'); }
     catch (error) { main.insertAdjacentHTML('afterbegin', notice('Deletion failed: ' + escapeHtml(error.message), 'error')); }
+    finally { finish(); }
   });
   document.querySelector('#delete-variation')?.addEventListener('click', async event => {
     const { id, project } = event.currentTarget.dataset;
     if (!confirm('Permanently delete this device-only variation proposal?')) return;
+    const finish = beginDeviceChange();
     try { await removeVariation(id); await refreshDrafts(); if (state.variationError || state.variations.some(item => item.id === id)) throw new Error('Device read-back failed after deletion.'); location.hash = '#project/' + project + '/variations'; announce('Local proposal deleted.'); }
     catch (error) { main.insertAdjacentHTML('afterbegin', notice('Deletion failed: ' + escapeHtml(error.message), 'error')); }
+    finally { finish(); }
   });
   document.querySelector('#clear-variations')?.addEventListener('click', async () => {
     if (!confirm('Permanently delete all device-only variation proposals?')) return;
+    const finish = beginDeviceChange();
     try { await clearVariations(); await refreshDrafts(); if (state.variationError || state.variations.length) throw new Error('Device read-back failed after deletion.'); route(); announce('Local variation proposals deleted.'); }
     catch (error) { main.insertAdjacentHTML('afterbegin', notice('Deletion failed: ' + escapeHtml(error.message), 'error')); }
+    finally { finish(); }
   });
   document.querySelectorAll('[data-financial-direction]').forEach(button => button.addEventListener('click', () => {
     state.snapshotDirection = button.dataset.financialDirection;
@@ -273,47 +295,21 @@ function bindPage() {
   document.querySelector('#delete-draft')?.addEventListener('click', async event => {
     const id = event.currentTarget.dataset.id;
     if (!confirm('Permanently delete this device-only draft?')) return;
+    const finish = beginDeviceChange();
     try { await removeDraft(id); await refreshDrafts(); if (state.storageError) throw new Error('Device read-back failed after deletion.'); location.hash = '#offline'; announce('Device draft deleted.'); }
     catch (error) { main.insertAdjacentHTML('afterbegin', notice('Deletion failed: ' + escapeHtml(error.message), 'error')); }
+    finally { finish(); }
   });
   document.querySelector('#clear-drafts')?.addEventListener('click', async () => {
     if (!confirm('Permanently delete all device-only claim drafts?')) return;
+    const finish = beginDeviceChange();
     try { await clearDrafts(); await refreshDrafts(); if (state.storageError) throw new Error('Device read-back failed after deletion.'); route(); announce('All device claim drafts deleted.'); }
     catch (error) { main.insertAdjacentHTML('afterbegin', notice('Deletion failed: ' + escapeHtml(error.message), 'error')); }
+    finally { finish(); }
   });
 }
 
 
-let updateRequested = false;
-async function setupWorker() {
-  if (!('serviceWorker' in navigator) || location.protocol === 'file:') return;
-  try {
-    const registration = await navigator.serviceWorker.register('./sw.js', { scope: './' });
-    const showUpdate = () => {
-      if (!registration.waiting || !navigator.serviceWorker.controller) return;
-      const banner = document.querySelector('#update-notice');
-      banner.hidden = false;
-      document.querySelector('#update-button').onclick = () => {
-        if (updateRequested) return;
-        if (activeEditor?.dirty || activeEditor?.busy) { announce('Save your draft before updating the app.'); const message = document.querySelector('#update-notice > span'); if (message) message.textContent = 'Save your draft before updating the app.'; return; }
-        updateRequested = true;
-        document.querySelector('#update-button').disabled = true;
-        document.querySelector('#update-overlay').hidden = false;
-        registration.waiting.postMessage({ type: 'SKIP_WAITING' });
-        setTimeout(() => {
-          if (!document.hidden && updateRequested) {
-            document.querySelector('#update-overlay').hidden = true;
-            banner.textContent = 'Update could not finish. Reload when ready to retry.';
-            updateRequested = false;
-          }
-        }, 10000);
-      };
-    };
-    if (registration.waiting) showUpdate();
-    registration.addEventListener('updatefound', () => registration.installing?.addEventListener('statechange', showUpdate));
-    navigator.serviceWorker.addEventListener('controllerchange', () => { if (updateRequested) location.reload(); });
-  } catch (error) { console.warn('Offline shell unavailable:', error); }
-}
 function collapseNavigation() {
   document.body.classList.remove('nav-expanded');
   document.querySelector('#menu-toggle').setAttribute('aria-expanded', 'false');
@@ -352,4 +348,4 @@ document.querySelector('#scroll-top').innerHTML = icon('up');
 document.querySelector('#scroll-top').addEventListener('click', () => window.scrollTo({ top: 0, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' }));
 await refreshDrafts();
 route();
-setupWorker();
+pwa.start();
