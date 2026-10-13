@@ -1,7 +1,7 @@
 // Bump this identifier with every published demo asset change to offer an explicit update.
-const VERSION = 'constructclaim-demo-9';
+const VERSION = 'constructclaim-demo-14';
 const SHELL = [
-  './', './index.html', './app.css', './app.js', './storage.js', './ui.js',
+  './', './index.html', './app.css', './app.js', './storage.js', './ui.js', './demo-domain.js', './draft-editor.js',
   './manifest.webmanifest', './icon.svg', './icon-192.png', './icon-512.png'
 ];
 const URLS = new Set(SHELL.map(path => new URL(path, self.registration.scope).href));
@@ -21,6 +21,8 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
   const url = new URL(event.request.url);
+  // Hash routes identify client views, never a different shell resource.
+  url.hash = '';
   if (url.origin !== self.location.origin || !URLS.has(url.href)) return;
   if (event.request.mode === 'navigate') {
     // This static demo has no private data. A cached shell avoids waiting on a dead network.

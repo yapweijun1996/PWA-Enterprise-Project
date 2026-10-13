@@ -2,7 +2,7 @@
 
 ## Status rules
 
-`Planned → Implemented → Verified → Released` are independent states. A task is not Verified merely because code exists; it needs the evidence in its Definition of Done. No application task is currently Implemented, Verified, or Released. Dependencies and open product/platform decisions are recorded explicitly.
+`Planned → Implemented → Verified → Released` are independent states. A task is not Verified merely because code exists; it needs the evidence in its Definition of Done. No production application task is currently Implemented, Verified, or Released; the separate demo workstream has bounded verification below. Dependencies and open product/platform decisions are recorded explicitly.
 
 Priorities: **P0** blocks safe foundations or the V1 financial/tenant contract; **P1** required V1 capability after its dependencies; **P2** release hardening or bounded enhancement. All work remains local unless deployment is separately authorized.
 
@@ -58,7 +58,7 @@ Priorities: **P0** blocks safe foundations or the V1 financial/tenant contract; 
 
 ### T-018 — Generate the v2 visual design baseline
 
-- **Status:** Verified as design artifacts; implementation remains pending.
+- **Status:** Verified as design artifacts; bounded demo implementation is tracked under DEMO-002.
 - **Scope:** Four image-generated desktop/mobile boards, persisted in `ui/ssot-v2/`; DESIGN.md owns visual tokens, responsive rules, source precedence, and the interaction contract. Exact generation prompts accompany the assets.
 - **Acceptance:** Inspect final images for layout, legibility, financial-stage separation, arithmetic examples, context, and connectivity/save-state consistency; verify image readability, document links, prompt JSON, original asset preservation, and unchanged application source.
 - **Evidence:** Four final PNGs opened and visually inspected; connectivity and table-header corrections checked; sample arithmetic passed; 48 local Markdown links/fragments and prompt JSON passed; GOAL_PROMPT.md is 1,889/2,000 characters; all 24 original images match HEAD byte-for-byte; application source is unchanged; `git diff --check` passed. Browser implementation/accessibility acceptance is not part of this artifact verification.
@@ -66,7 +66,7 @@ Priorities: **P0** blocks safe foundations or the V1 financial/tenant contract; 
 
 ### T-019 — Complete independent v2 page designs
 
-- **Status:** Verified as design artifacts; application implementation remains pending.
+- **Status:** Verified as design artifacts; wider production page implementation remains pending.
 - **Scope:** Generate independent desktop/mobile sheets for the remaining 20 original page families and Reports. Save 21 PNGs and exact prompts in `ui/ssot-v2/pages/`; provide a local review gallery and update the authoritative DESIGN.md page index.
 - **Acceptance:** Inspect every selected image; correct material state, financial, navigation and context inconsistencies; check PNG decoding, expected inventory, gallery links/rendering, document links, prompt JSON and prompt-length limit. Preserve the 24 original images, four earlier v2 boards, application source and unrelated work.
 - **Evidence:** 21 final 1586 x 992 PNGs decoded and visually inspected; 21 generation prompts and 17 targeted correction prompts saved. Synthetic arithmetic passed. The gallery decoded all 25 images, returned no broken resource links, and had no horizontal overflow at actual 1440, 390 and 320px viewport widths. Static checks resolved 68 Markdown links/fragments and 55 gallery targets before this evidence update; final link/whitespace checks were rerun after documentation synchronization. GOAL_PROMPT.md is 1,875/2,000 characters. All 24 original PNGs match HEAD byte-for-byte; the four prior boards were not edited; application source is unchanged. Gallery checks are not product workflow or accessibility acceptance.
@@ -79,7 +79,15 @@ Priorities: **P0** blocks safe foundations or the V1 financial/tenant contract; 
 - **Scope:** Owner clarified that the immediate deliverable is a demo, followed by a separate production phase. Use only synthetic examples and browser-local drafts; show a desktop/mobile shell, claim navigation, IndexedDB save/read/delete, explicit empty/error/offline states and a static PWA shell. See [README.md](README.md).
 - **Boundary:** No production security, tenant isolation, certified money, evidence upload, server sync, approval, invoice/payment, AI provider, or release claim. The T-001–T-003 decisions still gate T-004 and production work. Publishing to GitHub Pages is not authorized by this task.
 - **Acceptance evidence:** Syntax/manifest checks, browser navigation and local-write read-back, validation/error and 390×844 layout checks, offline/update checks where tool support permits; record any missing coverage separately from the production E2E matrix.
-- **Status:** Implemented in part; demo verification and the wider screenshot-family journeys remain open.
+- **Status:** Verified for the bounded main flow in DEMO-002. Wider screenshot-family journeys, real device/browser acceptance and publication remain separate.
+
+### DEMO-002 — Implement the v2 local claim main flow
+
+- **Status:** Verified within the synthetic/device-local demo scope; not released.
+- **Scope:** Shared shell and Overview; Details → Claim lines → synthetic Evidence → local Review; same-identifier save/resume/edit; old-draft compatibility; explicit validation, storage-failure, network and update recovery.
+- **Acceptance:** Focused domain/cache contracts; real Chromium create/read/edit/review and evidence read-back; context inheritance, input/focus retention, failed-save retry, old records, delete/filter regressions, desktop/tablet/mobile reflow and cached offline reload. Save feedback follows completed persistence and read-back. No Submitted/Synced/Certified outcome is claimed.
+- **Evidence:** Nine contract tests, six JavaScript syntax checks and manifest parsing passed. Chromium workflow and recovery checks at 1440/768/390/320px passed; 1024/768px navigation was checked. Hash-route cache regression was reproduced and fixed; offline reload and cached new-tab recovery passed with the local server stopped. Details and unrun real-device/accessibility/production checks are recorded in PROGRESS.md.
+- **Boundary:** Incomplete draft saves and optional synthetic text evidence are demo behavior, not selected production rules. No API, authentication, permission, real evidence upload, tax/retention, certification, invoice/payment, AI or sync is implemented. T-001–T-003 and production E2E states remain unchanged. Local commits are required for each completed amendment; no push or deployment is part of this scope.
 
 ## Open decision register
 

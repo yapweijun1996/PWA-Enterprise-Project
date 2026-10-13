@@ -2,9 +2,9 @@
 
 ## Current state
 
-**Visual design baseline v2 (2026-10-13):** four core boards in `ui/ssot-v2/` are extended by 21 independent desktop/mobile page sheets in `ui/ssot-v2/pages/`. Together they cover the original 24 page families and Reports. Open the [design gallery](ui/ssot-v2/pages/index.html); [DESIGN.md](DESIGN.md#active-visual-baseline-v2) owns the authoritative index, tokens, responsive dimensions, exact labels and interaction rules. T-018 and T-019 are verified as design artifacts: selected images inspected, PNG decoding and synthetic arithmetic passed, generation/correction prompts saved, local links resolved, and whitespace checks passed. The gallery loaded all 25 images and reflowed without horizontal overflow at actual 1440, 390 and 320px widths. All 24 original PNGs match HEAD; the four core boards were preserved; application source is unchanged. These designs have not been implemented in the demo and do not change product E2E completion or establish runtime accessibility.
+**Visual design baseline v2 (2026-10-13):** four core boards in `ui/ssot-v2/` are extended by 21 independent desktop/mobile page sheets in `ui/ssot-v2/pages/`. Together they cover the original 24 page families and Reports. Open the [design gallery](ui/ssot-v2/pages/index.html); [DESIGN.md](DESIGN.md#active-visual-baseline-v2) owns the authoritative index, tokens, responsive dimensions, exact labels and interaction rules. T-018 and T-019 are verified as design artifacts: selected images inspected, PNG decoding and synthetic arithmetic passed, generation/correction prompts saved, local links resolved, and whitespace checks passed. The gallery loaded all 25 images and reflowed without horizontal overflow at actual 1440, 390 and 320px widths. All original and v2 PNGs are preserved. The shared shell and local claim main flow now implement the v2 baseline as the bounded demo slice below; wider designs remain targets. Product E2E completion remains unchanged.
 
-**Lifecycle:** production pre-implementation / product blueprint; separate static demo slice in progress. The intended product is the ConstructClaim construction progress-claim and certification PWA described in [GOAL.md](GOAL.md) and [SPEC.md](SPEC.md).
+**Lifecycle:** production pre-implementation / product blueprint; separate static demo main flow implemented and verified within its synthetic/device-local scope. The intended product is the ConstructClaim construction progress-claim and certification PWA described in [GOAL.md](GOAL.md) and [SPEC.md](SPEC.md).
 
 **Historical documentation baseline (not current inventory):** branch `main`; the initial source baseline is `dbca199` (`Initial commit`, 2026-09-28). The first documentation pass is locally committed as `5780ee7`; `origin/main` still points at `dbca199`. Before this UI-reference update, the working tree showed the 24 user-provided PNGs under `ui/` as untracked. This pass leaves them unchanged and un-staged. The tracked project has no application source, `README.md`, `CHANGELOG.md`, ADR, package/build manifest, dependencies, tests, CI, release/deploy scripts, app entrypoint, or running browser/API/database behavior. No root/nested `AGENTS.md`, `CLAUDE.md`, or `CONTRIBUTING.md` was found.
 
@@ -16,7 +16,7 @@
 |---|---|---|---|---|
 | Product requirements E2E-01–E2E-18 | 18 | 0 | 0 | 0 |
 | Production application/API/data/PWA capabilities | Entire intended V1 | 0 evidenced | 0 evidenced | 0 evidenced |
-| Static local-only demo (DEMO-001) | Browser walkthrough | Navigation, synthetic records, IndexedDB drafts, static shell | Focused browser checks underway; not full demo acceptance | Not published |
+| Static local-only demo (DEMO-001 / DEMO-002) | v2 local claim main flow | Responsive shell, four-step create/edit/review, sample evidence and cached recovery | Nine contract tests and focused Chromium workflow/recovery checks passed | Not published |
 | Core planning documents | 8 requested files | 8 present; relevant UI-reference sections updated | Markdown consistency checks passed | Not applicable |
 | Documentation task T-017 | 1 UI-reference synchronization | 1 implemented | 1 verified by documentation checks | Not applicable |
 | UI reference assets | 24 user-provided PNGs | 0 modified/staged | 24 image files visually inspected as static references | Not applicable |
@@ -27,9 +27,9 @@ Progress is measured against the explicit E2E scenario IDs in [SPEC.md](SPEC.md)
 
 ## Static demo status
 
-The v2 shared shell and task-first Overview are implemented. Chromium checks at 1440, 1024, 768, 390 and 320px covered navigation, active destinations, mobile/tablet reflow, project/direction preselection, skip-link focus and network-event input preservation. Sampled routes had no horizontal overflow; no browser error/warning was observed. Claim editing/resume and the four-step main flow are the next implementation slice. These focused checks do not establish full accessibility, production acceptance or release.
+**DEMO-002 is verified within its bounded scope:** v2 shared shell, task-first Overview and Details → Claim lines → Evidence → Review. Drafts can be saved incomplete, resumed, edited and locally reviewed; sample evidence content and metadata persist together. Existing one-amount drafts preserve identifiers and values when resumed. No production state or API is simulated as complete. The design baseline is locally committed in `f723efc`; the shared-shell amendment is locally committed in `17157c6`; each completed amendment is committed separately as requested.
 
-The owner chose a demo-first phase, with production to follow. `index.html`, `app.css`, `app.js`, `storage.js`, `sw.js`, `manifest.webmanifest` and generated icons form a GitHub Pages-compatible static walkthrough. Local drafts are not submitted commands; sample claims are synthetic. No production endpoint, permission, audit, evidence upload, financial calculator or AI provider was introduced. This slice does not satisfy any production E2E ID. Details and local run instructions are in [README.md](README.md).
+The owner chose a demo-first phase, with production to follow. `index.html`, `app.css`, `app.js`, `storage.js`, `sw.js`, `manifest.webmanifest` and generated icons form a GitHub Pages-compatible static walkthrough. Local drafts are not submitted commands; sample claims are synthetic. No production endpoint, permission, audit, real evidence upload, authoritative financial calculator or AI provider was introduced. This slice does not satisfy any production E2E ID. Details and local run instructions are in [README.md](README.md).
 
 ## Documentation sync status
 
@@ -71,6 +71,16 @@ They distinguish user-approved product intent, proposed architecture, user-selec
 
 ### Static demo checks (not production verification)
 
+#### v2 main flow — 2026-10-13
+
+- Nine Node contract tests passed: decimal parsing/boundaries, exact-cent illustrative totals, old-draft compatibility, incomplete-save versus review readiness, snapshot isolation, evidence bytes/context, hash-route shell matching and static-cache exclusions. All six JavaScript syntax checks and manifest JSON parsing passed.
+- Chromium completed create → lines → sample evidence → local review → detail → edit/resume. Repeated saves/retries kept one identifier. A legacy amount was resumed and updated without duplication. Search/direction filters, no-results, delete and clear/cancel flows passed. Literal HTML in notes remained text.
+- Four-step layouts at 1440, 768, 390 and 320px had no measured horizontal overflow; primary actions were visible and at least 44px high. Tablet navigation at 1024/768px and mobile browsing navigation were checked separately. Targeted Tab/Space/Enter actions completed local review; this is not a screen-reader or complete accessibility audit.
+- Offline/online transitions preserved the form, values, focus and selection. Synthetic quota failure and unavailable IndexedDB retained inputs and allowed retry. Unsaved route departure and source-context changes could be cancelled without losing work. An app update was blocked while dirty, then activated after save and retained the draft.
+- A failing hash-route cache contract exposed the offline reload defect. Removing the fragment before the shell allowlist comparison fixed it; the test and Chromium offline reload then passed. With the task-owned server stopped, cached index navigation, reload and a new tab recovered the saved step and evidence content. This proves the tested Chromium profile, not real device installation or browser-process cold launch.
+
+#### Earlier static slice — historical evidence
+
 - Node syntax checks for `app.js`, `storage.js`, `sw.js`; manifest JSON parsing; local Markdown links, 18 E2E identifiers, 24 image inventory, relative icon paths, and `git diff --check` passed. No npm dependencies were installed.
 - In Chromium on localhost, verified synthetic home/claims navigation; validation and focus for missing month/invalid amount; successful IndexedDB save, refresh/read-back, deletion and empty state; device-storage failure retained the form and did not claim success. A literal HTML payload in notes remained text rather than an element.
 - Desktop 1280×800 and mobile-emulated 390×844 views rendered without measured horizontal overflow on the sampled routes. Browser checked route titles and active navigation; a standalone iOS device and screen reader were not available.
@@ -80,7 +90,7 @@ They distinguish user-approved product intent, proposed architecture, user-selec
 ### Not run / not possible
 
 - Production build, API, database, integration, financial-contract, tenant security, E2E-01–E2E-18 and deployment checks: no production system or target exists.
-- Demo install prompt, iOS standalone safe areas, screen reader, keyboard-only journey, offline cold launch and failure recovery across browsers remain unverified. A static screenshot review is not accessibility evidence.
+- Real device install prompt, iOS standalone safe areas, screen reader, complete keyboard-only journey, browser-process cold launch and cross-browser recovery remain unverified. Targeted Chromium keyboard, reload, new-tab and failure/retry checks above do not satisfy this wider matrix.
 
 These are unavailable or failed checks, not passing checks. See [SPEC.md](SPEC.md) for future production verification.
 
@@ -99,4 +109,4 @@ These are unavailable or failed checks, not passing checks. See [SPEC.md](SPEC.m
 
 **Owner scope choice:** retain the full V1 scope (option 1). This approves no specific platform, money/state rule, permission grant, offline/data policy, or AI provider. At the start of this update, local `main` and `origin/main` were both at `89370cd`, which added the 24 `ui/` images; no application source or runtime appeared.
 
-The user prioritized independent page designs before code changes; T-019 now completes that design deliverable. The next demo scope is the shared layout, overview and local claim editing against the expanded v2 baseline, including the previously identified context/input recovery issues. Production work still resumes with **T-001** in [TASK.md](TASK.md): fill its unapproved decision-to-verification worksheet and confirm/replace D-001/D-006. T-001–T-003 remain Planned pending owner decisions. Local Node/Compose/PostgreSQL client versions do not satisfy those gates, and Docker Compose cannot run until a daemon is available. Do not scaffold packages or migrations until platform, financial, and security/privacy decisions are resolved. No release, push, PR, or deployment is authorized.
+The independent designs and bounded demo main flow are complete. The current review point is the local demo walkthrough in README.md; wider certification, SOV/variation and production workflows remain separate scopes. Production work still resumes with **T-001** in [TASK.md](TASK.md): fill its unapproved decision-to-verification worksheet and confirm/replace D-001/D-006. T-001–T-003 remain Planned pending owner decisions. Local Node/Compose/PostgreSQL client versions do not satisfy those gates, and Docker Compose cannot run until a daemon is available. Do not scaffold packages or migrations until platform, financial, and security/privacy decisions are resolved. No release, push, PR, or deployment is authorized.

@@ -1,5 +1,7 @@
 import { listDrafts, saveDraft, removeDraft, clearDrafts } from './storage.js';
 import { escapeHtml, icon, money, displayDate, draftLabel } from './ui.js';
+import { createDraftEditor, evidenceCards } from './draft-editor.js';
+import { lineTotals, fromCents } from './demo-domain.js';
 
 const projects = [
   { id: 'harbor', name: 'Harbor Exchange', place: 'Demo City', description: 'Commercial development', contract: 'MC-001', party: 'Harbor Developments' },
@@ -27,11 +29,14 @@ const newLink = (query = '') => '<a class="button" href="#new' + query + '">' + 
 const navLink = ([route, label, glyph], active) => '<a class="nav-item" href="#' + route + '" aria-label="' + label + '" title="' + label + '" ' + (active === route ? 'aria-current="page"' : '') + '>' + icon(glyph) + '<span class="nav-label">' + label + '</span></a>';
 const mobileLink = ([route, label, glyph], active) => '<a href="#' + route + '" ' + (active === route || (route === 'more' && ['offline', 'evidence', 'settings', 'parties', 'reports'].includes(active)) ? 'aria-current="page"' : '') + '>' + icon(glyph) + label + '</a>';
 const claimTitle = claim => claim.local ? draftLabel(claim) : claim.id;
+let activeEditor = null;
+let currentHash = location.hash || '#home';
 
 async function refreshDrafts() {
   try { state.drafts = await listDrafts(); state.storageError = ''; }
   catch (error) { state.storageError = error.message || 'Device storage unavailable.'; state.drafts = []; }
-  document.querySelector('#draft-count').textContent = String(state.drafts.length);
+  document.querySelector('#draft-count').textContent = state.storageError ? '—' : String(state.drafts.length);
+  document.querySelector('#draft-count').parentElement.setAttribute('aria-label', state.storageError ? 'Device drafts unavailable' : state.drafts.length + ' device draft' + (state.drafts.length === 1 ? '' : 's'));
 }
 function snapshotControls() {
   return '<div class="segmented" role="group" aria-label="Financial direction">' + ['Receivable', 'Payable'].map(direction => '<button type="button" data-financial-direction="' + direction + '" aria-pressed="' + (state.snapshotDirection === direction) + '">' + direction + '</button>').join('') + '</div>';
@@ -48,7 +53,7 @@ function layoutHome() {
   return heading('Overview', 'Welcome back, Alex. Pick up your project work.', newLink()) +
     (state.storageError ? notice('Device storage unavailable: ' + escapeHtml(state.storageError), 'error') : '') +
     '<div class="grid home-work"><section class="panel"><div class="panel-head"><h2>My work</h2><span class="status">Demo tasks</span></div><ul class="row-list"><li><a class="row-link" href="#claim/PCAR-DEMO-01"><span class="task-label"><span class="task-icon">' + icon('claims') + '</span><span><strong>Explore a receivable claim</strong><small>Harbor Exchange · Sample draft</small></span></span>' + icon('arrow') + '</a></li><li><a class="row-link" href="#new?project=cedar&direction=Payable"><span class="task-label"><span class="task-icon">' + icon('plus') + '</span><span><strong>Prepare a payable draft</strong><small>Cedar Station · SC-014</small></span></span>' + icon('arrow') + '</a></li></ul></section><section class="panel"><h2>Continue work</h2>' +
-    (latest ? '<span class="status local">Saved on this device</span><h3 class="section-gap">' + escapeHtml(draftLabel(latest)) + '</h3><p class="meta">' + projectName(latest.project) + ' · ' + escapeHtml(latest.direction) + '<br>Saved ' + displayDate(latest.updatedAt) + '</p>' + pageLink('claim/' + encodeURIComponent(latest.id), 'Open draft') : '<p class="meta">Your saved draft will appear here. Start with fictional project information.</p>' + pageLink('new', 'Start a draft')) +
+    (latest ? '<span class="status local">Saved on this device</span><h3 class="section-gap">' + escapeHtml(draftLabel(latest)) + '</h3><p class="meta">' + projectName(latest.project) + ' · ' + escapeHtml(latest.direction) + '<br>Saved ' + displayDate(latest.updatedAt) + '</p>' + pageLink('edit/' + encodeURIComponent(latest.id), 'Resume draft') : '<p class="meta">Your saved draft will appear here. Start with fictional project information.</p>' + pageLink('new', 'Start a draft')) +
     '</section></div>' + snapshotPanel() +
     '<section class="panel section-gap"><div class="panel-head"><h2>Recent projects</h2>' + pageLink('projects', 'View all') + '</div><ul class="row-list">' + projects.map(p => '<li><a class="row-link" href="#project/' + p.id + '"><span><strong>' + p.name + '</strong><small>' + p.description + ' · ' + p.contract + '</small></span><span class="text-link">Open project ' + icon('arrow') + '</span></a></li>').join('') + '</ul></section>';
 }
@@ -74,31 +79,34 @@ function claimRecords() {
 }
 function layoutClaims() {
   return heading('Claims', 'Receivable and payable claims across your demo projects.', newLink(state.direction === 'Payable' ? '?direction=Payable' : '')) +
-    '<section class="panel"><div class="filters"><label>Search claims<input id="claim-search" type="search" placeholder="Document or project" value="' + escapeHtml(state.filter) + '"></label><label>Direction<select id="direction-filter"><option>All</option><option ' + (state.direction === 'Receivable' ? 'selected' : '') + '>Receivable</option><option ' + (state.direction === 'Payable' ? 'selected' : '') + '>Payable</option></select></label></div><div id="claim-results">' + claimRecords() + '</div></section>';
+    (state.storageError ? notice('Local drafts unavailable: ' + escapeHtml(state.storageError), 'error') : '') + '<section class="panel"><div class="filters"><label>Search claims<input id="claim-search" type="search" placeholder="Document or project" value="' + escapeHtml(state.filter) + '"></label><label>Direction<select id="direction-filter"><option>All</option><option ' + (state.direction === 'Receivable' ? 'selected' : '') + '>Receivable</option><option ' + (state.direction === 'Payable' ? 'selected' : '') + '>Payable</option></select></label></div><div id="claim-results">' + claimRecords() + '</div></section>';
 }
 function layoutClaim(id) {
   const claim = allClaims().find(c => c.id === id);
   if (!claim) return layoutMissing();
-  return heading(escapeHtml(claimTitle(claim)), projectName(claim.project) + ' · ' + escapeHtml(claim.direction) + ' · ' + escapeHtml(claim.period || 'Period not set'), '<a class="button secondary" href="#claims">' + icon('back') + 'Back to claims</a>') +
-    '<div class="grid columns"><section class="panel"><h2>Claim details</h2><dl class="key-values"><div><dt>Claimed · Illustrative</dt><dd>' + money(claim.amount) + '</dd></div><div><dt>Claim state</dt><dd><span class="status ' + (claim.local ? 'local' : '') + '">' + escapeHtml(claim.status) + '</span></dd></div><div><dt>Certification</dt><dd>' + escapeHtml(claim.certificate) + '</dd></div><div><dt>Period</dt><dd>' + escapeHtml(claim.period || 'Not set') + '</dd></div></dl>' +
-    (claim.local ? '<p><strong>Notes:</strong> ' + escapeHtml(claim.notes || 'None') + '</p><p class="meta">Saved on this device · ' + displayDate(claim.updatedAt) + '</p><details><summary>Technical reference</summary><p class="meta">' + escapeHtml(claim.id) + '</p></details><button class="button danger section-gap" id="delete-draft" type="button" data-id="' + escapeHtml(claim.id) + '">Delete local draft</button>' : '<p class="meta">Synthetic record for navigation and layout review.</p>') +
-    '</section><aside class="panel"><h2>' + (claim.local ? 'Saved on this device' : 'Sample workflow') + '</h2><p class="meta">' + (claim.local ? 'Not submitted or synchronized. Device storage is not a backup.' : 'Claim, certificate, invoice and payment are separate stages. These examples are not issued business documents.') + '</p></aside></div>';
+  const totals = lineTotals(claim.lines || []);
+  return heading(escapeHtml(claimTitle(claim)), projectName(claim.project) + ' · ' + escapeHtml(claim.direction) + ' · ' + escapeHtml(claim.period || 'Period not set'), claim.local ? '<a class="button" href="#edit/' + encodeURIComponent(claim.id) + '">' + icon('claims') + 'Edit draft</a>' : '<a class="button secondary" href="#claims">' + icon('back') + 'Back to claims</a>') +
+    '<div class="grid columns"><section class="panel"><h2>Claim details</h2><dl class="key-values"><div><dt>This period · Illustrative</dt><dd>' + money(claim.amount) + '</dd></div><div><dt>Claim state</dt><dd><span class="status ' + (claim.local ? 'local' : '') + '">' + escapeHtml(claim.status) + '</span></dd></div><div><dt>Certification</dt><dd>' + escapeHtml(claim.certificate) + '</dd></div><div><dt>Period</dt><dd>' + escapeHtml(claim.period || 'Not set') + '</dd></div></dl>' +
+    (claim.local ? '<p class="review-note"><strong>Period note:</strong> ' + escapeHtml(claim.notes || 'None') + '</p><p class="meta">Saved on this device · ' + displayDate(claim.updatedAt) + '</p>' +
+      (claim.reviewedAt ? '<p class="meta">Local review · ' + displayDate(claim.reviewedAt) + ' · Not submitted</p>' : '') +
+      (claim.lines?.length ? '<h2 class="section-gap">Claim lines</h2><ul class="row-list">' + claim.lines.map(line => '<li class="review-line"><span>' + escapeHtml(line.id + ' · ' + line.title) + '<small class="meta">' + escapeHtml(line.note || '') + '</small></span><strong>' + money(line.current || '0') + '</strong></li>').join('') + '</ul><p class="meta">Previous: ' + money(fromCents(totals.previous)) + ' · Cumulative: ' + money(fromCents(totals.cumulative)) + ' · Synthetic source</p>' : '') +
+      '<h2 class="section-gap">Sample evidence</h2>' + evidenceCards(claim.attachments || []) +
+      '<details class="section-gap"><summary>Technical reference</summary><p class="meta">' + escapeHtml(claim.id) + '</p><p class="meta">Source: ' + escapeHtml(claim.sourceVersion || 'Legacy demo amount') + '</p></details><button class="button danger section-gap" id="delete-draft" type="button" data-id="' + escapeHtml(claim.id) + '">Delete local draft</button>' : '<p class="meta">Synthetic record for navigation and layout review.</p>') +
+    '</section><aside class="panel"><h2>' + (claim.local ? 'Saved on this device' : 'Sample workflow') + '</h2><p class="meta">' + (claim.local ? 'Not submitted or synchronized. Device storage is not a backup.' : 'Claim, certificate, invoice and payment are separate stages. These examples are not issued business documents.') + '</p><a class="text-link" href="#claims">' + icon('back') + 'Back to claims</a></aside></div>';
 }
-function layoutNew() {
-  const query = new URLSearchParams(location.hash.split('?')[1] || '');
-  const selectedProject = projects.some(p => p.id === query.get('project')) ? query.get('project') : 'harbor';
-  const selectedDirection = query.get('direction') === 'Payable' ? 'Payable' : 'Receivable';
-  return heading('New claim draft', 'Fictional information · Saved on this device only.', '<a class="button secondary" href="#claims">' + icon('back') + 'Back to claims</a>') +
-    '<section class="panel form-panel"><h2>Draft details</h2><form id="draft-form" class="form" novalidate><label>Project<select name="project" required>' + projects.map(p => '<option value="' + p.id + '" ' + (p.id === selectedProject ? 'selected' : '') + '>' + p.name + '</option>').join('') + '</select></label><label>Claim direction<select name="direction" required><option ' + (selectedDirection === 'Receivable' ? 'selected' : '') + '>Receivable</option><option ' + (selectedDirection === 'Payable' ? 'selected' : '') + '>Payable</option></select></label><label>Period<input name="period" type="month" required aria-describedby="form-feedback"></label><label>Claimed amount · SGD<input name="amount" type="text" inputmode="decimal" placeholder="e.g. 1250.00" maxlength="16" required aria-describedby="amount-hint form-feedback"><span class="hint" id="amount-hint">Illustrative only. No tax, retention or certification calculation.</span></label><label>Notes (optional)<textarea name="notes" maxlength="500" placeholder="Fictional site progress note"></textarea></label><div id="form-feedback" role="alert" tabindex="-1"></div><div class="form-actions"><button class="button" type="submit">Save on this device</button><span class="meta">Not submitted</span></div></form></section>';
-}
+
 function layoutOffline() {
-  const content = state.drafts.length ? '<ul class="row-list">' + state.drafts.map(d => '<li><a class="row-link" href="#claim/' + encodeURIComponent(d.id) + '"><span><strong>' + escapeHtml(draftLabel(d)) + '</strong><small>' + projectName(d.project) + ' · Saved ' + displayDate(d.updatedAt) + '</small></span><span class="status local">Device only</span></a></li>').join('') + '</ul>' : notice('No device drafts yet. Start a draft to try reload and offline recovery.');
+  const content = state.drafts.length ? '<ul class="row-list">' + state.drafts.map(d => '<li><a class="row-link" href="#edit/' + encodeURIComponent(d.id) + '"><span><strong>' + escapeHtml(draftLabel(d)) + '</strong><small>' + projectName(d.project) + ' · Saved ' + displayDate(d.updatedAt) + '</small></span><span class="status local">Device only</span></a></li>').join('') + '</ul>' : notice('No device drafts yet. Start a draft to try reload and offline recovery.');
   return heading('Device drafts', 'Work stored in this browser. No synchronization is connected.', newLink()) +
     '<p class="meta" data-connection-description></p>' + (state.storageError ? notice('Local storage error: ' + escapeHtml(state.storageError), 'error') : '') +
     '<div class="grid columns"><section class="panel"><h2>Local work · ' + state.drafts.length + '</h2>' + content + '</section><aside class="panel"><h2>Recovery on this device</h2><p class="meta">Cached app files can open offline after the first successful visit. Site data clearing or storage eviction may remove drafts. No cross-device backup or server acceptance exists.</p></aside></div>';
 }
 function layoutInbox() { return heading('Inbox', 'Your review tasks and decisions.') + '<section class="panel"><h2>No review tasks</h2><p class="meta">The demo has no connected account or approval service. You can review a fictional draft on this device.</p>' + pageLink('claims', 'Explore claims') + '</section>'; }
-function layoutEvidence() { return heading('Evidence', 'Fictional project evidence.') + '<section class="panel"><h2>No evidence yet</h2><p class="meta">Open a draft to add synthetic evidence to its local record.</p>' + pageLink('new', 'Start a draft') + '</section>'; }
+function layoutEvidence() {
+  const records = state.drafts.filter(draft => draft.attachments?.length);
+  return heading('Evidence', 'Synthetic file content saved with device drafts.') + (state.storageError ? notice('Device storage unavailable: ' + escapeHtml(state.storageError), 'error') : '') +
+    (records.length ? records.map(draft => '<section class="panel section-gap"><div class="panel-head"><h2>' + escapeHtml(draftLabel(draft)) + '</h2>' + pageLink('claim/' + encodeURIComponent(draft.id), 'Open draft') + '</div><p class="meta">' + projectName(draft.project) + ' · ' + escapeHtml(draft.direction) + '</p>' + evidenceCards(draft.attachments) + '</section>').join('') : '<section class="panel"><h2>No evidence yet</h2><p class="meta">Open a draft to add synthetic text documents. No real file capture or upload is connected.</p>' + pageLink('new', 'Start a draft') + '</section>');
+}
 function layoutMore() { return heading('More', 'Tools and workspace settings.') + '<div class="grid cards">' + [['parties','Parties'],['reports','Reports'],['evidence','Evidence'],['offline','Device drafts'],['settings','Settings']].map(([r,l]) => '<div class="card"><h2>' + l + '</h2>' + pageLink(r, 'Open') + '</div>').join('') + '</div>'; }
 function layoutParties() { return heading('Parties', 'Synthetic counterparties for the demo projects.') + '<div class="grid cards">' + projects.map(p => '<article class="card"><h2>' + p.party + '</h2><p>' + p.name + ' · ' + p.contract + '</p><span class="status">Sample counterparty</span></article>').join('') + '</div>'; }
 function layoutReports() { return heading('Reports', 'Independent synthetic financial positions.') + snapshotPanel() + '<p class="meta">This snapshot is not calculated from device drafts. No financial ledger or production reporting service is connected.</p>'; }
@@ -109,17 +117,42 @@ function updateConnectivity() {
   document.querySelectorAll('[data-connection-description]').forEach(el => { el.textContent = navigator.onLine ? 'Browser reports online. Drafts remain on this device only.' : 'Browser reports offline. Cached app and saved drafts remain available on this device.'; });
 }
 function route() {
+  activeEditor?.dispose();
+  activeEditor = null;
   const raw = location.hash.slice(1) || 'home';
+  currentHash = location.hash || '#home';
   let path;
   try { path = decodeURIComponent(raw.split('?')[0]).split('/'); } catch { path = ['missing']; }
   const active = path[0];
   const section = ['new', 'claim', 'edit'].includes(active) ? 'claims' : active === 'project' ? 'projects' : active;
   document.querySelector('#desktop-nav').innerHTML = pages.map(page => navLink(page, section)).join('');
   document.querySelector('#mobile-nav').innerHTML = mobilePages.map(page => mobileLink(page, section)).join('');
-  const views = { home: layoutHome, projects: layoutProjects, claims: layoutClaims, new: layoutNew, offline: layoutOffline, inbox: layoutInbox, evidence: layoutEvidence, more: layoutMore, parties: layoutParties, reports: layoutReports, settings: layoutSettings };
-  main.innerHTML = active === 'project' ? layoutProject(path[1]) : active === 'claim' ? layoutClaim(path[1]) : views[active]?.() || layoutMissing();
+  const focusedTask = active === 'new' || active === 'edit';
+  document.body.classList.toggle('task-mode', focusedTask);
+  if (focusedTask) {
+    const record = active === 'edit' ? state.drafts.find(draft => draft.id === path[1]) : null;
+    if (active === 'edit' && !record) {
+      main.innerHTML = state.storageError ? heading('Draft unavailable', 'Device storage could not be read.') + notice(escapeHtml(state.storageError), 'error') + pageLink('offline', 'Open device drafts') : layoutMissing();
+    } else {
+      const query = new URLSearchParams(raw.split('?')[1] || '');
+      const context = { project: projects.some(project => project.id === query.get('project')) ? query.get('project') : 'harbor', direction: query.get('direction') === 'Payable' ? 'Payable' : 'Receivable' };
+      activeEditor = createDraftEditor({
+        root: main, record, context, projects, announce,
+        onSave: async draft => {
+          await saveDraft(draft);
+          await refreshDrafts();
+          if (state.storageError || !state.drafts.some(item => item.id === draft.id && item.updatedAt === draft.updatedAt)) throw new Error('Device read-back failed after the write.');
+        },
+        onRouteChange: id => { currentHash = '#edit/' + encodeURIComponent(id); history.replaceState(null, '', currentHash); },
+        onDone: id => { location.hash = '#claim/' + encodeURIComponent(id); }
+      });
+    }
+  } else {
+    const views = { home: layoutHome, projects: layoutProjects, claims: layoutClaims, offline: layoutOffline, inbox: layoutInbox, evidence: layoutEvidence, more: layoutMore, parties: layoutParties, reports: layoutReports, settings: layoutSettings };
+    main.innerHTML = active === 'project' ? layoutProject(path[1]) : active === 'claim' ? layoutClaim(path[1]) : views[active]?.() || layoutMissing();
+    bindPage();
+  }
   document.title = (main.querySelector('h1')?.textContent || 'Demo') + ' — ConstructClaim Demo';
-  bindPage();
   updateConnectivity();
 }
 function bindPage() {
@@ -131,52 +164,19 @@ function bindPage() {
   const search = document.querySelector('#claim-search');
   search?.addEventListener('input', () => { state.filter = search.value; document.querySelector('#claim-results').innerHTML = claimRecords(); });
   document.querySelector('#direction-filter')?.addEventListener('change', event => { state.direction = event.target.value; document.querySelector('#claim-results').innerHTML = claimRecords(); document.querySelector('.page-head .button').href = '#new' + (state.direction === 'Payable' ? '?direction=Payable' : ''); });
-  document.querySelector('#draft-form')?.addEventListener('submit', submitDraft);
   document.querySelector('#delete-draft')?.addEventListener('click', async event => {
     const id = event.currentTarget.dataset.id;
     if (!confirm('Permanently delete this device-only draft?')) return;
-    try { await removeDraft(id); await refreshDrafts(); location.hash = '#offline'; announce('Device draft deleted.'); }
+    try { await removeDraft(id); await refreshDrafts(); if (state.storageError) throw new Error('Device read-back failed after deletion.'); location.hash = '#offline'; announce('Device draft deleted.'); }
     catch (error) { main.insertAdjacentHTML('afterbegin', notice('Deletion failed: ' + escapeHtml(error.message), 'error')); }
   });
   document.querySelector('#clear-drafts')?.addEventListener('click', async () => {
     if (!confirm('Permanently delete all device-only drafts?')) return;
-    try { await clearDrafts(); await refreshDrafts(); route(); announce('All device drafts deleted.'); }
+    try { await clearDrafts(); await refreshDrafts(); if (state.storageError) throw new Error('Device read-back failed after deletion.'); route(); announce('All device drafts deleted.'); }
     catch (error) { main.insertAdjacentHTML('afterbegin', notice('Deletion failed: ' + escapeHtml(error.message), 'error')); }
   });
 }
-async function submitDraft(event) {
-  event.preventDefault();
-  const form = event.currentTarget;
-  const feedback = document.querySelector('#form-feedback');
-  const fields = new FormData(form);
-  const amount = String(fields.get('amount') || '').trim();
-  const period = String(fields.get('period') || '');
-  const amountInvalid = !/^\d{1,11}(\.\d{1,2})?$/.test(amount) || Number(amount) <= 0;
-  const periodInvalid = !/^\d{4}-(0[1-9]|1[0-2])$/.test(period);
-  form.elements.period.setAttribute('aria-invalid', String(periodInvalid));
-  form.elements.amount.setAttribute('aria-invalid', String(amountInvalid));
-  if (amountInvalid || periodInvalid) {
-    feedback.innerHTML = `<p class="form-error">${periodInvalid ? 'Select a valid month. ' : ''}${amountInvalid ? 'Enter a positive illustrative amount with up to two decimal places.' : ''}</p>`;
-    (periodInvalid ? form.elements.period : form.elements.amount).focus();
-    return;
-  }
-  const submit = form.querySelector('button[type=submit]');
-  submit.disabled = true;
-  feedback.textContent = 'Saving on this device…';
-  const draft = { id: `LOCAL-${crypto.randomUUID()}`, project: String(fields.get('project')), direction: String(fields.get('direction')), period, amount, notes: String(fields.get('notes') || '').trim(), updatedAt: new Date().toISOString() };
-  try {
-    await saveDraft(draft);
-    await refreshDrafts();
-    if (state.storageError) throw new Error('Could not confirm the saved draft.');
-    location.hash = `#claim/${draft.id}`;
-    route();
-    announce('Draft saved on this device only. Not submitted or synchronized.');
-  } catch (error) {
-    feedback.innerHTML = `<p class="form-error">Local save failed: ${escapeHtml(error.message)}. Nothing was submitted. Your inputs remain here; try again or copy them before leaving.</p>`;
-    feedback.focus();
-    submit.disabled = false;
-  }
-}
+
 
 let updateRequested = false;
 async function setupWorker() {
@@ -189,6 +189,7 @@ async function setupWorker() {
       banner.hidden = false;
       document.querySelector('#update-button').onclick = () => {
         if (updateRequested) return;
+        if (activeEditor?.dirty || activeEditor?.busy) { announce('Save your draft before updating the app.'); const message = document.querySelector('#update-notice > span'); if (message) message.textContent = 'Save your draft before updating the app.'; return; }
         updateRequested = true;
         document.querySelector('#update-button').disabled = true;
         document.querySelector('#update-overlay').hidden = false;
@@ -212,7 +213,22 @@ function collapseNavigation() {
   document.querySelector('#menu-toggle').setAttribute('aria-expanded', 'false');
   document.querySelector('#menu-toggle').setAttribute('aria-label', 'Expand navigation');
 }
-window.addEventListener('hashchange', () => { collapseNavigation(); route(); main.focus({ preventScroll: true }); window.scrollTo(0, 0); });
+document.addEventListener('click', event => {
+  const link = event.target.closest('a[href^="#"]');
+  if (!link || link.classList.contains('skip-link') || link.hash === currentHash || event.ctrlKey || event.metaKey || event.shiftKey || event.button !== 0) return;
+  if (activeEditor && !activeEditor.canLeave()) event.preventDefault();
+});
+window.addEventListener('hashchange', () => {
+  if ((location.hash || '#home') === currentHash) return;
+  if (activeEditor && !activeEditor.canLeave()) { history.replaceState(null, '', currentHash); return; }
+  collapseNavigation();
+  route();
+  main.focus({ preventScroll: true });
+  window.scrollTo(0, 0);
+});
+window.addEventListener('beforeunload', event => {
+  if (activeEditor?.dirty || activeEditor?.busy) { event.preventDefault(); event.returnValue = ''; }
+});
 window.addEventListener('online', updateConnectivity);
 window.addEventListener('offline', updateConnectivity);
 window.addEventListener('scroll', () => { document.querySelector('#scroll-top').hidden = window.scrollY < window.innerHeight; }, { passive: true });

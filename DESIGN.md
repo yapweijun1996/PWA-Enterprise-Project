@@ -6,7 +6,7 @@ This document separates product intent from repository facts.
 
 - **Verified repository state before this UI-documentation update:** `main` was at local documentation commit `5780ee7`, one commit ahead of `origin/main` at `dbca199`; the earlier commit tracks `.gitattributes` and the eight core planning documents. The 24 PNGs under `ui/` are untracked and were preserved. No app source, package/configuration, tests, CI, or release workflow exists in this checkout; no `AGENTS.md`, `CLAUDE.md`, `CONTRIBUTING.md`, README, or ADR was found.
 - **User-defined target:** the ConstructClaim PWA V1 blueprint supplied in the task conversation.
-- **Not verified:** every runtime, framework, database, API, storage service, browser behavior, PWA capability, and integration described below. Target architecture is a design proposal, not a claim about existing code.
+- **Production not verified:** target runtimes, frameworks, databases, APIs, storage services and integrations below remain proposals. The bounded static demo and its evidence are described separately in README.md and PROGRESS.md.
 
 ## Product/system classification
 
@@ -18,6 +18,23 @@ The intended product is a hybrid business system:
 4. Optional AI assistance and future ERP adapters behind explicit interfaces.
 
 The **production system** remains at the pre-implementation blueprint stage. A separate zero-dependency static demo slice (`index.html`, `app.js`, `storage.js`, `sw.js`) demonstrates navigation and browser-local drafts; it has no production API, authorization, evidence store, or authoritative financial behavior. See [README.md](README.md) for its boundaries. No production package or deployable service boundary exists yet.
+
+## Implemented static demo boundary
+
+The v2 shared shell and four-step local claim journey are implemented; the wider production screen families remain targets. [README.md](README.md) owns the walkthrough and commands; [PROGRESS.md](PROGRESS.md) owns verification evidence and limitations.
+
+| Source | Demo responsibility |
+|---|---|
+| app.js | Hash navigation, synthetic read models, local persistence/read-back and editor lifecycle. |
+| draft-editor.js | One active draft state, Details/Lines/Evidence/Review UI, dirty/busy guards and explicit save feedback. |
+| demo-domain.js | Integer-cent illustrative totals, readiness validation, synthetic evidence fixtures and old-record adaptation. |
+| ui.js | Escaping, formatting and consistent outline icons. |
+| storage.js | Existing IndexedDB v1 draft store and same-key transactions. |
+| sw.js / manifest.webmanifest | Allowlisted static shell, compatible explicit updates and install metadata. |
+
+Schema-version-2 records add line arrays, sample text file content/metadata, saved step and local review time without changing the store or identifier. Old one-amount records adapt in memory and save back to their existing key. One transaction stores the draft and sample evidence together; the UI confirms read-back before showing Saved on this device. The editor owns unsaved state; network events only update connectivity presentation. A failed write retains the editor and retries the same identifier. Source-context changes explicitly discard only the current draft's synthetic lines/evidence after confirmation.
+
+Incomplete saves and optional synthetic evidence are scoped demo choices. Local review is not submission or certification. There is no production permission, authoritative money, upload, command queue, server acceptance or conflict implementation. Rollback of source must retain browser data; historical records remain readable by the adapter. The Service Worker caches only declared static assets, normalizes hash fragments for shell matching and waits for an explicit update after the active draft is saved.
 
 ## Proposed system context
 
