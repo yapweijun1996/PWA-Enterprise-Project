@@ -4,7 +4,7 @@ This repository contains a **device-local demonstration** of ConstructClaim. It 
 
 ## Visual design baseline
 
-Open the [design gallery](ui/ssot-v2/pages/index.html) to review 21 independent desktop/mobile page sheets and four core boards. [DESIGN.md — Active visual baseline v2](DESIGN.md#active-visual-baseline-v2) owns the page index, tokens, responsive rules and interaction contract. The running demo implements the shared shell, Overview, local claim main flow and project SOV/variation browsing. The remaining page families are target designs; the 24 original images remain supporting references.
+Open the [design gallery](ui/ssot-v2/pages/index.html) to review 21 independent desktop/mobile page sheets and four core boards. [DESIGN.md — Active visual baseline v2](DESIGN.md#active-visual-baseline-v2) owns the page index, tokens, responsive rules and interaction contract. The running demo implements the shared shell, Overview, local claim main flow and project SOV/variation workflows. The remaining page families are target designs; the 24 original images remain supporting references.
 
 The gallery opens directly from disk, or at http://127.0.0.1:8765/ui/ssot-v2/pages/ with the local server running.
 
@@ -24,7 +24,7 @@ Relative asset URLs support a GitHub Pages repository subpath. Publication is a 
 
 1. Open **Overview → Prepare a payable draft**, or **Projects → Cedar Station → New draft**. Cedar Station and Payable carry into the editor.
 2. In **Details**, choose October 2026 and enter a fictional reference and period note. Save draft is available even while the record is incomplete.
-3. In **Claim lines**, enter 10,000 for A01 and 15,000 for A02. The sample previous amount is 50,000; this period is 25,000 and cumulative is 75,000. Previous values are read-only synthetic fixtures. No tax, retention or certification calculation occurs.
+3. In **Claim lines**, enter 10,000 for A01 and 15,000 for A02. The sample previous amount is 50,000; this period is 25,000 and cumulative is 75,000. Previous values are read-only synthetic fixtures. Harbor Exchange additionally includes the sample approved VO-007 line; Cedar Station has its own two-line basis. Quantity, rate, revised basis and source version are saved with new claim lines; old snapshots are preserved. No tax, retention or certification calculation occurs.
 4. In **Evidence**, choose a sample text document and its claim/line context, then add it. Preview its actual fictional content. Ready to save becomes Saved on this device only after the draft transaction and read-back succeed. Evidence is optional in this demo.
 5. In **Review**, inspect details, lines and sample evidence. The acknowledgement starts unchecked. **Save reviewed draft** records a local review and opens the detail page; it does not submit anything.
 6. Use **Edit draft**, **Overview → Resume draft**, or **Device drafts** to continue. Saves keep the same identifier. Reload restores the last saved step and content. Older one-amount drafts resume as a preserved legacy line.
@@ -36,13 +36,17 @@ Relative asset URLs support a GitHub Pages repository subpath. Publication is a 
 3. Open **Variations**, filter the sample lifecycle states, and inspect VO-008. Its SGD 12,000 proposal is excluded; SGD 1,062,000 is labelled as an illustrative scenario only. Approved VO-007 links to its included SOV line. Rejected VO-010 has no contract effect.
 4. Cedar Station has a separate SGD 250,000 sample contract and no sample variations. Project Claims and Evidence show only that project's related records.
 
+5. Choose **New variation**, enter a fictional scope title, reason, affected line (or new scope), and proposed SGD value. **Save draft** accepts incomplete work; a local review requires valid scope/reason, a positive two-decimal amount, and an explicit acknowledgement.
+6. Save, reload and resume the proposal from Variations or Device drafts. Editing clears the local review. **Save local review** opens the detail with **Reviewed on device**, never Approved. Proposals do not enter contract totals or claim lines.
+7. Delete individual proposals from their detail. Settings has separate clear actions for claim drafts and variation proposals; each requires confirmation. Device storage is not a backup.
+
 ## What works
 
 - v2 shell: 240px desktop sidebar, expandable 72px tablet rail, five-item mobile browsing navigation and consistent outline icons. Focused mobile editing replaces bottom navigation with persistent Save/Continue actions and explicit back/close paths.
 - Task-first Overview, synthetic projects and separate claimed/certified/invoiced/paid snapshot examples. Snapshot figures are independent fixtures, not aggregates of device drafts.
-- Project Overview/SOV/Claims/Variations/Evidence navigation, responsive SOV/VO tables and cards, filters, source facts and truthful sample decision states. Contract fixtures share one source; pending/rejected variations are excluded.
+- Project Overview/SOV/Claims/Variations/Evidence navigation, responsive SOV/VO tables and cards, filters, source facts, truthful sample decision states, local proposal save/edit/review/delete and separate storage errors. Contract fixtures share one source; pending/rejected variations are excluded.
 - Claim search, receivable/payable filters, short draft references and responsive list cards. Claim state and certification remain separate.
-- IndexedDB draft create/edit/read/delete, incomplete draft saves, integer-cent illustrative line totals, local review and sample evidence content/metadata saved in one record. The existing store/key contract is unchanged.
+- IndexedDB draft create/edit/read/delete, incomplete draft saves, integer-cent illustrative line totals, local review and sample evidence content/metadata saved in one record. The existing claim store/key contract is unchanged. Variation proposals use a separate database and share only transaction handling.
 - Validation and failure feedback retain input. Network changes preserve the editor, focus and selection. Leaving with unsaved changes requires an explicit discard decision; app updates wait for dirty/busy drafts to be saved.
 - A static manifest and versioned Service Worker cache. Hash routes resolve to the static shell. Chromium verified offline reload, local read/write and cached navigation/new-tab recovery after the local server was stopped.
 
@@ -67,8 +71,12 @@ node --check demo-domain.js
 node --check sw.js
 node --check demo-contracts.js
 node --check project-pages.js
+node --check record-store.js
+node --check variation-storage.js
+node --check variation-domain.js
+node --check variation-editor.js
 node --test tests/*.test.mjs
 python -m json.tool manifest.webmanifest
 ~~~
 
-Twelve tests cover decimal boundaries, totals, old-draft compatibility, draft/review readiness, snapshot isolation, evidence bytes/context approved-only contract inclusion, project isolation, fixture immutability and Service Worker route/cache boundaries. Chromium checks covered the four-step journey at 1440, 768, 390 and 320px, targeted keyboard actions, failure/retry, unchanged identifiers, deletion, escaping, network transitions, offline reload and compatible updates. These are bounded demo checks, not production acceptance or full accessibility certification. See [PROGRESS.md](PROGRESS.md).
+Eighteen tests cover decimal boundaries, totals, old-draft compatibility, draft/review readiness, snapshot isolation, evidence bytes/context, approved-only contract inclusion, project isolation, fixture immutability, proposal review boundaries, unknown values/storage errors and Service Worker route/cache boundaries. Chromium checks covered the four-step journey at 1440, 768, 390 and 320px, targeted keyboard actions, failure/retry, unchanged identifiers, deletion, escaping, network transitions, offline reload and compatible updates. SOV/VO checks also covered source integration, old snapshot preservation, proposal failure/read-back/retry, local review reset, independent deletion, offline cached recovery after stopping the server and dirty-update protection. These are bounded demo checks, not production acceptance or full accessibility certification. See [PROGRESS.md](PROGRESS.md).

@@ -1,3 +1,4 @@
+import { claimBasis, SOURCE_VERSION } from './demo-contracts.js';
 // Illustrative device-local calculations; not a production financial contract.
 const AMOUNT = /^\d{1,11}(\.\d{1,2})?$/;
 export const STEPS = ['Details', 'Claim lines', 'Evidence', 'Review'];
@@ -9,11 +10,8 @@ export function toCents(value) {
 }
 export const fromCents = cents => (cents / 100).toFixed(2);
 export const validPeriod = value => /^\d{4}-(0[1-9]|1[0-2])$/.test(String(value));
-export function sampleLines() {
-  return [
-    { id: 'A01', title: 'Site preparation', previous: '20000.00', current: '', note: '' },
-    { id: 'A02', title: 'Concrete works', previous: '30000.00', current: '', note: '' }
-  ];
+export function sampleLines(project = 'harbor') {
+  return claimBasis(project);
 }
 export function lineTotals(lines = []) {
   let previous = 0;
@@ -38,7 +36,7 @@ export function normalizeDraft(record, context = {}, id) {
     lines: structuredClone(record?.lines || []), attachments: structuredClone(record?.attachments || []),
     step: Math.min(3, Math.max(0, Number(record?.step) || 0)),
     updatedAt: record?.updatedAt || null, reviewedAt: record?.reviewedAt || null,
-    sourceVersion: String(record?.sourceVersion || 'demo-sov-v1')
+    sourceVersion: String(record?.sourceVersion || (record ? 'demo-sov-v1' : SOURCE_VERSION))
   };
   // Older one-amount drafts retain their value and identifier when resumed.
   if (record && !Array.isArray(record.lines) && toCents(record.amount) !== null) {

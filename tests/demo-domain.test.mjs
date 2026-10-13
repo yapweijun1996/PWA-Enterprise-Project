@@ -53,3 +53,18 @@ test('sample evidence stores actual content bytes with its contextual metadata',
   assert.equal(attachment.size, new TextEncoder().encode(attachment.content).length);
   assert.throws(() => sampleAttachment('unknown', {}));
 });
+test('old line snapshots survive while new claim sources use only their project basis', () => {
+  const old = { id: 'LOCAL-v1', project: 'harbor', sourceVersion: 'demo-sov-v1', lines: [{ id: 'A02', title: 'Historical concrete', previous: '7.00', current: '3.00', note: '' }] };
+  const resumed = normalizeDraft(old);
+  assert.deepEqual(resumed.lines, old.lines);
+  assert.equal(savedRecord(resumed, false).amount, '3.00');
+  assert.equal(resumed.sourceVersion, 'demo-sov-v1');
+  assert.deepEqual(sampleLines('cedar').map(line => line.id), ['A01', 'A02']);
+  const current = normalizeDraft(null, { project: 'harbor' }, 'LOCAL-v2');
+  current.lines = sampleLines(current.project);
+  current.lines[2].current = '1.01';
+  const snapshot = savedRecord(current, false);
+  assert.equal(snapshot.sourceVersion, 'demo-sov-v2');
+  assert.equal(snapshot.lines[2].basis.source, 'Approved variation');
+  assert.equal(snapshot.lines[2].basis.revised, '50000.00');
+});

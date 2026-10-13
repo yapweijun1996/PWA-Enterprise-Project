@@ -21,7 +21,7 @@ The **production system** remains at the pre-implementation blueprint stage. A s
 
 ## Implemented static demo boundary
 
-The v2 shared shell and four-step local claim journey are implemented; the wider production screen families remain targets. [README.md](README.md) owns the walkthrough and commands; [PROGRESS.md](PROGRESS.md) owns verification evidence and limitations.
+The v2 shared shell, four-step local claim journey, project SOV/VO pages and local variation proposals are implemented; the wider production screen families remain targets. [README.md](README.md) owns the walkthrough and commands; [PROGRESS.md](PROGRESS.md) owns verification evidence and limitations.
 
 | Source | Demo responsibility |
 |---|---|
@@ -31,10 +31,17 @@ The v2 shared shell and four-step local claim journey are implemented; the wider
 | project-pages.js | Project SOV/VO browsing, responsive records, filtering, source facts and project tabs. |
 | demo-domain.js | Integer-cent illustrative totals, readiness validation, synthetic evidence fixtures and old-record adaptation. |
 | ui.js | Escaping, formatting and consistent outline icons. |
-| storage.js | Existing IndexedDB v1 draft store and same-key transactions. |
+| storage.js | Existing claim database/store/key API, with no database version upgrade. |
+| record-store.js | Shared IndexedDB transaction completion/error handling; no shared record collection. |
+| variation-storage.js | Separate device-only variation proposal database and read/write/delete API. |
+| variation-domain.js / variation-editor.js | Proposal validation, source snapshots, local review and one active editor with dirty/busy guards. |
 | sw.js / manifest.webmanifest | Allowlisted static shell, compatible explicit updates and install metadata. |
 
 Schema-version-2 records add line arrays, sample text file content/metadata, saved step and local review time without changing the store or identifier. Old one-amount records adapt in memory and save back to their existing key. One transaction stores the draft and sample evidence together; the UI confirms read-back before showing Saved on this device. The editor owns unsaved state; network events only update connectivity presentation. A failed write retains the editor and retries the same identifier. Source-context changes explicitly discard only the current draft's synthetic lines/evidence after confirmation.
+
+New claim lines snapshot the selected project's original SOV and sample approved VO basis from demo-contracts.js (demo-sov-v2). Pending/rejected fixtures and local proposals are never claim sources. Existing v1 line arrays, amounts, notes and source versions survive resume/resave; an empty old draft takes the current source only when its first lines are created.
+
+Variation proposals use constructclaim-demo-variations-v1 / drafts at database version 1 with schema-version-1 records. Claims keep constructclaim-demo-v1 / drafts at version 1. This separation avoids mixing proposal records into claim consumers or requiring an upgrade of existing cached clients. The app reads both independently, labels unavailable storage explicitly, and confirms each write with its owning read-back. Proposal scope, proposed amount, linked-line snapshot, source version and local review timestamp are saved; no approval/submission flag is accepted. Editing clears local review. Separate delete/clear operations cannot clear the other record family. Rollback leaves both databases intact; older app versions will simply not expose variation records.
 
 Incomplete saves and optional synthetic evidence are scoped demo choices. Local review is not submission or certification. There is no production permission, authoritative money, upload, command queue, server acceptance or conflict implementation. Rollback of source must retain browser data; historical records remain readable by the adapter. The Service Worker caches only declared static assets, normalizes hash fragments for shell matching and waits for an explicit update after the active draft is saved.
 

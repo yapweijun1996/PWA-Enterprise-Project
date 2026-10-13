@@ -1,3 +1,4 @@
+import { SOURCE_VERSION } from './demo-contracts.js';
 import { escapeHtml, icon, money, displayDate, draftLabel } from './ui.js';
 import { STEPS, normalizeDraft, sampleLines, lineTotals, toCents, fromCents, validateDraft, savedRecord, EVIDENCE_KINDS, sampleAttachment } from './demo-domain.js';
 
@@ -69,10 +70,10 @@ export function createDraftEditor({ root, record, context, projects, onSave, onD
   }
   function linesMarkup() {
     const legacy = draft.sourceVersion === 'legacy-demo-amount';
-    return '<div class="panel-head"><h2>Claim lines</h2><span class="meta">SGD · Illustrative</span></div><p class="meta">' + (legacy ? 'Your previous demo amount is preserved as one editable line.' : 'SOV v1 · Synthetic source. Previous amounts are read-only sample values.') + '</p>' +
+    return '<div class="panel-head"><h2>Claim lines</h2><span class="meta">SGD · Illustrative</span></div><p class="meta">' + (legacy ? 'Your previous demo amount is preserved as one editable line.' : 'Source ' + fieldValue(draft.sourceVersion) + ' · Saved line basis. Previous amounts are read-only samples.') + '</p>' +
       '<div class="line-pager"><button class="button secondary" type="button" data-line-prev aria-label="Previous claim line" ' + (selectedLine === 0 ? 'disabled' : '') + '>' + icon('back') + '</button><div><strong>' + fieldValue(draft.lines[selectedLine]?.id) + ' · ' + fieldValue(draft.lines[selectedLine]?.title) + '</strong><span class="meta">Line ' + (selectedLine + 1) + ' of ' + draft.lines.length + '</span></div><button class="button secondary" type="button" data-line-next aria-label="Next claim line" ' + (selectedLine >= draft.lines.length - 1 ? 'disabled' : '') + '>' + icon('arrow') + '</button></div>' +
       '<div class="line-grid-head" aria-hidden="true"><span>Item</span><span>Previous</span><span>This period</span><span>Cumulative</span></div>' +
-      draft.lines.map((line, index) => '<section class="claim-line ' + (index === selectedLine ? 'is-selected' : '') + '" data-line-row="' + index + '" aria-label="' + fieldValue(line.id + ' · ' + line.title) + '"><div class="line-values"><div class="line-name"><strong>' + fieldValue(line.id) + ' · ' + fieldValue(line.title) + '</strong></div><div class="line-previous"><span class="mobile-field-label">Previous · Sample</span><strong>' + amount(toCents(line.previous) ?? 0) + '</strong></div><label class="line-current"><span class="mobile-field-label">This period · SGD</span><span class="sr-only">This period for ' + fieldValue(line.id) + ' (SGD)</span><input id="line-' + index + '" data-line-amount="' + index + '" type="text" inputmode="decimal" maxlength="16" value="' + fieldValue(line.current) + '" placeholder="0.00" aria-describedby="editor-feedback"></label><div class="line-cumulative"><span class="mobile-field-label">Cumulative</span><strong data-cumulative="' + index + '">' + (toCents(line.current || '0') === null ? '—' : amount((toCents(line.previous) ?? 0) + toCents(line.current || '0'))) + '</strong></div></div><label class="line-note">Progress note (optional)<textarea id="line-note-' + index + '" data-line-note="' + index + '" maxlength="300" placeholder="Fictional measured progress">' + fieldValue(line.note) + '</textarea></label></section>').join('') +
+      draft.lines.map((line, index) => '<section class="claim-line ' + (index === selectedLine ? 'is-selected' : '') + '" data-line-row="' + index + '" aria-label="' + fieldValue(line.id + ' · ' + line.title) + '"><div class="line-values"><div class="line-name"><strong>' + fieldValue(line.id) + ' · ' + fieldValue(line.title) + '</strong>' + (line.basis ? '<small class="meta">' + fieldValue(line.basis.source + ' · ' + line.basis.quantity + ' ' + line.basis.unit) + ' × ' + money(line.basis.rate) + '<br>Revised basis: ' + money(line.basis.revised) + '</small>' : '<small class="meta">Historical sample basis preserved</small>') + '</div><div class="line-previous"><span class="mobile-field-label">Previous · Sample</span><strong>' + amount(toCents(line.previous) ?? 0) + '</strong></div><label class="line-current"><span class="mobile-field-label">This period · SGD</span><span class="sr-only">This period for ' + fieldValue(line.id) + ' (SGD)</span><input id="line-' + index + '" data-line-amount="' + index + '" type="text" inputmode="decimal" maxlength="16" value="' + fieldValue(line.current) + '" placeholder="0.00" aria-describedby="editor-feedback"></label><div class="line-cumulative"><span class="mobile-field-label">Cumulative</span><strong data-cumulative="' + index + '">' + (toCents(line.current || '0') === null ? '—' : amount((toCents(line.previous) ?? 0) + toCents(line.current || '0'))) + '</strong></div></div><label class="line-note">Progress note (optional)<textarea id="line-note-' + index + '" data-line-note="' + index + '" maxlength="300" placeholder="Fictional measured progress">' + fieldValue(line.note) + '</textarea></label></section>').join('') +
       '<p class="meta">Enter non-negative amounts with up to two decimal places. A positive total is required to continue.</p>';
   }
   function evidenceMarkup() {
@@ -114,7 +115,7 @@ function render(focus = false) {
     if (step > draft.step) {
       const errors = validateDraft(draft, { requireDetails: true, requireLines: step > 1 });
       if (errors.length) { showErrors(errors); return; }
-      if (step >= 1 && !draft.lines.length) { draft.lines = sampleLines(); markDirty(); }
+      if (step >= 1 && !draft.lines.length) { draft.lines = sampleLines(draft.project); draft.sourceVersion = SOURCE_VERSION; markDirty(); }
     }
     draft.step = step;
     feedback = '';
@@ -129,7 +130,7 @@ function render(focus = false) {
     draft[field] = value;
     draft.lines = [];
     draft.attachments = [];
-    draft.sourceVersion = 'demo-sov-v1';
+    draft.sourceVersion = SOURCE_VERSION;
     selectedLine = 0;
     markDirty();
     render();

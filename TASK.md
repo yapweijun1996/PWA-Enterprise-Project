@@ -163,4 +163,11 @@ Acceptance IDs E2E-01–E2E-18 are defined in [SPEC.md](SPEC.md). Their current 
 - **Status:** Verified within the synthetic read-only demo scope; not released.
 - **Scope:** Implement v2 page families 12–15 and project Overview/SOV/Claims/Variations/Evidence navigation, source/status filters, immutable synthetic fixtures and approved-only revised contract values.
 - **Evidence:** Twelve Node contract tests passed; Chromium list/detail checks at 1440/768/390/320px, filter/no-results, project isolation, 44px primary controls, no document overflow, explicit cache update and hash-route reload passed. See PROGRESS.md.
-- **Boundary:** No live approval, contract editing, submission, certificate or authoritative financial event. Claim-source integration remains a separate demo amendment. T-006 and production E2E states are unchanged.
+- **Boundary:** No live approval, contract editing, submission, certificate or authoritative financial event. Claim-source integration and local proposals are covered by DEMO-004. T-006 and production E2E states are unchanged.
+
+### DEMO-004 — SOV claim sources and local variation proposals
+
+- **Status:** Verified within the synthetic/device-local demo scope; not released.
+- **Scope:** Use one project SOV/approved-VO fixture source for new claims, preserve historical draft snapshots, and implement local variation create/edit/save/review/read/delete with independent storage.
+- **Evidence:** Eighteen Node tests, twelve JavaScript syntax checks and manifest parsing passed. Focused Chromium flows verified source/evidence persistence, legacy compatibility, proposal review/reset, failed write/read-back/retry, independent clear/delete/cancel, 1440/768/390/320px layouts, guarded updates and cached recovery with the test server stopped. See PROGRESS.md.
+- **Boundary:** Local review cannot approve, submit or add a proposal to revised contract/claim lines. No real VO authority, SOV version editing, certificate issue, upload or server workflow exists. T-006 and production E2E states remain unchanged. Both completed amendments are committed locally; no publication is authorized.

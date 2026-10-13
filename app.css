@@ -303,3 +303,8 @@ pre { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 12px; line-heig
 #sov-search, #sov-source, #vo-search, #vo-state { font-size: 16px; }
 .data-table tfoot th { border-top: 2px solid var(--line); }
 @media (max-width: 767px) { .contract-cards { grid-template-columns: 1fr; } .project-tabs { gap: 0; } .project-tabs a { padding: 10px 12px; } }
+/* Local variation proposal task */
+.variation-form { padding-bottom: 72px; }
+.variation-form .editor-action-buttons { display: flex; flex-wrap: wrap; }
+.variation-form input, .variation-form select, .variation-form textarea { font-size: 16px; }
+@media (max-width: 767px) { .variation-form .editor-action-buttons { display: grid; grid-template-columns: 1fr 1fr; } .variation-form .editor-action-buttons button { white-space: normal; padding: 10px 8px; } }
