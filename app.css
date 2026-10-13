@@ -316,4 +316,20 @@ pre { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 12px; line-heig
 .variation-form { padding-bottom: 72px; }
 .variation-form .editor-action-buttons { display: flex; flex-wrap: wrap; }
 .variation-form input, .variation-form select, .variation-form textarea { font-size: 16px; }
+/* Device-local image capture and evidence gallery */
+.capture-form { padding-bottom: 72px; }
+.capture-form input, .capture-form select, .capture-form textarea, #evidence-search, #evidence-type { font-size: 16px; }
+.capture-preview { min-height: 260px; display: grid; place-items: center; margin-bottom: 20px; background: #F4F7FB; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.capture-preview .empty-state { margin: 0; }
+.evidence-photo { display: block; width: 100%; max-height: 600px; object-fit: contain; background: #EAF1FC; border-radius: 8px; }
+.file-picker { display: grid; gap: 8px; margin-bottom: 16px; font-size: 14px; font-weight: 600; }
+.file-picker input { padding: 8px; width: 100%; border: 1px solid var(--line); border-radius: 8px; background: white; }
+.file-picker input::file-selector-button { min-height: 44px; border: 0; border-radius: 6px; padding: 8px 12px; color: var(--blue); background: #EAF1FC; margin-right: 8px; }
+.evidence-gallery { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 16px; }
+.evidence-gallery:empty { display: none; }
+.evidence-tile { overflow-wrap: anywhere; min-width: 0; }
+.evidence-tile .evidence-photo { height: 170px; object-fit: cover; margin-bottom: 16px; }
+.evidence-tile h3 { font-size: 16px; margin: 14px 0 8px; }
+@media (max-width: 1199px) { .evidence-gallery { grid-template-columns: repeat(2,minmax(0,1fr)); } }
+@media (max-width: 767px) { .evidence-gallery { grid-template-columns: 1fr; } .capture-preview { min-height: 200px; } .capture-form .editor-action-buttons { display: grid; grid-template-columns: 1fr 1fr; } }
 @media (max-width: 767px) { .variation-form .editor-action-buttons { display: grid; grid-template-columns: 1fr 1fr; } .variation-form .editor-action-buttons button { white-space: normal; padding: 10px 8px; } }

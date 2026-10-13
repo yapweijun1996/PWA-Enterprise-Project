@@ -1,18 +1,20 @@
 import { SOURCE_VERSION } from './demo-contracts.js';
+import { imageContent } from './evidence-domain.js';
 import { escapeHtml, icon, money, displayDate, draftLabel } from './ui.js';
 import { STEPS, normalizeDraft, sampleLines, lineTotals, toCents, fromCents, validateDraft, savedRecord, EVIDENCE_KINDS, sampleAttachment } from './demo-domain.js';
 
 const amount = cents => money(fromCents(cents));
 const fieldValue = value => escapeHtml(value ?? '');
 export function evidenceCards(attachments, pending = false, editable = false) {
-  if (!attachments.length) return '<p class="meta">No sample evidence attached.</p>';
-  return '<div class="evidence-list">' + attachments.map((file, index) =>
-    '<article class="evidence-card"><div class="evidence-file">' + icon('file') + '<div><strong>' + fieldValue(file.name) + '</strong><small class="meta">' + fieldValue(file.lineId || 'Whole claim') + ' · ' + Number(file.size || 0) + ' bytes · Synthetic text</small></div></div><span class="status ' + (pending ? 'warning' : 'local') + '">' + (pending ? 'Ready to save' : 'Saved on this device') + '</span><details><summary>Preview sample content</summary><pre>' + fieldValue(file.content) + '</pre></details>' +
+  if (!attachments.length) return '<p class="meta">No evidence attached.</p>';
+  return '<div class="evidence-list">' + attachments.map((file, index) => {
+    const preview = imageContent(file);
+    return '<article class="evidence-card"><div class="evidence-file">' + icon(preview ? 'evidence' : 'file') + '<div><strong>' + fieldValue(file.name) + '</strong><small class="meta">' + fieldValue(file.lineId || 'Whole claim') + ' · ' + Number(file.size || 0) + ' bytes · ' + (preview ? 'Image' : 'Synthetic text') + '</small></div></div><span class="status ' + (pending ? 'warning' : 'local') + '">' + (pending ? 'Ready to save' : 'Saved on this device') + '</span>' + (preview ? '<details><summary>Preview image</summary><img class="evidence-photo" src="' + fieldValue(preview) + '" alt="' + fieldValue(file.note || file.name) + '"><p class="meta">' + fieldValue(file.note || '') + '</p><p class="meta">Linked claim saved: ' + fieldValue(file.context?.updatedAt || 'Sample fixture') + '</p></details>' : '<details><summary>Preview sample content</summary><pre>' + fieldValue(file.type === 'text/plain' ? file.content : 'Preview unavailable') + '</pre></details>') +
     (editable ? '<button class="text-link remove-file" type="button" data-remove-evidence="' + index + '">' + icon('trash') + 'Remove sample</button>' : '') + '</article>'
-  ).join('') + '</div>';
+  }).join('') + '</div>';
 }
 
-export function createDraftEditor({ root, record, context, projects, onSave, onDone, onRouteChange, announce }) {
+export function createDraftEditor({ root, record, context, projects, linkedAttachments = [], linkedImageError = '', onSave, onDone, onRouteChange, announce }) {
   let draft = normalizeDraft(record, context, 'LOCAL-' + crypto.randomUUID());
   if (!projects.some(project => project.id === draft.project)) draft.project = projects[0].id;
   let dirty = false;
@@ -56,6 +58,7 @@ export function createDraftEditor({ root, record, context, projects, onSave, onD
     if (previous) previous.disabled = busy || selectedLine === 0;
     if (next) next.disabled = busy || selectedLine >= draft.lines.length - 1;
     root.querySelectorAll('.evidence-card .status').forEach(el => {
+      if (el.closest('[data-linked-images]')) return;
       el.textContent = dirty || !saved ? 'Ready to save' : 'Saved on this device';
       el.classList.toggle('warning', dirty || !saved);
       el.classList.toggle('local', saved && !dirty);
@@ -64,6 +67,10 @@ export function createDraftEditor({ root, record, context, projects, onSave, onD
     if (finish) finish.disabled = busy || !acknowledged;
     const checkbox = root.querySelector('[name=acknowledgement]');
     if (checkbox) checkbox.checked = acknowledged;
+    const imageLink = root.querySelector('[data-add-image]');
+    if (imageLink) imageLink.hidden = !saved || dirty || busy;
+    const imageHint = root.querySelector('[data-image-save-hint]');
+    if (imageHint) imageHint.textContent = !saved ? 'Save this claim first to add an image with its saved context.' : dirty ? 'Save your changes before adding another image.' : '';
   }
   function detailsMarkup() {
     return '<h2>Claim details</h2><p class="meta">Project and direction carry forward from your starting point.</p><div class="details-fields"><label>Project<select name="project">' + projects.map(item => '<option value="' + item.id + '" ' + (item.id === draft.project ? 'selected' : '') + '>' + item.name + '</option>').join('') + '</select></label><label>Direction<select name="direction"><option ' + (draft.direction === 'Receivable' ? 'selected' : '') + '>Receivable</option><option ' + (draft.direction === 'Payable' ? 'selected' : '') + '>Payable</option></select></label><div class="context-field"><span>Contract · Sample</span><strong>' + project().contract + ' · ' + project().party + '</strong></div><label>Claim period <span class="required-label">Required to continue</span><input name="period" type="month" value="' + fieldValue(draft.period) + '" aria-describedby="editor-feedback"></label><label>Reference (optional)<input name="reference" maxlength="60" placeholder="e.g. SITE-OCT-01" value="' + fieldValue(draft.reference) + '"></label><label class="full-field">Period note (optional)<textarea name="notes" maxlength="500" placeholder="Fictional progress measured this period">' + fieldValue(draft.notes) + '</textarea><span class="hint"><span id="note-count">' + draft.notes.length + '</span> / 500</span></label></div>';
@@ -76,15 +83,19 @@ export function createDraftEditor({ root, record, context, projects, onSave, onD
       draft.lines.map((line, index) => '<section class="claim-line ' + (index === selectedLine ? 'is-selected' : '') + '" data-line-row="' + index + '" aria-label="' + fieldValue(line.id + ' · ' + line.title) + '"><div class="line-values"><div class="line-name"><strong>' + fieldValue(line.id) + ' · ' + fieldValue(line.title) + '</strong>' + (line.basis ? '<small class="meta">' + fieldValue(line.basis.source + ' · ' + line.basis.quantity + ' ' + line.basis.unit) + ' × ' + money(line.basis.rate) + '<br>Revised basis: ' + money(line.basis.revised) + '</small>' : '<small class="meta">Historical sample basis preserved</small>') + '</div><div class="line-previous"><span class="mobile-field-label">Previous · Sample</span><strong>' + amount(toCents(line.previous) ?? 0) + '</strong></div><label class="line-current"><span class="mobile-field-label">This period · SGD</span><span class="sr-only">This period for ' + fieldValue(line.id) + ' (SGD)</span><input id="line-' + index + '" data-line-amount="' + index + '" type="text" inputmode="decimal" maxlength="16" value="' + fieldValue(line.current) + '" placeholder="0.00" aria-describedby="editor-feedback"></label><div class="line-cumulative"><span class="mobile-field-label">Cumulative</span><strong data-cumulative="' + index + '">' + (toCents(line.current || '0') === null ? '—' : amount((toCents(line.previous) ?? 0) + toCents(line.current || '0'))) + '</strong></div></div><label class="line-note">Progress note (optional)<textarea id="line-note-' + index + '" data-line-note="' + index + '" maxlength="300" placeholder="Fictional measured progress">' + fieldValue(line.note) + '</textarea></label></section>').join('') +
       '<p class="meta">Enter non-negative amounts with up to two decimal places. A positive total is required to continue.</p>';
   }
+  function linkedImagesMarkup() {
+    const images = linkedAttachments.filter(file => file.context.project === draft.project);
+    return '<section data-linked-images><h3 class="section-gap">Linked images · Saved separately</h3>' + (linkedImageError ? '<div class="notice error" role="alert">Linked images unavailable: ' + fieldValue(linkedImageError) + '</div>' : evidenceCards(images)) + '<p class="meta">These device-local files retain their original claim context. Editing or saving this draft does not replace them.</p><p class="meta" data-image-save-hint></p><a class="text-link" data-add-image href="#evidence-new?project=' + encodeURIComponent(draft.project) + '&claim=' + encodeURIComponent(draft.id) + '">Add image ' + icon('plus') + '</a></section>';
+  }
   function evidenceMarkup() {
     return '<h2>Evidence</h2><p class="meta">Add a synthetic text file to try local evidence save and recovery. File content and metadata are saved together with the draft.</p><div class="evidence-picker"><label>Sample document<select id="evidence-kind">' + EVIDENCE_KINDS.map(item => '<option value="' + item.id + '">' + item.name + '</option>').join('') + '</select></label><label>Attach to<select id="evidence-line"><option value="">Whole claim</option>' + draft.lines.map(line => '<option value="' + fieldValue(line.id) + '">' + fieldValue(line.id + ' · ' + line.title) + '</option>').join('') + '</select></label><button class="button secondary" type="button" data-add-evidence>' + icon('plus') + 'Add sample file</button></div>' +
-      evidenceCards(draft.attachments, dirty || !saved, true) + '<p class="meta">Evidence is optional in this demo. Real capture, file upload and production evidence requirements are not connected.</p>';
+      evidenceCards(draft.attachments, dirty || !saved, true) + linkedImagesMarkup() + '<p class="meta">Evidence is optional in this demo. Server uploads and production evidence requirements are not connected.</p>';
   }
   function reviewMarkup() {
     const totals = lineTotals(draft.lines);
     return '<div class="panel-head"><h2>Review draft</h2><button type="button" class="text-link" data-go-step="0">Edit details</button></div><dl class="key-values"><div><dt>Project / contract</dt><dd>' + project().name + ' · ' + project().contract + '</dd></div><div><dt>Direction / period</dt><dd>' + draft.direction + ' · ' + fieldValue(draft.period) + '</dd></div><div><dt>Reference</dt><dd>' + fieldValue(draft.reference || draftLabel(draft)) + '</dd></div><div><dt>This period · Illustrative</dt><dd>' + amount(totals.current) + '</dd></div></dl><p class="review-note">' + fieldValue(draft.notes || 'No period note') + '</p>' +
       '<div class="panel-head section-gap"><h3>Claim lines</h3><button type="button" class="text-link" data-go-step="1">Edit lines</button></div><ul class="row-list">' + draft.lines.map(line => '<li class="review-line"><span>' + fieldValue(line.id + ' · ' + line.title) + '</span><strong>' + amount(toCents(line.current || '0') ?? 0) + '</strong></li>').join('') + '</ul>' +
-      '<div class="panel-head section-gap"><h3>Sample evidence · ' + draft.attachments.length + '</h3><button type="button" class="text-link" data-go-step="2">Edit evidence</button></div>' + evidenceCards(draft.attachments, dirty || !saved) +
+      '<div class="panel-head section-gap"><h3>Sample evidence · ' + draft.attachments.length + '</h3><button type="button" class="text-link" data-go-step="2">Edit evidence</button></div>' + evidenceCards(draft.attachments, dirty || !saved) + linkedImagesMarkup() +
       '<div class="notice"><strong>Local review only</strong><p>Saving this review does not submit, synchronize or certify the claim. Real evidence rules and server acceptance are not connected.</p></div><label class="acknowledgement"><input name="acknowledgement" type="checkbox"><span>I have reviewed this fictional draft and understand it remains on this device.</span></label>';
   }
 function render(focus = false) {

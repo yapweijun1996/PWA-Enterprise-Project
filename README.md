@@ -4,7 +4,7 @@ This repository contains a **device-local demonstration** of ConstructClaim. It 
 
 ## Visual design baseline
 
-Open the [design gallery](ui/ssot-v2/pages/index.html) to review 21 independent desktop/mobile page sheets and four core boards. [DESIGN.md — Active visual baseline v2](DESIGN.md#active-visual-baseline-v2) owns the page index, tokens, responsive rules and interaction contract. The running demo implements the shared shell, Overview, local claim main flow and project SOV/variation workflows. The remaining page families are target designs; the 24 original images remain supporting references.
+Open the [design gallery](ui/ssot-v2/pages/index.html) to review 21 independent desktop/mobile page sheets and four core boards. [DESIGN.md — Active visual baseline v2](DESIGN.md#active-visual-baseline-v2) owns the page index, tokens, responsive rules and interaction contract. The running demo implements the shared shell, Overview, claims, project SOV/variations, certification previews and device-local evidence capture/gallery. The remaining page families are target designs; the 24 original images remain supporting references.
 
 The gallery opens directly from disk, or at http://127.0.0.1:8765/ui/ssot-v2/pages/ with the local server running. Local certification and certificate previews also follow core board 03 and page 11.
 
@@ -49,6 +49,18 @@ Relative asset URLs support a GitHub Pages repository subpath. Publication is a 
 
 No certificate is issued. Retention, deductions, tax, net payable and PDF output await selected contract/output rules. Local previews do not change SOV figures, claims, invoices or payments.
 
+## Evidence capture walkthrough
+
+1. Save a fictional claim, then choose **Add evidence** on its detail or **Add image** in the saved editor's Evidence/Review step. A project Evidence page or **More → Evidence** also provides an entry. Save claim changes before leaving its editor to add an image.
+2. Choose a fictional PNG/JPEG/WebP through the file picker, or choose **Load demo illustration**. The demo reads and decodes the actual file, checks type/signature, and limits it to 3 MB and 24 megapixels. An invalid selection retains the previous valid preview.
+3. Check the project, saved claim and line (or Whole claim). Set the evidence type, user-supplied captured time, note and optional manual location. No device location is requested. The picker has a camera hint for supporting phones; real camera/device behavior is unverified.
+4. **Ready to save** is a preview only. **Save on this device** persists image bytes and context together in a separate record, confirms the read-back, and opens its detail. Failed writes/read-backs keep the preview and details; retry the same attempt before leaving.
+5. Browse project or global Evidence, search file/note/claim, and filter Photos/Documents. Existing synthetic text documents stay in their claim records; images have their own store. Device drafts provides image recovery links.
+6. Saved claim Evidence/Review shows linked images as already saved, even when the claim has unsaved edits. A new certificate assessment copies the readable linked images for that project's claim into its source snapshot. Later image deletion does not alter a saved certificate.
+7. Delete an image from its detail, or clear images through Settings. Confirmation is required. These actions keep claims, proposals and certificate snapshots; clearing claims also keeps the separately saved images and previews.
+
+Images are device-local and unuploaded, with no server queue. Context snapshots remain available after a source changes or disappears; unreadable storage is shown as unavailable. Use fictional data only. Browser eviction or site-data clearing can remove these records.
+
 ## What works
 
 - v2 shell: 240px desktop sidebar, expandable 72px tablet rail, five-item mobile browsing navigation and consistent outline icons. Focused mobile editing replaces bottom navigation with persistent Save/Continue actions and explicit back/close paths.
@@ -58,13 +70,14 @@ No certificate is issued. Retention, deductions, tax, net payable and PDF output
 - IndexedDB draft create/edit/read/delete, incomplete draft saves, integer-cent illustrative line totals, local review and sample evidence content/metadata saved in one record. The existing claim store/key contract is unchanged. Variation proposals use a separate database and share only transaction handling.
 - Validation and failure feedback retain input. Network changes preserve the editor, focus and selection. Leaving with unsaved changes requires an explicit discard decision; app updates wait for dirty/busy drafts to be saved.
 - Independent assessment drafts and read-only reviewed certificate previews, exact-cent signed variances, required reasons, source/evidence snapshots and guarded, idempotent retries. Certificates use a separate database; an atomic check prevents replacement of a reviewed preview by another tab.
+- Image selection/preview, local bytes/context save/read-back, independent evidence gallery/detail, source context snapshots, note/location metadata, filters, failure/retry and separate delete/clear. Images are visible in claim review and copied into new certificate snapshots; existing claim storage is unchanged.
 - A static manifest and versioned Service Worker cache. Hash routes resolve to the static shell. Chromium verified offline reload, local read/write and cached navigation/new-tab recovery after the local server was stopped.
 
 Browser storage can be evicted or cleared and is not a backup. Cache availability requires a successful first visit. Real device installation, browser-process cold launch, iOS standalone safe areas and screen-reader acceptance are not verified.
 
 ## Deliberately not implemented
 
-There is **no authentication, authorization, tenant isolation, production API/database, real evidence capture/upload, authoritative financial calculation, certificate issue, invoice/payment posting, audit ledger, AI, server synchronization or conflict resolution**. Device drafts are not queued server commands. The demo cannot claim a server submission, approval, sync or financial event.
+There is **no authentication, authorization, tenant isolation, production API/database, server evidence upload, authoritative financial calculation, certificate issue, invoice/payment posting, audit ledger, AI, server synchronization or conflict resolution**. Local image selection is demonstrated; physical phone camera capture is unverified. Device records are not queued server commands. The demo cannot claim a server submission, approval, sync or financial event.
 
 T-001–T-003 and production E2E-01–E2E-18 remain open. The wider 25-family design coverage is not a claim that all production routes exist.
 
@@ -90,8 +103,12 @@ node --check certificate-domain.js
 node --check certificate-storage.js
 node --check certificate-editor.js
 node --check certificate-pages.js
+node --check evidence-domain.js
+node --check evidence-storage.js
+node --check evidence-editor.js
+node --check evidence-pages.js
 node --test tests/*.test.mjs
 python -m json.tool manifest.webmanifest
 ~~~
 
-Twenty-one tests cover the existing claim/SOV/VO/cache contracts plus assessment readiness, signed exact-cent variance, required reasons, immutable source/reviewed snapshots and rejected issue flags. Focused Chromium checks cover claim/VO flows and certification save/review/detail/reload, source changes, quota/read-back failure/retry, network state preservation, unsaved departure cancellation and offline-emulated recovery. Layout checks use 1440/768/390/320px. These are bounded demo checks, not production acceptance or full accessibility certification. See [PROGRESS.md](PROGRESS.md).
+Twenty-six tests cover claim/SOV/VO/cache contracts, assessment/variance readiness, immutable previews, raster bytes/type/size limits, evidence context/project isolation and unavailable-source states. All twenty-one JavaScript syntax checks pass. Focused Chromium checks include actual PNG/JPEG input and decode, persistence/read-back/retry, image/claim/certificate integration, independent deletion/clear, dirty-update protection, source snapshots, filters, 1440/768/390/320px layouts and cached reload/new-tab/local-write recovery with the task server stopped. These are bounded demo checks, not production acceptance, real phone-camera or full accessibility certification. See [PROGRESS.md](PROGRESS.md).

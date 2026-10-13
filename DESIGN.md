@@ -21,7 +21,7 @@ The **production system** remains at the pre-implementation blueprint stage. A s
 
 ## Implemented static demo boundary
 
-The v2 shared shell, four-step local claim journey, project SOV/VO pages and local variation proposals are implemented; the wider production screen families remain targets. [README.md](README.md) owns the walkthrough and commands; [PROGRESS.md](PROGRESS.md) owns verification evidence and limitations.
+The v2 shared shell, local claim/SOV/VO workflows, certification previews and device-local evidence capture/gallery are implemented; the wider production screen families remain targets. [README.md](README.md) owns the walkthrough and commands; [PROGRESS.md](PROGRESS.md) owns verification evidence and limitations.
 
 | Source | Demo responsibility |
 |---|---|
@@ -38,6 +38,8 @@ The v2 shared shell, four-step local claim journey, project SOV/VO pages and loc
 | demo-claims.js | Independent synthetic claim navigation fixtures. |
 | certificate-domain.js / certificate-editor.js / certificate-pages.js | Separate assessments, signed variance/reason readiness, snapshot review and responsive read-only previews. |
 | certificate-storage.js | Separate certificate database and atomically checked immutable reviewed writes. |
+| evidence-domain.js / evidence-editor.js / evidence-pages.js | Raster selection/validation, generated fictional illustration, context snapshots, capture state and project/global gallery/detail. |
+| evidence-storage.js | Separate local image records with bytes/metadata saved together and checked immutable retry. |
 | sw.js / manifest.webmanifest | Allowlisted static shell, compatible explicit updates and install metadata. |
 
 Schema-version-2 records add line arrays, sample text file content/metadata, saved step and local review time without changing the store or identifier. Old one-amount records adapt in memory and save back to their existing key. One transaction stores the draft and sample evidence together; the UI confirms read-back before showing Saved on this device. The editor owns unsaved state; network events only update connectivity presentation. A failed write retains the editor and retries the same identifier. Source-context changes explicitly discard only the current draft's synthetic lines/evidence after confirmation.
@@ -48,7 +50,11 @@ Variation proposals use constructclaim-demo-variations-v1 / drafts at database v
 
 Certificates use constructclaim-demo-certificates-v1 / certificates at database version 1, schema version 1. Each independently owned record snapshots a locally reviewed valid claim, its evidence, and assessments. Variance is illustrative certified minus claimed in integer cents. Incomplete rows remain unknown; review requires amounts and reasons for differences. Review makes the preview read-only; a check and put in one transaction prevents replacement, while an identical retry is accepted after an unconfirmed read-back. Later source changes/deletion preserve the preview and show a warning. Clear/delete operations affect only their own record family. No issue/submission flag is generated; retention, tax, deductions, net payable and issued PDF rules remain unselected.
 
-Incomplete saves and optional synthetic evidence are scoped demo choices. Local review is not submission or certificate issue. There is no production permission, authoritative money, upload, command queue, server acceptance or conflict implementation. Rollback of source must retain browser data; historical records remain readable by the adapter. The Service Worker caches only declared static assets, normalizes hash fragments for shell matching and waits for an explicit update after the active draft is saved.
+Images use constructclaim-demo-evidence-v1 / evidence at database version 1, schema version 1. Each record atomically stores an embedded PNG/JPEG/WebP data URL, decoded dimensions and byte count, selected project/claim/line context, source save/version reference, evidence type, manual note/location and user-supplied captured time. Limits are 3 MB and 24 megapixels; type/signature, decode and metadata validation run before saving. Only embedded raster previews are allowed; no remote image/SVG preview or Blob URL/CSP expansion is added. Saved files are read-only; identical unconfirmed retries retain the identifier. Invalid selections keep the previous valid preview. No upload/queue state is generated.
+
+The claim editor displays independently saved images without changing their saved status or copying them into claim writes. Capture links become available after confirmed claim saves and are hidden during unsaved/busy edits. New assessments copy readable images linked to the same claim and project into the certificate snapshot. Old-project images are not pulled into a claim moved to another project. File deletion keeps certificate copies; source deletion keeps image/context snapshots. Each store is read independently, and unavailable source reads are distinct from known changes/deletion. Clear/delete operations never clear another record family. Rollback preserves all four version-1 databases; older clients simply omit new record families.
+
+Incomplete saves and optional fictional evidence are scoped demo choices. Local review is not submission or certificate issue. There is no production permission, authoritative money, upload, command queue, server acceptance or conflict implementation. Rollback of source must retain browser data; historical records remain readable by the adapter. The Service Worker caches only declared static assets, normalizes hash fragments for shell matching and waits for an explicit update after the active editor is saved.
 
 ## Proposed system context
 

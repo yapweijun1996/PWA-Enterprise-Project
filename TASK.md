@@ -178,3 +178,10 @@ Acceptance IDs E2E-01–E2E-18 are defined in [SPEC.md](SPEC.md). Their current 
 - **Scope:** Independent line assessments, exact-cent signed variance, required reasons, incomplete save/resume, local review and read-only certificate/source/evidence snapshots, separate persistence and deletion.
 - **Evidence:** Twenty-one Node tests; focused Chromium create/save/review/detail/reload, invalid review, source preservation, atomic immutable writes, quota/read-back retry without duplicates, network/leave guards, offline-emulated recovery and 1440/768/390/320px layouts. See PROGRESS.md.
 - **Boundary:** Not issued or authorized; no contract/claim/invoice/payment change, retention/tax/deduction/net-payable policy, PDF output or production financial acceptance. T-002/T-010 and E2E states remain unchanged.
+
+### DEMO-006 — Device-local evidence capture and gallery
+
+- **Status:** Verified within the fictional/device-local demo scope; not released.
+- **Scope:** Raster file/illustration selection, validated preview, actual bytes/context save/read-back, project/global gallery filters and detail, claim review visibility, certificate snapshot integration, independent delete/clear and cached recovery.
+- **Evidence:** Twenty-six Node tests, twenty-one JavaScript syntax checks and manifest parsing; focused Chromium PNG/JPEG input/decode, write/read-back retry, context/snapshot isolation, storage errors, filters, dirty-update/leave guards, independent clear/cancel, 1440/768/390/320px layouts and screenshots. Server-stopped reload/new-tab recovery and on-device image write passed. See PROGRESS.md.
+- **Boundary:** Fictional images only; no automatic camera/geolocation, server upload, queue, real site inspection/sign-off, evidence authorization/retention or production security acceptance. Real phone camera/installation and the wider browser/device matrix remain unverified. T-003/T-008/T-009 and production E2E states remain unchanged.
