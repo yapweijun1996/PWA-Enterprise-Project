@@ -4,7 +4,7 @@ This repository contains a **device-local demonstration** of ConstructClaim. It 
 
 ## Visual design baseline
 
-Open the [design gallery](ui/ssot-v2/pages/index.html) to review 21 independent desktop/mobile page sheets and four core boards. [DESIGN.md — Active visual baseline v2](DESIGN.md#active-visual-baseline-v2) owns the page index, tokens, responsive rules and interaction contract. The running demo implements the shared shell, Overview and local claim main flow. The remaining page families are target designs; the 24 original images remain supporting references.
+Open the [design gallery](ui/ssot-v2/pages/index.html) to review 21 independent desktop/mobile page sheets and four core boards. [DESIGN.md — Active visual baseline v2](DESIGN.md#active-visual-baseline-v2) owns the page index, tokens, responsive rules and interaction contract. The running demo implements the shared shell, Overview, local claim main flow and project SOV/variation browsing. The remaining page families are target designs; the 24 original images remain supporting references.
 
 The gallery opens directly from disk, or at http://127.0.0.1:8765/ui/ssot-v2/pages/ with the local server running.
 
@@ -29,10 +29,18 @@ Relative asset URLs support a GitHub Pages repository subpath. Publication is a 
 5. In **Review**, inspect details, lines and sample evidence. The acknowledgement starts unchecked. **Save reviewed draft** records a local review and opens the detail page; it does not submit anything.
 6. Use **Edit draft**, **Overview → Resume draft**, or **Device drafts** to continue. Saves keep the same identifier. Reload restores the last saved step and content. Older one-amount drafts resume as a preserved legacy line.
 
+## SOV and variation walkthrough
+
+1. Open **Projects → Harbor Exchange → SOV**. The original sample contract is SGD 1,000,000; approved VO-007 adds SGD 50,000, giving a revised SGD 1,050,000.
+2. Search by code/description or filter **Approved variation**. Open A02 to inspect quantity, unit rate, current source and separate claimed/certified sample histories. Saved device drafts appear as snapshots, not submitted claims.
+3. Open **Variations**, filter the sample lifecycle states, and inspect VO-008. Its SGD 12,000 proposal is excluded; SGD 1,062,000 is labelled as an illustrative scenario only. Approved VO-007 links to its included SOV line. Rejected VO-010 has no contract effect.
+4. Cedar Station has a separate SGD 250,000 sample contract and no sample variations. Project Claims and Evidence show only that project's related records.
+
 ## What works
 
 - v2 shell: 240px desktop sidebar, expandable 72px tablet rail, five-item mobile browsing navigation and consistent outline icons. Focused mobile editing replaces bottom navigation with persistent Save/Continue actions and explicit back/close paths.
 - Task-first Overview, synthetic projects and separate claimed/certified/invoiced/paid snapshot examples. Snapshot figures are independent fixtures, not aggregates of device drafts.
+- Project Overview/SOV/Claims/Variations/Evidence navigation, responsive SOV/VO tables and cards, filters, source facts and truthful sample decision states. Contract fixtures share one source; pending/rejected variations are excluded.
 - Claim search, receivable/payable filters, short draft references and responsive list cards. Claim state and certification remain separate.
 - IndexedDB draft create/edit/read/delete, incomplete draft saves, integer-cent illustrative line totals, local review and sample evidence content/metadata saved in one record. The existing store/key contract is unchanged.
 - Validation and failure feedback retain input. Network changes preserve the editor, focus and selection. Leaving with unsaved changes requires an explicit discard decision; app updates wait for dirty/busy drafts to be saved.
@@ -57,8 +65,10 @@ node --check storage.js
 node --check draft-editor.js
 node --check demo-domain.js
 node --check sw.js
-node --test tests/demo-domain.test.mjs tests/service-worker.test.mjs
+node --check demo-contracts.js
+node --check project-pages.js
+node --test tests/*.test.mjs
 python -m json.tool manifest.webmanifest
 ~~~
 
-Nine tests cover decimal boundaries, totals, old-draft compatibility, draft/review readiness, snapshot isolation, evidence bytes/context and Service Worker route/cache boundaries. Chromium checks covered the four-step journey at 1440, 768, 390 and 320px, targeted keyboard actions, failure/retry, unchanged identifiers, deletion, escaping, network transitions, offline reload and compatible updates. These are bounded demo checks, not production acceptance or full accessibility certification. See [PROGRESS.md](PROGRESS.md).
+Twelve tests cover decimal boundaries, totals, old-draft compatibility, draft/review readiness, snapshot isolation, evidence bytes/context approved-only contract inclusion, project isolation, fixture immutability and Service Worker route/cache boundaries. Chromium checks covered the four-step journey at 1440, 768, 390 and 320px, targeted keyboard actions, failure/retry, unchanged identifiers, deletion, escaping, network transitions, offline reload and compatible updates. These are bounded demo checks, not production acceptance or full accessibility certification. See [PROGRESS.md](PROGRESS.md).

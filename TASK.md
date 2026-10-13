@@ -157,3 +157,10 @@ Reply with decisions keyed by IDs; partial answers are useful, but unanswered it
 ## V1 acceptance mapping
 
 Acceptance IDs E2E-01–E2E-18 are defined in [SPEC.md](SPEC.md). Their current state is 0 implemented, 0 verified, and 0 released. Keep each scenario's evidence linked from its implementation task and [PROGRESS.md](PROGRESS.md); never infer completion from a feature name or document section.
+
+### DEMO-003 — Project SOV and variation browsing
+
+- **Status:** Verified within the synthetic read-only demo scope; not released.
+- **Scope:** Implement v2 page families 12–15 and project Overview/SOV/Claims/Variations/Evidence navigation, source/status filters, immutable synthetic fixtures and approved-only revised contract values.
+- **Evidence:** Twelve Node contract tests passed; Chromium list/detail checks at 1440/768/390/320px, filter/no-results, project isolation, 44px primary controls, no document overflow, explicit cache update and hash-route reload passed. See PROGRESS.md.
+- **Boundary:** No live approval, contract editing, submission, certificate or authoritative financial event. Claim-source integration remains a separate demo amendment. T-006 and production E2E states are unchanged.

@@ -27,6 +27,8 @@ The v2 shared shell and four-step local claim journey are implemented; the wider
 |---|---|
 | app.js | Hash navigation, synthetic read models, local persistence/read-back and editor lifecycle. |
 | draft-editor.js | One active draft state, Details/Lines/Evidence/Review UI, dirty/busy guards and explicit save feedback. |
+| demo-contracts.js | Single synthetic project/SOV/VO source; approved-only revised values and immutable returned basis snapshots. |
+| project-pages.js | Project SOV/VO browsing, responsive records, filtering, source facts and project tabs. |
 | demo-domain.js | Integer-cent illustrative totals, readiness validation, synthetic evidence fixtures and old-record adaptation. |
 | ui.js | Escaping, formatting and consistent outline icons. |
 | storage.js | Existing IndexedDB v1 draft store and same-key transactions. |
@@ -202,7 +204,7 @@ Use one outline-icon family. Icons complement text; raw Unicode glyphs and color
 ### Shared navigation and task hierarchy
 
 - Desktop navigation is Overview, Projects, Claims, Inbox, Parties, Reports, with Settings at the bottom. Mobile Home maps to Overview; More groups Parties, Reports, Settings, and device-data access. Search remains a utility rather than a new navigation section.
-- Project context retains Overview, SOV, Claims, Variations, Evidence, Team, and Activity. Certification is reachable within Claims; evidence is reachable from its project or claim; Sync center is under Settings / Device data and the connectivity indicator. These are target destinations, not currently implemented routes.
+- Project context retains Overview, SOV, Claims, Variations, Evidence, Team, and Activity. Certification is reachable within Claims; evidence is reachable from its project or claim; Sync center is under Settings / Device data and the connectivity indicator. The static demo currently implements Overview, SOV, Claims, Variations and Evidence within project context. Team and Activity remain target destinations.
 - Browsing pages retain the mobile bottom navigation. Focused claim-line editing, capture, and conflict resolution replace it with a task action bar and an explicit back link. Preserve the originating project, direction, filters, and list position when returning; protect dirty work before leaving.
 - Overview prioritizes actionable work and resumable drafts, then financial position and recent projects. Avoid placing large decorative summary cards ahead of the user's next action.
 - Financial position presents Claimed, Certified, Invoiced, and Paid independently. Never add these overlapping stages together or put them in a total-share donut without a separately defined mutually exclusive basis. Receivable/Payable filters must match every visible record.

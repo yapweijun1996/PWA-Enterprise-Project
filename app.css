@@ -5,7 +5,7 @@
   --surface: #fff; --attention: #B54708; --success: #067647; --error: #B42318;
 }
 * { box-sizing: border-box; }
-body { margin: 0; min-width: 320px; }
+body { margin: 0; }
 button, input, select, textarea { font: inherit; }
 button, a { touch-action: manipulation; }
 button { cursor: pointer; }
@@ -292,3 +292,14 @@ pre { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 12px; line-heig
   .mobile-next { display: inline; }
   .task-mode .scroll-top { bottom: 146px; }
 }
+/* Project contract context */
+.project-tabs { display: flex; flex-wrap: wrap; gap: 8px; border-bottom: 1px solid var(--line); margin: 0 0 24px; }
+.project-tabs a { display: inline-flex; align-items: center; min-height: 44px; padding: 10px 14px; border-bottom: 3px solid transparent; text-decoration: none; color: var(--muted); font-size: 14px; font-weight: 600; }
+.project-tabs a[aria-current=page] { color: var(--blue); border-bottom-color: var(--blue); }
+.contract-cards { grid-template-columns: repeat(3,minmax(0,1fr)); }
+.contract-cards .metric { font-size: clamp(20px,2vw,27px); overflow-wrap: anywhere; }
+.sample-preview summary { padding: 12px 0; min-height: 44px; cursor: pointer; color: var(--blue); }
+.sample-preview pre { white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; line-height: 1.6; }
+#sov-search, #sov-source, #vo-search, #vo-state { font-size: 16px; }
+.data-table tfoot th { border-top: 2px solid var(--line); }
+@media (max-width: 767px) { .contract-cards { grid-template-columns: 1fr; } .project-tabs { gap: 0; } .project-tabs a { padding: 10px 12px; } }

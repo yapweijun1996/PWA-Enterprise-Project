@@ -33,7 +33,7 @@ test('cached shell accepts hash routes under a repository subpath', async () => 
 });
 test('new editor modules belong to the static shell allowlist', async () => {
   const app = await worker();
-  for (const name of ['demo-domain.js', 'draft-editor.js', 'storage.js']) {
+  for (const name of ['demo-domain.js', 'draft-editor.js', 'storage.js', 'demo-contracts.js', 'project-pages.js']) {
     const url = 'https://example.test/demo/' + name;
     assert.deepEqual(await app.fetch(url, 'cors'), { cached: url });
   }

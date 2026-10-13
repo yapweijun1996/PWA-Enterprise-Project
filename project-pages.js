@@ -1,0 +1,69 @@
+import { projects, sovLines, projectVariations, contractSummary, SOURCE_VERSION } from './demo-contracts.js';
+import { escapeHtml as e, money, icon } from './ui.js';
+
+const amount = cents => money((cents / 100).toFixed(2));
+const href = (project, view, id = '') => '#project/' + encodeURIComponent(project) + '/' + view + (id ? '/' + encodeURIComponent(id) : '');
+export function projectTabs(project, active) {
+  return '<nav class="project-tabs" aria-label="Project pages">' + [['overview', 'Overview'], ['sov', 'SOV'], ['claims', 'Claims'], ['variations', 'Variations'], ['evidence', 'Evidence']].map(([view, label]) => '<a href="' + href(project, view) + '" ' + (view === active ? 'aria-current="page"' : '') + '>' + label + '</a>').join('') + '</nav>';
+}
+export function contractCards(project) {
+  const summary = contractSummary(project);
+  return '<div class="grid contract-cards">' + [['Original contract', summary.original], ['Approved variations', summary.approved], ['Revised contract', summary.revised]].map(([label, value]) => '<div class="card"><p class="label">' + label + ' · Sample</p><p class="metric">' + amount(value) + '</p></div>').join('') + '</div>';
+}
+function header(project, title, view, action = '') {
+  return '<a class="text-link" href="#project/' + project.id + '">' + icon('back') + e(project.name) + '</a><div class="page-head"><div><h1>' + e(title) + '</h1><p class="subtitle">' + e(project.name + ' · ' + project.contract + ' · ' + SOURCE_VERSION) + ' · SGD · Synthetic</p></div>' + action + '</div>' + projectTabs(project.id, view);
+}
+function empty(message) { return '<div class="notice">' + e(message) + '</div>'; }
+function sovRows(project, query = '', source = 'All') {
+  const rows = sovLines(project).filter(line => (source === 'All' || line.source === source) && (line.id + ' ' + line.title).toLowerCase().includes(query.trim().toLowerCase()));
+  if (!rows.length) return empty('No SOV lines match these filters. Try another search or source.');
+  const sums = rows.reduce((sum, line) => ({ original: sum.original + line.original, approved: sum.approved + line.approved, revised: sum.revised + line.revised, previous: sum.previous + line.previous }), { original: 0, approved: 0, revised: 0, previous: 0 });
+  return '<div class="table-wrap"><table class="data-table"><caption class="sr-only">Sample SOV values in SGD. Totals cover the filtered rows.</caption><thead><tr><th>Code / description</th><th class="amount">Original</th><th class="amount">Approved VO</th><th class="amount">Revised</th><th class="amount">Claimed · Sample</th></tr></thead><tbody>' + rows.map(line => '<tr><td><a class="text-link" href="' + href(project, 'sov', line.id) + '">' + e(line.id) + ' · ' + e(line.title) + '</a><small class="meta">' + e(line.source) + '</small></td>' + [line.original, line.approved, line.revised, line.previous].map(value => '<td class="amount">' + amount(value) + '</td>').join('') + '</tr>').join('') + '</tbody><tfoot><tr><th>Filtered total</th>' + [sums.original, sums.approved, sums.revised, sums.previous].map(value => '<th class="amount">' + amount(value) + '</th>').join('') + '</tr></tfoot></table></div><div class="mobile-records">' + rows.map(line => '<a href="' + href(project, 'sov', line.id) + '"><strong>' + e(line.id + ' · ' + line.title) + '</strong><small class="meta">' + e(line.source) + '</small><div class="record-amount"><span>Revised</span><strong>' + amount(line.revised) + '</strong></div><div class="record-amount"><span>Claimed · Sample</span><strong>' + amount(line.previous) + '</strong></div></a>').join('') + '<p class="meta">Filtered revised total: ' + amount(sums.revised) + '</p></div>';
+}
+function sovPage(project) {
+  return header(project, 'Schedule of values', 'sov', '<a class="button" href="#new?project=' + project.id + '&direction=' + (project.id === 'cedar' ? 'Payable' : 'Receivable') + '">' + icon('plus') + 'New claim draft</a>') + contractCards(project.id) + '<section class="panel section-gap"><div class="filters"><label>Search SOV lines<input id="sov-search" type="search" placeholder="Code or description"></label><label>Source<select id="sov-source"><option>All</option><option>Original</option><option>Approved variation</option></select></label></div><div class="records" id="sov-results">' + sovRows(project.id) + '</div><p class="meta">Pending and rejected variations are excluded. Claimed and certified values are separate sample histories; device drafts do not change them.</p></section>';
+}
+function facts(items) { return '<dl class="key-values">' + items.map(([key, value]) => '<div><dt>' + e(key) + '</dt><dd>' + e(value) + '</dd></div>').join('') + '</dl>'; }
+function linePage(project, id, drafts) {
+  const line = sovLines(project.id).find(item => item.id === id);
+  if (!line) return null;
+  const locals = drafts.filter(draft => draft.project === project.id && draft.lines?.some(item => item.id === id));
+  return header(project, line.id + ' · ' + line.title, 'sov') + '<a class="text-link" href="' + href(project.id, 'sov') + '">' + icon('back') + 'Schedule of values</a><section class="panel">' + facts([['Quantity / unit', line.quantity.toLocaleString('en-SG') + ' ' + line.unit], ['Unit rate', amount(line.rate)], ['Original', amount(line.original)], ['Approved VO', amount(line.approved)], ['Revised', amount(line.revised)], ['Source', line.source]]) + '</section><div class="grid columns section-gap"><div class="stack"><section class="panel"><h2>Claimed history · Sample</h2><p class="metric">' + amount(line.previous) + '</p><p class="meta">Fictional previous-period amount. No device draft is counted as a submitted claim.</p><h3>Device draft snapshots</h3>' + (locals.length ? '<ul class="row-list">' + locals.map(draft => '<li><a class="row-link" href="#claim/' + encodeURIComponent(draft.id) + '"><span><strong>' + e(draft.reference || 'Local draft') + '</strong><small>' + e(draft.period || 'Period not set') + ' · ' + e(draft.sourceVersion || 'Legacy source') + ' · Not submitted</small></span>' + icon('arrow') + '</a></li>').join('') + '</ul>' : empty('No saved device drafts reference this line.')) + '</section><section class="panel"><h2>Source snapshot</h2>' + facts([['Version', line.version], ['Contract', project.contract], ['Basis', line.quantity + ' × ' + amount(line.rate)]]) + '<p class="meta">This is the current fictional source. Saved claims keep their own line descriptions, basis and source version.</p></section></div><div class="stack"><section class="panel"><h2>Certified history · Sample</h2><p class="metric">' + amount(line.certified) + '</p><p class="meta">Separate fixture; no certificate is issued by this demo.</p></section><section class="panel"><h2>Related variations</h2>' + (line.source === 'Approved variation' ? '<a class="text-link" href="' + href(project.id, 'variations', line.id) + '">' + e(line.id) + ' · Sample approved variation ' + icon('arrow') + '</a>' : empty('No approved variation changes this original line.')) + '</section></div></div>';
+}
+function status(item) { return '<span class="status ' + (item.status === 'Approved' ? 'issued' : 'warning') + '">Sample · ' + e(item.status) + '</span>'; }
+function variationRows(project, query = '', filter = 'All') {
+  const rows = projectVariations(project).filter(item => (filter === 'All' || item.status === filter) && (item.id + ' ' + item.title).toLowerCase().includes(query.trim().toLowerCase()));
+  if (!rows.length) return empty('No variation orders match. Try another filter.');
+  return '<div class="table-wrap"><table class="data-table"><caption class="sr-only">Synthetic variation orders</caption><thead><tr><th>Variation / scope</th><th>State</th><th class="amount">Value · SGD</th><th>Revision</th></tr></thead><tbody>' + rows.map(item => '<tr><td><a class="text-link" href="' + href(project, 'variations', item.id) + '">' + e(item.id + ' · ' + item.title) + '</a></td><td>' + status(item) + '</td><td class="amount">' + amount(item.value) + '</td><td>' + item.revision + '</td></tr>').join('') + '</tbody></table></div><div class="mobile-records">' + rows.map(item => '<a href="' + href(project, 'variations', item.id) + '"><div class="record-top"><strong>' + e(item.id) + '</strong>' + status(item) + '</div><p>' + e(item.title) + '</p><div class="record-amount"><strong>' + amount(item.value) + '</strong><span>Open ' + icon('arrow') + '</span></div><small class="meta">Revision ' + item.revision + '</small></a>').join('') + '</div>';
+}
+function variationsPage(project) {
+  const pending = projectVariations(project.id).filter(item => ['Draft', 'In review'].includes(item.status)).reduce((sum, item) => sum + item.value, 0);
+  return header(project, 'Variation orders', 'variations') + contractCards(project.id) + '<p class="meta">Pending proposals · Sample: ' + amount(pending) + ' · Excluded from revised contract.</p><section class="panel"><div class="filters"><label>Search variation orders<input id="vo-search" type="search" placeholder="Reference or scope"></label><label>State<select id="vo-state"><option>All</option><option>Draft</option><option>In review</option><option>Approved</option><option>Rejected</option></select></label></div><div class="records" id="vo-results">' + variationRows(project.id) + '</div></section>';
+}
+function variationPage(project, id) {
+  const item = projectVariations(project.id).find(value => value.id === id);
+  if (!item) return null;
+  const approved = item.status === 'Approved';
+  const revised = contractSummary(project.id).revised;
+  const evidence = 'SYNTHETIC VARIATION EVIDENCE\nReference: ' + item.id + '\nScope: ' + item.reason + '\nBasis: ' + item.quantity + ' ' + item.unit + ' × ' + amount(item.rate) + '\nNo real instruction, measurement or approval authority.';
+  return header(project, item.id + ' · ' + item.title, 'variations') + '<a class="text-link" href="' + href(project.id, 'variations') + '">' + icon('back') + 'Variation orders</a>' + status(item) + '<div class="notice ' + (approved ? 'success' : '') + '"><strong>' + (approved ? 'Sample approved · Included once in the revised contract and claim basis.' : 'Not approved · Excluded from revised contract and claim lines.') + '</strong></div><div class="grid columns"><div class="stack"><section class="panel"><h2>Variation scope</h2><p>' + e(item.reason) + '</p>' + facts([['Reference', item.id], ['Revision', item.revision], ['Contract', project.contract]]) + '</section><section class="panel"><h2>' + (approved ? 'Approved line basis · Sample' : 'Proposed line basis · Sample') + '</h2>' + facts([['Quantity / unit', item.quantity + ' ' + item.unit], ['Unit rate', amount(item.rate)], ['Value', amount(item.value)]]) + (approved ? '<a class="text-link" href="' + href(project.id, 'sov', item.id) + '">Open SOV line ' + icon('arrow') + '</a>' : '<p class="meta">This proposed work cannot be selected in a claim draft.</p>') + '</section><section class="panel"><h2>Sample evidence</h2><details class="sample-preview"><summary>Open fictional scope note</summary><pre>' + e(evidence) + '</pre></details><p class="meta">Synthetic text only. No uploaded drawing or instruction.</p></section></div><aside class="stack"><section class="panel"><h2>Contract position</h2>' + facts([['Existing revised contract · Sample', amount(revised)], [approved ? 'Included approved value' : 'Excluded proposal value', amount(item.value)]]) + (!approved && item.status !== 'Rejected' ? '<div class="notice">If approved · Illustration only<br><strong>' + amount(revised + item.value) + '</strong><p class="meta">This scenario does not change the contract.</p></div>' : '') + '</section><section class="panel"><h2>Decision history · Sample</h2><p>' + e(item.decision) + '</p><p class="meta">Revision ' + item.revision + ' · No approval action or server transaction is available.</p></section></aside></div>';
+}
+export function renderProjectPage(projectId, view, id, drafts = []) {
+  const project = projects.find(item => item.id === projectId);
+  if (!project) return null;
+  if (view === 'sov') return id ? linePage(project, id, drafts) : sovPage(project);
+  if (view === 'variations') return id ? variationPage(project, id) : variationsPage(project);
+  return null;
+}
+export function bindProjectPages(root, project) {
+  const sovSearch = root.querySelector('#sov-search');
+  const sovSource = root.querySelector('#sov-source');
+  const voSearch = root.querySelector('#vo-search');
+  const voState = root.querySelector('#vo-state');
+  const updateSov = () => { root.querySelector('#sov-results').innerHTML = sovRows(project, sovSearch.value, sovSource.value); };
+  const updateVo = () => { root.querySelector('#vo-results').innerHTML = variationRows(project, voSearch.value, voState.value); };
+  sovSearch?.addEventListener('input', updateSov);
+  sovSource?.addEventListener('change', updateSov);
+  voSearch?.addEventListener('input', updateVo);
+  voState?.addEventListener('change', updateVo);
+}

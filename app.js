@@ -1,12 +1,10 @@
+import { projects } from './demo-contracts.js';
+import { projectTabs, contractCards, renderProjectPage, bindProjectPages } from './project-pages.js';
 import { listDrafts, saveDraft, removeDraft, clearDrafts } from './storage.js';
 import { escapeHtml, icon, money, displayDate, draftLabel } from './ui.js';
 import { createDraftEditor, evidenceCards } from './draft-editor.js';
 import { lineTotals, fromCents } from './demo-domain.js';
 
-const projects = [
-  { id: 'harbor', name: 'Harbor Exchange', place: 'Demo City', description: 'Commercial development', contract: 'MC-001', party: 'Harbor Developments' },
-  { id: 'cedar', name: 'Cedar Station', place: 'Demo City', description: 'Public works project', contract: 'SC-014', party: 'Cedar Concrete' }
-];
 const sampleClaims = [
   { id: 'PCAR-DEMO-01', project: 'harbor', direction: 'Receivable', period: '2026-04', amount: '48000.00', status: 'Sample draft', certificate: 'Not yet certified' },
   { id: 'PCAP-DEMO-02', project: 'cedar', direction: 'Payable', period: '2026-05', amount: '18500.00', status: 'Sample reviewed', certificate: 'CCAP-DEMO-01 · Illustrative' }
@@ -60,12 +58,15 @@ function layoutHome() {
 function layoutProjects() {
   return heading('Projects', 'Your assigned demo projects.') + '<div class="grid cards">' + projects.map(p => '<article class="card"><p class="eyebrow">' + p.contract + ' · ' + p.place + '</p><h2>' + p.name + '</h2><p>' + p.description + '</p><p class="meta">Next action · Prepare a local claim draft</p>' + pageLink('project/' + p.id, 'Open project') + '</article>').join('') + '</div>';
 }
-function layoutProject(id) {
+function layoutProject(id, view = 'overview') {
   const project = projects.find(p => p.id === id);
-  if (!project) return layoutMissing();
+  if (!project || !['overview', 'claims', 'evidence'].includes(view)) return layoutMissing();
   const related = allClaims().filter(c => c.project === id);
-  return heading(project.name, project.description + ' · ' + project.place, newLink('?project=' + id + '&direction=' + (id === 'cedar' ? 'Payable' : 'Receivable'))) +
-    '<div class="grid columns"><section class="panel"><h2>Project overview</h2><dl class="key-values"><div><dt>Contract</dt><dd>' + project.contract + ' · Sample</dd></div><div><dt>Counterparty</dt><dd>' + project.party + '</dd></div><div><dt>Contract / SOV</dt><dd>Illustrative only</dd></div><div><dt>Approved variations</dt><dd>No live records</dd></div></dl><p class="meta">Contract totals and project permissions are not authoritative in this demo.</p></section><section class="panel"><h2>Claims</h2><ul class="row-list">' + related.map(c => '<li><a class="row-link" href="#claim/' + encodeURIComponent(c.id) + '"><span><strong>' + escapeHtml(claimTitle(c)) + '</strong><small>' + escapeHtml(c.direction) + ' · ' + escapeHtml(c.status) + '</small></span>' + icon('arrow') + '</a></li>').join('') + '</ul></section></div>';
+  const claims = '<section class="panel"><h2>Project claims</h2><ul class="row-list">' + related.map(c => '<li><a class="row-link" href="#claim/' + encodeURIComponent(c.id) + '"><span><strong>' + escapeHtml(claimTitle(c)) + '</strong><small>' + escapeHtml(c.direction) + ' · ' + escapeHtml(c.status) + '</small></span>' + icon('arrow') + '</a></li>').join('') + '</ul></section>';
+  const evidence = state.drafts.filter(draft => draft.project === id && draft.attachments?.length);
+  return heading(view === 'overview' ? project.name : view === 'claims' ? 'Project claims' : 'Project evidence', project.name + ' · ' + project.contract + ' · Synthetic', newLink('?project=' + id + '&direction=' + (id === 'cedar' ? 'Payable' : 'Receivable'))) + projectTabs(id, view) +
+    (view === 'claims' ? claims : view === 'evidence' ? '<section class="panel"><h2>Saved sample evidence</h2>' + (evidence.length ? evidence.map(draft => '<h3>' + escapeHtml(draftLabel(draft)) + '</h3>' + evidenceCards(draft.attachments) + '<a class="text-link" href="#claim/' + encodeURIComponent(draft.id) + '">Open draft</a>').join('') : notice('No sample evidence saved for this project. Add a sample file in a claim draft.')) + '</section>' :
+      contractCards(id) + '<div class="grid columns section-gap"><section class="panel"><h2>Project overview</h2><dl class="key-values"><div><dt>Contract</dt><dd>' + project.contract + ' · Sample</dd></div><div><dt>Counterparty</dt><dd>' + project.party + '</dd></div></dl><a class="text-link" href="#project/' + id + '/sov">Explore SOV ' + icon('arrow') + '</a><br><a class="text-link" href="#project/' + id + '/variations">Explore variations ' + icon('arrow') + '</a><p class="meta">Only sample approved variations enter the illustrative revised contract. Device drafts do not change these fixtures.</p></section>' + claims + '</div>');
 }
 function allClaims() {
   return [...sampleClaims, ...state.drafts.map(d => ({ ...d, local: true, status: d.reviewedAt ? 'Reviewed on device' : 'Device-only draft', certificate: 'Not yet certified' }))];
@@ -149,8 +150,9 @@ function route() {
     }
   } else {
     const views = { home: layoutHome, projects: layoutProjects, claims: layoutClaims, offline: layoutOffline, inbox: layoutInbox, evidence: layoutEvidence, more: layoutMore, parties: layoutParties, reports: layoutReports, settings: layoutSettings };
-    main.innerHTML = active === 'project' ? layoutProject(path[1]) : active === 'claim' ? layoutClaim(path[1]) : views[active]?.() || layoutMissing();
+    main.innerHTML = active === 'project' ? (['sov', 'variations'].includes(path[2]) ? renderProjectPage(path[1], path[2], path[3], state.drafts) || layoutMissing() : layoutProject(path[1], path[2])) : active === 'claim' ? layoutClaim(path[1]) : views[active]?.() || layoutMissing();
     bindPage();
+    if (active === 'project') bindProjectPages(main, path[1]);
   }
   document.title = (main.querySelector('h1')?.textContent || 'Demo') + ' — ConstructClaim Demo';
   updateConnectivity();
