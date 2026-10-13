@@ -150,8 +150,8 @@ This worksheet makes no identity, role, offline-retention, evidence-sharing, or 
 
 ### FR-11 — Responsive and accessible workflows
 
-- Use the user-designated static references in `ui/` as the screen-composition anchor indexed in [DESIGN.md](DESIGN.md). They guide hierarchy and layout; they do not prove that routes, interactions, or browser behavior exist.
-- Desktop app shell uses persistent primary navigation and a global utility/search bar. Mobile uses a compact header and Home/Projects/Claims/Inbox/More navigation; preserve project context and active location.
+- Follow [DESIGN.md — Active visual baseline v2](DESIGN.md#active-visual-baseline-v2) for screen composition and reference precedence. Four core boards and 21 independent v2 page sheets guide hierarchy and layout, with the original 24 images as secondary field references; they do not prove that routes, interactions, or browser behavior exist.
+- Desktop app shell uses persistent primary navigation and a global utility/search bar. Mobile browsing uses a compact header and Home/Projects/Claims/Inbox/More navigation. Focused editing, capture, and conflict tasks use an explicit back link and an unobscured task action bar as defined in DESIGN.md; preserve project context and active location.
 - Desktop tables are appropriate for SOV/claim/certification comparison. Mobile must recompose into readable cards, focused line forms, stacked inspectors, or deliberate detail routes; do not shrink desktop tables until labels/values become unusable.
 - Follow the screen-family patterns for dashboard, Projects/Project 360, Claims/Create/Review, Certification/Certificate Detail, SOV/VO, Evidence, Inbox, Parties, Timeline/Search, Offline Queue/Conflict, and Settings in DESIGN.md.
 - Primary actions, save-draft, wizard progress, selected-record context, warning/error states, and offline/sync status must be visible. Sticky mobile controls must not cover fields, errors, keyboard, or bottom navigation.

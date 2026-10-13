@@ -54,7 +54,7 @@ No numeric time-saving, financial accuracy, uptime, or market-adoption target ha
 
 Projects, parties, contracts, SOVs, approved variations, PCAR/CCAR and PCAP/CCAP workflows, evidence/documents, approval inbox, invoice links/records, retention, audit trail, offline synchronization, and human-reviewed AI assistance.
 
-The 24 user-provided `ui/` screenshots are the visual layout reference for the screen families documented in [DESIGN.md](DESIGN.md); they are static comps, not proof of a running UI. The exact invoice integration boundary, identity provider, browser matrix, deployment environment, offline-data retention policy, and mandatory-evidence policy remain open decisions; see [TASK.md](TASK.md).
+The active visual baseline v2 in [DESIGN.md](DESIGN.md#active-visual-baseline-v2) defines target layouts and interaction rules using four core boards and 21 independent page sheets, covering the original 24 page families plus Reports. The original 24 `ui/` screenshots remain supporting field references. These are static designs, not proof of a running UI. The exact invoice integration boundary, identity provider, browser matrix, deployment environment, offline-data retention policy, and mandatory-evidence policy remain open decisions; see [TASK.md](TASK.md).
 
 ### Explicit non-goals
 
@@ -78,4 +78,4 @@ AI may suggest, compare, extract, or summarize evidence. It must not approve cla
 4. Keep issued financial documents and audit history immutable; correct by revision, void, or supersession rather than silent overwrite.
 5. Make offline capability explicit, bounded, observable, and recoverable.
 6. Keep the first release focused on reliable PCAR → CCAR and PCAP → CCAP flows rather than expanding into a general ERP.
-7. Use the user-selected `ui/` images as composition anchors while verifying actual accessibility, trust, responsive behavior, and interaction states in a real browser.
+7. Follow the active visual baseline and reference precedence in DESIGN.md while verifying actual accessibility, trust, responsive behavior, and interaction states in a real browser.

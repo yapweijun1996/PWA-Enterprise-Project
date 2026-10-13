@@ -2,7 +2,7 @@
 
 Build ConstructClaim PWA V1: a mobile-first construction financial evidence system linking contracts/SOV/approved variations to PCAR/CCAR, PCAP/CCAP, evidence, retention, certified-value invoice links, audit, bounded offline sync, and human-reviewed AI. It is not a full ERP.
 
-Use the 24 user-designated static images in `ui/` as layout references mapped in `DESIGN.md`. They are not runtime, data, accessibility, or behavior proof. Follow the desktop navigation/context and deliberate mobile reflow patterns; add accessible loading, empty, validation, permission, error, offline, and recovery states. Never present screenshot values as live tenant data.
+Follow the v2 baseline and precedence in `DESIGN.md`: four core boards, 21 page sheets, 24 supporting originals. These are not runtime or accessibility proof. Preserve project context, mobile reflow, input recovery, and accessible states. Never present synthetic values as live data.
 
 For each task inspect repo rules, Git status, code/callers/config/tests/runtime, and TASK/PROGRESS. Choose the highest-value unblocked task; make the smallest complete change; run owning checks/regressions; review security, data, UX/accessibility, operations, and docs; fix findings; update TASK/PROGRESS; make a focused local commit. Preserve unrelated work.
 

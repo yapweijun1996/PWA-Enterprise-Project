@@ -98,11 +98,122 @@ Required design constraints:
 - Preserve drafts across compatible app updates; do not activate a new worker in a way that discards queued user work.
 - Attachment upload must be resumable/retryable or expose a clear failed state; metadata and file bytes must not diverge silently.
 
-## UI/UX layout anchor — user-provided `ui/` references
+## Active visual baseline v2
+
+**Status:** target UI design, created and expanded on 2026-10-13 at the user's request. Four core boards in `ui/ssot-v2/`, 21 independent page sheets in `ui/ssot-v2/pages/`, and the rules in this section form the current visual design baseline for subsequent implementation. They are not screenshots of implemented functionality or approval of a technology, identity provider, financial policy, or offline-data policy.
+
+### Source of truth and precedence
+
+- `SPEC.md` owns business meaning, permissions, financial invariants, and acceptance scenarios. This document owns visual structure and interaction presentation.
+- The four core boards own the shared visual language. The independent page sheets own the corresponding page composition and take precedence over a small inset of that page in a core board. This section owns exact labels, responsive rules, and behaviors that a raster image cannot specify reliably. Use these written rules if generated pixels or small labels are ambiguous.
+- The original 24 `ui/*.png` images remain secondary references for field inventory and unillustrated subflows. The v2 coverage index below now maps all 24 original page families plus Reports. Apply the v2 shell, hierarchy, tokens, and state rules; do not reproduce inconsistent original examples.
+- Examples are independent synthetic scenarios, not a cross-board dataset or approved seed data. SGD and the illustrated retention amounts are presentation examples, not selected production financial defaults. External-party roles and available actions still require server authorization.
+
+### Board index
+
+| Board | Authoritative visual coverage | Supporting original page families |
+|---|---|---|
+| [01 — Workspace and navigation](ui/ssot-v2/01-workspace-navigation.png) | Desktop app shell; task-first overview; resume draft; separate financial stages; mobile browsing shell. | Dashboard, projects, project overview, inbox, global search. |
+| [02 — Claims and draft editing](ui/ssot-v2/02-claims-draft-editing.png) | Desktop claim-line editor and summary; mobile focused editor; claim-list component; persistent project/direction context and save feedback. | Claims, claim detail, new claim, line editor, submission review; table/form patterns for SOV and variations. |
+| [03 — Certification and field evidence](ui/ssot-v2/03-certification-field-evidence.png) | Claim/certificate separation; line assessment and variance reasons; certificate summary; mobile evidence capture before local save. | Certification, certificate detail, evidence gallery and capture. |
+| [04 — Offline recovery and UI states](ui/ssot-v2/04-offline-recovery-ui-states.png) | Sync queue, field-level conflict comparison, explicit resolution, local/server status vocabulary, empty/no-results/error components. | Offline queue, sync conflict, device-data settings. |
+
+The four core boards are retained unchanged. The page expansion below supplies dedicated desktop/mobile sheets for the other 20 original page families, plus Reports. Together the 25 PNGs provide visual coverage for 25 page families; this is not an exhaustive specification of every tab, dialog, exception state, or production permission. Settings illustrates Device data; other settings categories are navigation anchors pending their policy decisions. Original images remain unchanged.
+
+Generation uses the built-in `image_gen.imagegen` tool. Core-board prompts are preserved in [generation-prompts.json](ui/ssot-v2/generation-prompts.json); page prompts and targeted corrections are in [pages/generation-prompts.json](ui/ssot-v2/pages/generation-prompts.json). Only selected final images are project assets. Presentation-canvas dimensions and any rendered viewport captions are not CSS measurements or browser verification.
+
+### Independent page index
+
+Open the [local design gallery](ui/ssot-v2/pages/index.html) for thumbnails and full-size image links. The following page numbers match the original reference inventory, with Reports added as page 25. Existing coverage is retained for page 02 (Overview) in board 01, page 08 (Claim-line editor) in board 02, page 10 (Certification review) in board 03, and page 22 (Sync center) in board 04.
+
+| Page | Independent desktop/mobile sheet | Main handoff constraint |
+|---|---|---|
+| 01 | [Sign in](ui/ssot-v2/pages/01-login.png) | Organization context before sign-in; Single-column mobile entry; Identity provider remains a product decision. |
+| 03 | [Projects](ui/ssot-v2/pages/03-projects.png) | Assigned-project scope; Cards preserve the next action; Filters remain visible on mobile. |
+| 04 | [Project workspace](ui/ssot-v2/pages/04-project-overview.png) | Project context stays in every task; Financial stages remain separate; Approved variations alone revise contract. |
+| 05 | [Claims](ui/ssot-v2/pages/05-claims.png) | Direction filters govern every row; Current-period basis is explicit; Missing certificate is not zero. |
+| 06 | [Claim detail](ui/ssot-v2/pages/06-claim-detail.png) | Claim and certificate states are independent; Source version remains visible; Submitted claims are not edited in place. |
+| 07 | [New claim · Details](ui/ssot-v2/pages/07-new-claim.png) | Inherit project and direction; Preserve fields across connectivity changes; Saving locally does not submit. |
+| 09 | [Review claim](ui/ssot-v2/pages/09-submit-claim-review.png) | Review before the final submission; Readiness is based on approved rules; Server confirmation owns Submitted. |
+| 11 | [Certificate detail](ui/ssot-v2/pages/11-certificate-detail.png) | Issued snapshots are read-only; Link to the exact source claim version; Retention terms come from the contract. |
+| 12 | [Schedule of values](ui/ssot-v2/pages/12-schedule-of-values.png) | Versioned contract basis; Approved variations are explicit; Mobile uses line cards. |
+| 13 | [SOV line detail](ui/ssot-v2/pages/13-sov-detail.png) | Keep the calculation basis visible; History uses source snapshots; Separate claimed and certified histories. |
+| 14 | [Variation orders](ui/ssot-v2/pages/14-variation-orders.png) | Only approved value enters contract totals; Statuses remain visible in cards; Review is distinct from approval. |
+| 15 | [Variation detail](ui/ssot-v2/pages/15-variation-order-detail.png) | Unapproved work is excluded from claims; Decision review precedes approval; Reason and source version are preserved. |
+| 16 | [Evidence gallery](ui/ssot-v2/pages/16-evidence-gallery.png) | File bytes and metadata share a state; Context identifies the correct attachment; Failed uploads have recoverable actions. |
+| 17 | [Capture evidence](ui/ssot-v2/pages/17-evidence-capture.png) | Preview is not a saved attachment; Location is optional; Offline file save requires successful persistence. |
+| 18 | [Approval inbox](ui/ssot-v2/pages/18-approval-inbox.png) | Queue is the workflow source; Record review precedes decisions; Show only permitted actions. |
+| 19 | [Parties](ui/ssot-v2/pages/19-parties.png) | Directory entries are not permission grants; External access is separately managed; Organization context survives mobile reflow. |
+| 20 | [Activity timeline](ui/ssot-v2/pages/20-activity-timeline.png) | Audit event details remain read-only; Before and after values have provenance; Project and document scope stay visible. |
+| 21 | [Global search](ui/ssot-v2/pages/21-global-search.png) | Results remain permission scoped; Context separates similar records; No-results differs from access denial. |
+| 23 | [Resolve conflict](ui/ssot-v2/pages/23-sync-conflict.png) | Preserve base, local and server versions; Review choice before applying; Revalidate the server version on confirmation. |
+| 24 | [Settings · Device data](ui/ssot-v2/pages/24-settings.png) | Policy defines what may stay on a device; Review pending work before removal; Connection does not prove synchronization. |
+| 25 | [Reports · Financial position](ui/ssot-v2/pages/25-reports.png) | Stages are separate, overlapping measures; Currency and as-of basis are explicit; Totals reconcile to visible source rows. |
+
+### Page handoff clarifications
+
+- Use a single implementation of the shared logo, outline icons, navigation and controls. Small generated glyph or wordmark variations are not alternative components. Canonical labels include `Harbor Exchange`, `Cedar Station`, `A02 · Concrete works`, and `Parties`; preserve normal word spacing. Project codes in the illustrations are HX-001 and CS-002.
+- Browsing mobile navigation always includes all five destinations. New-claim entry, line editing, submission review, capture and conflict resolution use focused task actions with an explicit back path. Project-level tabs are Overview, SOV, Claims, Variations, Evidence, Team, Activity; narrow screens expose additional tabs through More.
+- List counts describe the full filtered result, even when only the first cards fit the mobile viewport. In the Projects sheet, All statuses includes both Active and Planning. Receivable claim lists contain PCAR records only. A missing certificate is Not yet certified.
+- Read-only certificate detail links its source claim version and retains the variance reason. Illustrated variance is certified minus claimed; this sample convention does not resolve D-004. The 95,000 certified / 4,750 retention / 90,250 net example is internally consistent, not a universal retention policy.
+- Review submission separately from server acceptance. The pictured acknowledgement represents a user-selected state and must start unchecked in implementation. File types, evidence requirements, SSO, remembered-device behavior, approval steps, and available actions remain subject to SPEC.md and the relevant product/security decisions.
+- Capture retains project, claim and line context on both screen sizes. Ready to save means not persisted; Upload failed exposes Retry. Settings storage is measured in MB, never currency; policy text does not select an offline allowlist or retention duration. Removing local data requires reviewing unsynced work and confirming the consequences.
+- Reports declares direction, currency, cumulative/as-of basis and freshness. Its four stage totals reconcile independently to visible project rows: 200,000 claimed, 180,000 certified, 160,000 invoiced, 120,000 paid. Mobile project cards use two columns by two rows. These stages must not be added together.
+- Page examples remain independent synthetic scenarios. Reused document labels across sheets do not establish a shared seed dataset, historical sequence or permission grant. Prompts record generation intent; these written handoff rules resolve minor raster-copy ambiguity. Raster inspection does not establish measured contrast, keyboard behavior, real touch-target dimensions or successful persistence.
+
+### Visual tokens and layout dimensions
+
+These are explicit implementation targets, not color measurements extracted from generated pixels. They require verification in the rendered implementation.
+
+| Token | Target |
+|---|---|
+| Canvas / surface / border | `#F4F7FB` / `#FFFFFF` / `#D9E2EE` |
+| Primary text / secondary text | `#14243B` / `#52637A` |
+| Primary action / on-primary | `#155EEF` / `#FFFFFF` |
+| Brand accent | `#F79009`; decoration only, not small text on white. |
+| Attention / success / error / conflict text | `#B54708` / `#067647` / `#B42318` / `#6941C6`; pair with a text label and a pale surface. |
+| Typography | Inter when available, system sans-serif fallback; tabular numerals for amounts. Mobile body 16px; desktop body/table 14-16px; supporting labels at least 12px; headings 24-32px. |
+| Spacing / shape | 8px base rhythm with 4px micro-spacing; 16px mobile and 24-32px desktop content gutters; 8px controls and 12px panel corners; restrained borders, minimal shadow. |
+| Controls | At least 44px touch height; visible labels and focus; one dominant primary action per task region. |
+| Desktop, at least 1200px | 240px navigation rail, 64px utility bar, fluid workspace; optional 280-320px summary only when the main task retains sufficient width. |
+| Tablet, 768-1199px | Collapse navigation to a 72px rail with an expandable labelled menu; stack the inspector when needed. Preserve accessible names and discoverable labels. |
+| Mobile, 320-767px | Single-column content, compact top context, deliberate card/form recomposition; primary navigation Home, Projects, Claims, Inbox, More. |
+| Table adaptation | Use available content width, not viewport width alone. Below 720px of usable workspace, show claim/task cards or a focused line editor. Essential status and amount must not require horizontal scrolling. |
+
+Use one outline-icon family. Icons complement text; raw Unicode glyphs and color alone must not carry navigation or state meaning. Keep amounts right-aligned and show currency, period, and current/cumulative basis explicitly. Use descriptive short document labels; keep full technical IDs in a copyable secondary detail.
+
+### Shared navigation and task hierarchy
+
+- Desktop navigation is Overview, Projects, Claims, Inbox, Parties, Reports, with Settings at the bottom. Mobile Home maps to Overview; More groups Parties, Reports, Settings, and device-data access. Search remains a utility rather than a new navigation section.
+- Project context retains Overview, SOV, Claims, Variations, Evidence, Team, and Activity. Certification is reachable within Claims; evidence is reachable from its project or claim; Sync center is under Settings / Device data and the connectivity indicator. These are target destinations, not currently implemented routes.
+- Browsing pages retain the mobile bottom navigation. Focused claim-line editing, capture, and conflict resolution replace it with a task action bar and an explicit back link. Preserve the originating project, direction, filters, and list position when returning; protect dirty work before leaving.
+- Overview prioritizes actionable work and resumable drafts, then financial position and recent projects. Avoid placing large decorative summary cards ahead of the user's next action.
+- Financial position presents Claimed, Certified, Invoiced, and Paid independently. Never add these overlapping stages together or put them in a total-share donut without a separately defined mutually exclusive basis. Receivable/Payable filters must match every visible record.
+- Use short persistent identity/status cues. In the static demo, retain a compact visible Demo / synthetic-data label; expose fuller limitations on demand. Put relevant storage or operation failures next to the affected action rather than repeating long banners above every form.
+
+### Exact interaction contract
+
+1. **Draft context and recovery:** starting from a project preselects that project; entering from a filtered direction carries it forward. Network events update connectivity presentation without rebuilding or clearing the editor. Preserve fields, selection, and focus across offline/online changes and failed saves. Refresh recovery is bounded by the approved local-data policy and successful persistence.
+2. **Claim editing:** Details -> Claim lines -> Evidence -> Review. Save draft remains available; the primary action names the next step. Previous and cumulative values are read-only projections from their proper sources. A saved draft has a Resume/Edit action. No certification is displayed as zero merely because a certificate does not exist; use Not yet certified.
+3. **Certification:** reference the exact source claim version and keep certificate state independent. The assessment columns are Item, Claimed, Certified, Variance, Reason. Every non-zero variance requires a reason. Certified, retention held/released, deductions, adjustments, and net certified remain separate where applicable. The illustrated Review & issue action opens a review step; it does not bypass evidence requirements, permissions, or final explicit confirmation. Issued documents are read-only, with authorized revision/void flows.
+4. **Capture:** inherited project/claim/line context must remain visible and internally consistent. A preview marked Ready to save is not yet persisted. Only a successful file-and-metadata save may produce Saved on device or Upload pending; Uploaded requires confirmed file bytes on the server. Location is optional. Required-evidence rules remain D-008.
+5. **Conflict resolution:** show base version and current server version; compare local/server values together per changed field on mobile. Keep server values, Review my changes, and Edit and merge are choices, not immediate writes. Review stays disabled until a choice; show the resulting changes, require confirmation, and revalidate server version/authority before applying. An authorization failure preserves recoverable work according to policy and cannot become a successful sync.
+6. **Truthful status:** distinguish Saving, Saved on device, Pending, Synced, Conflict, and Failed. Connectivity and sync status are separate; Online does not mean Up to date. Global and local connectivity labels must agree within one screen. Server-confirmed timestamps describe actual successful confirmation only.
+7. **Failure and empty states:** distinguish no records, no matching filters, loading, permission denial, write failure, and upload failure. Provide the relevant permitted action, retain input, and announce outcomes. Keep the existing accessible/truthful state contract below as the detailed state checklist.
+8. **Keyboard and viewport:** skip-to-content focuses the existing main landmark without changing the application route. Route changes announce the new title and place focus logically. Sticky actions account for safe areas, the software keyboard, zoom, validation messages, and the last field. Do not hide focused controls under navigation.
+
+### Implementation acceptance for the visual baseline
+
+- Check representative pages at 1440x900, 1024x768, 768x1024, 390x844, and 320x740, plus 200% zoom and a real mobile keyboard. These are layout test sizes, not an approved production browser-support matrix.
+- Verify tasks and information hierarchy against the boards, rather than matching scaled PNG text sizes. Check ordinary text contrast, focus visibility, accessible names, reading order, and screen-reader announcements in the rendered application.
+- Reproduce and then resolve the existing demo issues before calling the new UI complete: online/offline events clear unsaved input; project-originated creation resets to the first project; the skip link enters the missing route. Also verify edit/resume, long labels, tablet status visibility, local save failure, and unobscured action bars.
+- Static assets and visual inspection do not satisfy product E2E-01-E2E-18. Production API/security/financial/offline decisions and runtime verification remain governed by SPEC.md and TASK.md.
+
+## Supporting UI references — original `ui/` images
 
 ### Evidence and status
 
-The user designated the 24 static screen images in `ui/` as the visual/layout anchor for ConstructClaim. They show paired desktop and phone compositions for the main journeys. This pass reads them as **design references**, not screenshots of a running application; their dates, people, amounts, project names, status counts, and settings values are illustrative, not approved seed data or live facts. The assets were untracked during the original layout review and were later committed in `89370cd`; this static demo does not alter them. The UI layout spec below is a derived design baseline, not evidence that any route or interaction exists.
+The original 24 user-designated images in `ui/` provide secondary screen-family references under the active v2 baseline above. They show paired desktop and phone compositions for the main journeys. Their dates, people, amounts, project names, status counts, and settings values are illustrative, not approved seed data or live facts. The assets were untracked during the original layout review and were later committed in `89370cd`; they remain unchanged. The historical composition guidance below is subordinate to v2 where layouts differ and is not evidence that any route or interaction exists.
 
 ### Shared shell and information architecture
 
@@ -190,7 +301,7 @@ All listed assets are user-provided files currently present under `ui/` in this 
 
 `01-Login.png`, `02-Home Dashboard.png`, `03-Projects.png`, `04-Project-360.png`, `05-Claims.png`, `06-Claim-Detail.png`, `07-New-Claim.png`, `08-Claim-Line-Editor.png`, `09-Submit-Claim-Review.png`, `10-Certification.png`, `11-Certificate-Detail.png`, `12-Schedule-of-Values.png`, `13-SOV-Detail.png`, `14-Variation-Orders.png`, `15-Variation-Order-Detail.png`, `16-Evidence-Gallery.png`, `17-Evidence-Capture.png`, `18-Approval-Inbox.png`, `19-Parties.png`, `20-Activity-Timeline.png`, `21-Global-Search.png`, `22-Offline-Queue.png`, `23-Sync-Conflict.png`, and `24-Settings.png`.
 
-The static references are the layout anchor for the screen families above; they are not a pixel-perfect implementation mandate or runtime/browser verification. The PWA app-shell install/update/offline experience, manifest, service-worker versioning, cache strategy, supported browsers, and update recovery remain unimplemented and must be selected and tested as a coherent release contract.
+These original static references supplement the active v2 baseline; they are not a pixel-perfect implementation mandate or runtime/browser verification. The demo has a static manifest and Service Worker, while production PWA install/update/offline behavior, browser support, and recovery remain subject to implementation and verification as a coherent release contract.
 
 ## AI and integrations
 

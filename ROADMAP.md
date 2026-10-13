@@ -2,7 +2,7 @@
 
 ## Planning basis
 
-The repository contains the initial `.gitattributes` baseline, eight planning documents, and 24 tracked user-provided UI PNGs. An isolated static demo slice now has application code (see [README.md](README.md)), but no production API/database/security milestone is Implemented, Verified, or Released. The ConstructClaim PWA V1 blueprint defines the intended product. This roadmap sequences work by dependency; it does not assert dates or percent-complete estimates.
+The repository contains the initial `.gitattributes` baseline, eight planning documents, 24 original user-provided UI PNGs, four core v2 design boards, and 21 independent v2 page sheets with a local review gallery. Use the visual reference precedence in [DESIGN.md](DESIGN.md#active-visual-baseline-v2). An isolated static demo slice now has application code (see [README.md](README.md)), but no production API/database/security milestone is Implemented, Verified, or Released. The ConstructClaim PWA V1 blueprint defines the intended product. This roadmap sequences work by dependency; it does not assert dates or percent-complete estimates.
 
 ## Milestone status
 

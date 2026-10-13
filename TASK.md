@@ -56,6 +56,22 @@ Priorities: **P0** blocks safe foundations or the V1 financial/tenant contract; 
 - **Definition of Done:** `DESIGN.md` maps shared shell, screen families, desktop/mobile adaptation, visible states, and screenshot inventory; `SPEC.md`/`EPIC.md`/`ROADMAP.md`/`TASK.md`/`PROGRESS.md`/`GOAL.md`/`GOAL_PROMPT.md` align; links/IDs/counts/prompt limit pass; `ui/` assets remain untouched and un-staged.
 - **Evidence:** 24/24 image inventory, Markdown targets, E2E/task IDs, D-008 alignment, prompt length, and whitespace checks passed; image-only quality review and runtime limits are recorded in [DESIGN.md](DESIGN.md) and [PROGRESS.md](PROGRESS.md).
 
+### T-018 — Generate the v2 visual design baseline
+
+- **Status:** Verified as design artifacts; implementation remains pending.
+- **Scope:** Four image-generated desktop/mobile boards, persisted in `ui/ssot-v2/`; DESIGN.md owns visual tokens, responsive rules, source precedence, and the interaction contract. Exact generation prompts accompany the assets.
+- **Acceptance:** Inspect final images for layout, legibility, financial-stage separation, arithmetic examples, context, and connectivity/save-state consistency; verify image readability, document links, prompt JSON, original asset preservation, and unchanged application source.
+- **Evidence:** Four final PNGs opened and visually inspected; connectivity and table-header corrections checked; sample arithmetic passed; 48 local Markdown links/fragments and prompt JSON passed; GOAL_PROMPT.md is 1,889/2,000 characters; all 24 original images match HEAD byte-for-byte; application source is unchanged; `git diff --check` passed. Browser implementation/accessibility acceptance is not part of this artifact verification.
+- **Boundary:** Design delivery only. It does not implement the reviewed demo fixes or satisfy product E2E scenarios. Original 24 references remain unchanged and secondary under the v2 baseline.
+
+### T-019 — Complete independent v2 page designs
+
+- **Status:** Verified as design artifacts; application implementation remains pending.
+- **Scope:** Generate independent desktop/mobile sheets for the remaining 20 original page families and Reports. Save 21 PNGs and exact prompts in `ui/ssot-v2/pages/`; provide a local review gallery and update the authoritative DESIGN.md page index.
+- **Acceptance:** Inspect every selected image; correct material state, financial, navigation and context inconsistencies; check PNG decoding, expected inventory, gallery links/rendering, document links, prompt JSON and prompt-length limit. Preserve the 24 original images, four earlier v2 boards, application source and unrelated work.
+- **Evidence:** 21 final 1586 x 992 PNGs decoded and visually inspected; 21 generation prompts and 17 targeted correction prompts saved. Synthetic arithmetic passed. The gallery decoded all 25 images, returned no broken resource links, and had no horizontal overflow at actual 1440, 390 and 320px viewport widths. Static checks resolved 68 Markdown links/fragments and 55 gallery targets before this evidence update; final link/whitespace checks were rerun after documentation synchronization. GOAL_PROMPT.md is 1,875/2,000 characters. All 24 original PNGs match HEAD byte-for-byte; the four prior boards were not edited; application source is unchanged. Gallery checks are not product workflow or accessibility acceptance.
+- **Boundary:** The user prioritized completing designs before the proposed demo implementation. These artifacts do not implement routes, approve production policies, or satisfy product E2E scenarios.
+
 ## Separate static demo workstream
 
 ### DEMO-001 — Device-local GitHub Pages-capable walkthrough

@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>ConstructClaim · UI Blueprint v2 design gallery</title>
+  <style>
+    :root{font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;color:#14243b;background:#f4f7fb;font-synthesis:none}
+    *{box-sizing:border-box}body{margin:0}a{color:#155eef}a:focus-visible{outline:3px solid #155eef;outline-offset:4px}header,main,footer{max-width:1440px;margin:auto;padding:32px}
+    header{padding-top:48px;padding-bottom:16px}.eyebrow{font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#52637a}h1{font-size:clamp(28px,4vw,44px);letter-spacing:-.04em;line-height:1.15;margin:12px 0}h2{font-size:24px;margin:0 0 8px}h3{font-size:18px;margin:6px 0 8px}
+    p{line-height:1.6;color:#52637a;margin:8px 0 16px}.intro{max-width:860px}nav{display:flex;flex-wrap:wrap;gap:12px;margin-top:20px}nav a{display:inline-flex;align-items:center;min-height:44px;padding:10px 16px;background:white;border:1px solid #d9e2ee;border-radius:8px;text-decoration:none;font-weight:600}
+    .primary{color:white;background:#155eef;border-color:#155eef}.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px;margin:24px 0 48px}.sheet{display:block;overflow:hidden;min-width:0;background:#fff;border:1px solid #d9e2ee;border-radius:12px;text-decoration:none;color:inherit}.sheet:hover{border-color:#155eef}.sheet img{display:block;width:100%;height:auto;aspect-ratio:1586/992;object-fit:contain;background:#eef3fa;border-bottom:1px solid #d9e2ee}.sheet>div{padding:18px}.sheet p{font-size:14px;margin-bottom:12px}.number{font-size:12px;font-weight:700;letter-spacing:.05em;color:#52637a}.open{display:inline-flex;align-items:center;min-height:28px;font-size:14px;font-weight:600;color:#155eef}
+    .note{max-width:950px;border-left:3px solid #155eef;padding:0 20px;margin:24px 0}footer{font-size:13px;padding-top:0;color:#52637a}.skip{position:absolute;left:16px;top:-100px;background:white;padding:12px}.skip:focus{top:16px}
+    @media(max-width:1050px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:640px){header,main,footer{padding:20px}.grid{grid-template-columns:1fr;gap:20px}header{padding-top:32px}nav a{flex-grow:1;justify-content:center}}
+  </style>
+</head>
+<body>
+  <a class="skip" href="#pages">Skip to page designs</a>
+  <header>
+    <div class="eyebrow">ConstructClaim · UI Blueprint v2 · 13 October 2026</div>
+    <h1>Page design gallery</h1>
+    <p class="intro">21 independent desktop/mobile page sheets extend the four existing core boards. Together they cover the original 24 page families and the Reports destination. Select an image to inspect its full-size design.</p>
+    <nav aria-label="Design resources">
+      <a class="primary" href="#pages">21 page sheets</a><a href="#core">4 core boards</a><a href="../../../DESIGN.md">Authoritative design rules</a><a href="generation-prompts.json">Page generation prompts</a>
+    </nav>
+    <p class="note">Target product designs with synthetic examples. These images are not the running application. DESIGN.md owns exact labels, shared components, responsive dimensions and interaction rules; SPEC.md owns business meaning and authorization.</p>
+  </header>
+  <main>
+    <section id="pages" aria-labelledby="page-heading">
+      <h2 id="page-heading">Independent page sheets</h2>
+      <p>Page numbers follow the original reference inventory. Pages 02, 08, 10 and 22 retain coverage in the core boards below. Page 25 adds Reports.</p>
+      <div class="grid">
+      <a class="sheet" href="01-login.png" id="page-01"><img src="01-login.png" alt="Sign in: desktop and mobile design" width="1586" height="992" loading="lazy"><div><span class="number">01</span><h3>Sign in</h3><p>Organization context before sign-in</p><span class="open">Open full-size image →</span></div></a>
+      <a class="sheet" href="03-projects.png" id="page-03"><img src="03-projects.png" alt="Projects: desktop and mobile design" width="1586" height="992" loading="lazy"><div><span class="number">03</span><h3>Projects</h3><p>Assigned-project scope</p><span class="open">Open full-size image →</span></div></a>
+      <a class="sheet" href="04-project-overview.png" id="page-04"><img src="04-project-overview.png" alt="Project workspace: desktop and mobile design" width="1586" height="992" loading="lazy"><div><span class="number">04</span><h3>Project workspace</h3><p>Project context stays in every task</p><span class="open">Open full-size image →</span></div></a>
+      <a class="sheet" href="05-claims.png" id="page-05"><img src="05-claims.png" alt="Claims: desktop and mobile design" width="1586" height="992" loading="lazy"><div><span class="number">05</span><h3>Claims</h3><p>Direction filters govern every row</p><span class="open">Open full-size image →</span></div></a>
+      <a class="sheet" href="06-claim-detail.png" id="page-06"><img src="06-claim-detail.png" alt="Claim detail: desktop and mobile design" width="1586" height="992" loading="lazy"><div><span class="number">06</span><h3>Claim detail</h3><p>Claim and certificate states are independent</p><span class="open">Open full-size image →</span></div></a>
+      <a class="sheet" href="07-new-claim.png" id="page-07"><img src="07-new-claim.png" alt="New claim · Details: desktop and mobile design" width="1586" height="992" loading="lazy"><div><span class="number">07</span><h3>New claim · Details</h3><p>Inherit project and direction</p><span class="open">Open full-size image →</span></div></a>
+      <a class="sheet" href="09-submit-claim-review.png" id="page-09"><img src="09-submit-claim-review.png" alt="Review claim: desktop and mobile design" width="1586" height="992" loading="lazy"><div><span class="number">09</span><h3>Review claim</h3><p>Review before the final submission</p><span class="open">Open full-size image →</span></div></a>
+      <a class="sheet" href="11-certificate-detail.png" id="page-11"><img src="11-certificate-detail.png" alt="Certificate detail: desktop and mobile design" width="1586" height="992" loading="lazy"><div><span class="number">11</span><h3>Certificate detail</h3><p>Issued snapshots are read-only</p><span class="open">Open full-size image →</span></div></a>
+      <a class="sheet" href="12-schedule-of-values.png" id="page-12"><img src="12-schedule-of-values.png" alt="Schedule of values: desktop and mobile design" width="1586" height="992" loading="lazy"><div><span class="number">12</span><h3>Schedule of values</h3><p>Versioned contract basis</p><span class="open">Open full-size image →</span></div></a>
+      <a class="sheet" href="13-sov-detail.png" id="page-13"><img src="13-sov-detail.png" alt="SOV line detail: desktop and mobile design" width="1586" height="992" loading="lazy"><div><span class="number">13</span><h3>SOV line detail</h3><p>Keep the calculation basis visible</p><span class="open">Open full-size image →</span></div></a>
+      <a class="sheet" href="14-variation-orders.png" id="page-14"><img src="14-variation-orders.png" alt="Variation orders: desktop and mobile design" width="1586" height="992" loading="lazy"><div><span class="number">14</span><h3>Variation orders</h3><p>Only approved value enters contract totals</p><span class="open">Open full-size image →</span></div></a>
+      <a class="sheet" href="15-variation-order-detail.png" id="page-15"><img src="15-variation-order-detail.png" alt="Variation detail: desktop and mobile design" width="1586" height="992" loading="lazy"><div><span class="number">15</span><h3>Variation detail</h3><p>Unapproved work is excluded from claims</p><span class="open">Open full-size image →</span></div></a>
+      <a class="sheet" href="16-evidence-gallery.png" id="page-16"><img src="16-evidence-gallery.png" alt="Evidence gallery: desktop and mobile design" width="1586" height="992" loading="lazy"><div><span class="number">16</span><h3>Evidence gallery</h3><p>File bytes and metadata share a state</p><span class="open">Open full-size image →</span></div></a>
+      <a class="sheet" href="17-evidence-capture.png" id="page-17"><img src="17-evidence-capture.png" alt="Capture evidence: desktop and mobile design" width="1586" height="992" loading="lazy"><div><span class="number">17</span><h3>Capture evidence</h3><p>Preview is not a saved attachment</p><span class="open">Open full-size image →</span></div></a>
+      <a class="sheet" href="18-approval-inbox.png" id="page-18"><img src="18-approval-inbox.png" alt="Approval inbox: desktop and mobile design" width="1586" height="992" loading="lazy"><div><span class="number">18</span><h3>Approval inbox</h3><p>Queue is the workflow source</p><span class="open">Open full-size image →</span></div></a>
+      <a class="sheet" href="19-parties.png" id="page-19"><img src="19-parties.png" alt="Parties: desktop and mobile design" width="1586" height="992" loading="lazy"><div><span class="number">19</span><h3>Parties</h3><p>Directory entries are not permission grants</p><span class="open">Open full-size image →</span></div></a>
+      <a class="sheet" href="20-activity-timeline.png" id="page-20"><img src="20-activity-timeline.png" alt="Activity timeline: desktop and mobile design" width="1586" height="992" loading="lazy"><div><span class="number">20</span><h3>Activity timeline</h3><p>Audit event details remain read-only</p><span class="open">Open full-size image →</span></div></a>
+      <a class="sheet" href="21-global-search.png" id="page-21"><img src="21-global-search.png" alt="Global search: desktop and mobile design" width="1586" height="992" loading="lazy"><div><span class="number">21</span><h3>Global search</h3><p>Results remain permission scoped</p><span class="open">Open full-size image →</span></div></a>
+      <a class="sheet" href="23-sync-conflict.png" id="page-23"><img src="23-sync-conflict.png" alt="Resolve conflict: desktop and mobile design" width="1586" height="992" loading="lazy"><div><span class="number">23</span><h3>Resolve conflict</h3><p>Preserve base, local and server versions</p><span class="open">Open full-size image →</span></div></a>
+      <a class="sheet" href="24-settings.png" id="page-24"><img src="24-settings.png" alt="Settings · Device data: desktop and mobile design" width="1586" height="992" loading="lazy"><div><span class="number">24</span><h3>Settings · Device data</h3><p>Policy defines what may stay on a device</p><span class="open">Open full-size image →</span></div></a>
+      <a class="sheet" href="25-reports.png" id="page-25"><img src="25-reports.png" alt="Reports · Financial position: desktop and mobile design" width="1586" height="992" loading="lazy"><div><span class="number">25</span><h3>Reports · Financial position</h3><p>Stages are separate, overlapping measures</p><span class="open">Open full-size image →</span></div></a>
+      </div>
+    </section>
+    <section id="core" aria-labelledby="core-heading">
+      <h2 id="core-heading">Existing core boards</h2>
+      <p>Shared shell and primary workflows. These four original v2 files are preserved unchanged.</p>
+      <div class="grid">
+      <a class="sheet" href="../01-workspace-navigation.png"><img src="../01-workspace-navigation.png" alt="Workspace and navigation design board" width="1586" height="992" loading="lazy"><div><span class="number">Board 01</span><h3>Workspace and navigation</h3><span class="open">Open full-size image →</span></div></a>
+      <a class="sheet" href="../02-claims-draft-editing.png"><img src="../02-claims-draft-editing.png" alt="Claims and draft editing design board" width="1586" height="992" loading="lazy"><div><span class="number">Board 02</span><h3>Claims and draft editing</h3><span class="open">Open full-size image →</span></div></a>
+      <a class="sheet" href="../03-certification-field-evidence.png"><img src="../03-certification-field-evidence.png" alt="Certification and field evidence design board" width="1586" height="992" loading="lazy"><div><span class="number">Board 03</span><h3>Certification and field evidence</h3><span class="open">Open full-size image →</span></div></a>
+      <a class="sheet" href="../04-offline-recovery-ui-states.png"><img src="../04-offline-recovery-ui-states.png" alt="Offline recovery and UI states design board" width="1586" height="992" loading="lazy"><div><span class="number">Board 04</span><h3>Offline recovery and UI states</h3><span class="open">Open full-size image →</span></div></a>
+      </div>
+    </section>
+  </main>
+  <footer>Static review gallery · No account, network service or application data required · Open a PNG for full-size review; thumbnail text is intentionally reduced.</footer>
+</body>
+</html>
