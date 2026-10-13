@@ -43,5 +43,42 @@ export function createRecordStore(database, storeName = 'drafts') {
       });
     } finally { db.close(); }
   }
-  return { open, list: () => transaction('readonly', store => store.getAll()), save: record => transaction('readwrite', store => store.put(record)), saveChecked, remove: id => transaction('readwrite', store => store.delete(id)), clear: () => transaction('readwrite', store => store.clear()) };
+  // A readwrite transaction serializes competing tabs; add never replaces a record.
+  async function createIfAbsent(record, check) {
+    const db = await open();
+    try {
+      return await new Promise((resolve, reject) => {
+        const tx = db.transaction(storeName, 'readwrite');
+        const store = tx.objectStore(storeName);
+        let result, failure;
+        store.get(record.id).onsuccess = event => {
+          const existing = event.target.result;
+          if (existing !== undefined) { result = { created: false, record: existing }; return; }
+          try {
+            if (check) check(undefined, record);
+            store.add(record);
+            result = { created: true, record };
+          } catch (error) { failure = error; tx.abort(); }
+        };
+        tx.oncomplete = () => resolve(result);
+        tx.onerror = tx.onabort = () => reject(failure || tx.error || new Error('Local create failed.'));
+      });
+    } finally { db.close(); }
+  }
+  async function removeIfPresent(id) {
+    const db = await open();
+    try {
+      return await new Promise((resolve, reject) => {
+        const tx = db.transaction(storeName, 'readwrite');
+        const store = tx.objectStore(storeName);
+        let removed = false;
+        store.get(id).onsuccess = event => {
+          if (event.target.result !== undefined) { store.delete(id); removed = true; }
+        };
+        tx.oncomplete = () => resolve(removed);
+        tx.onerror = tx.onabort = () => reject(tx.error || new Error('Local removal failed.'));
+      });
+    } finally { db.close(); }
+  }
+  return { open, list: () => transaction('readonly', store => store.getAll()), get: id => transaction('readonly', store => store.get(id)), save: record => transaction('readwrite', store => store.put(record)), saveChecked, createIfAbsent, removeIfPresent, remove: id => transaction('readwrite', store => store.delete(id)), clear: () => transaction('readwrite', store => store.clear()) };
 }

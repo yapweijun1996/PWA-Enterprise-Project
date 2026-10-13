@@ -9,7 +9,10 @@ import { lineTotals, fromCents } from './demo-domain.js';
 import { sampleClaims } from './demo-claims.js';
 import { listCertificates, saveCertificate, removeCertificate, clearCertificates } from './certificate-storage.js';
 import { createCertificateEditor } from './certificate-editor.js';
-import { canAssess, sampleCertificate } from './certificate-domain.js';
+import { canAssess } from './certificate-domain.js';
+import { sampleCertificates } from './demo-certificates.js';
+import { sampleEvidence } from './sample-evidence.js';
+import { loadPracticeRecords, resetPracticeRecords } from './demo-practice.js';
 import { certificateRecords, certificateDetail } from './certificate-pages.js';
 import { listEvidence, saveEvidence, removeEvidence, clearEvidence } from './evidence-storage.js';
 import { createEvidenceEditor } from './evidence-editor.js';
@@ -25,7 +28,7 @@ const pages = [
 const mobilePages = [['home', 'Home', 'home'], ['projects', 'Projects', 'projects'], ['claims', 'Claims', 'claims'], ['inbox', 'Inbox', 'inbox'], ['more', 'More', 'more']];
 const main = document.querySelector('#main');
 const live = document.querySelector('#live-status');
-const state = { drafts: [], storageError: '', variations: [], variationError: '', certificates: [], certificateError: '', evidence: [], evidenceError: '', filter: '', direction: 'All', snapshotDirection: 'Receivable' };
+const state = { drafts: [], storageError: '', variations: [], variationError: '', certificates: [], certificateError: '', evidence: [], evidenceError: '', filter: '', direction: 'All', snapshotDirection: 'Receivable', practiceFeedback: '' };
 
 const projectName = id => projects.find(project => project.id === id)?.name || 'Unknown demo project';
 const announce = message => { live.textContent = ''; requestAnimationFrame(() => { live.textContent = message; pwa.reconsider(); }); };
@@ -84,12 +87,16 @@ function layoutProject(id, view = 'overview') {
   if (view === 'evidence') return layoutEvidence(id);
   const related = allClaims().filter(c => c.project === id);
   const claims = '<section class="panel"><h2>Project claims</h2><ul class="row-list">' + related.map(c => '<li><a class="row-link" href="#claim/' + encodeURIComponent(c.id) + '"><span><strong>' + escapeHtml(claimTitle(c)) + '</strong><small>' + escapeHtml(c.direction) + ' · ' + escapeHtml(c.status) + '</small></span>' + icon('arrow') + '</a></li>').join('') + '</ul></section>';
-  return heading(view === 'overview' ? project.name : view === 'claims' ? 'Project claims' : 'Project evidence', project.name + ' · ' + project.contract + ' · Synthetic', newLink('?project=' + id + '&direction=' + (id === 'cedar' ? 'Payable' : 'Receivable'))) + projectTabs(id, view) + (state.storageError ? notice('Local claim drafts could not be read: ' + escapeHtml(state.storageError), 'error') : '') +
+  return heading(view === 'overview' ? project.name : view === 'claims' ? 'Project claims' : 'Project evidence', project.name + ' · ' + project.contract + ' · Synthetic', newLink('?project=' + id + '&direction=' + project.defaultDirection)) + projectTabs(id, view) + (state.storageError ? notice('Local claim drafts could not be read: ' + escapeHtml(state.storageError), 'error') : '') +
     (view === 'claims' ? claims :
       contractCards(id) + '<div class="grid columns section-gap"><section class="panel"><h2>Project overview</h2><dl class="key-values"><div><dt>Contract</dt><dd>' + project.contract + ' · Sample</dd></div><div><dt>Counterparty</dt><dd>' + project.party + '</dd></div></dl><a class="text-link" href="#project/' + id + '/sov">Explore SOV ' + icon('arrow') + '</a><br><a class="text-link" href="#project/' + id + '/variations">Explore variations ' + icon('arrow') + '</a><p class="meta">Only sample approved variations enter the illustrative revised contract. Device drafts do not change these fixtures.</p></section>' + claims + '</div>');
 }
 function allClaims() {
-  return [...sampleClaims, ...state.drafts.map(d => ({ ...d, local: true, status: d.reviewedAt ? 'Reviewed on device' : 'Device-only draft', certificate: state.certificateError ? 'Preview storage unavailable' : state.certificates.some(item => item.source.id === d.id) ? 'Local preview · Not issued' : 'Not yet certified' }))];
+  const samples = sampleClaims.map(claim => {
+    const preview = sampleCertificates.find(item => item.source.id === claim.id);
+    return { ...claim, sample: true, certificate: preview ? preview.id + ' · Illustrative' : claim.certificate || 'Not yet certified' };
+  });
+  return [...samples, ...state.drafts.map(d => ({ ...d, local: true, status: d.reviewedAt ? 'Reviewed on device' : 'Device-only draft', certificate: state.certificateError ? 'Preview storage unavailable' : state.certificates.some(item => item.source.id === d.id) ? 'Local preview · Not issued' : 'Not yet certified' }))];
 }
 function claimRecords() {
   const query = state.filter.toLocaleLowerCase();
@@ -108,16 +115,16 @@ function layoutClaim(id) {
   const totals = lineTotals(claim.lines || []);
   return heading(escapeHtml(claimTitle(claim)), projectName(claim.project) + ' · ' + escapeHtml(claim.direction) + ' · ' + escapeHtml(claim.period || 'Period not set'), claim.local ? '<a class="button" href="#edit/' + encodeURIComponent(claim.id) + '">' + icon('claims') + 'Edit draft</a>' : '<a class="button secondary" href="#claims">' + icon('back') + 'Back to claims</a>') +
     '<div class="grid columns"><section class="panel"><h2>Claim details</h2><dl class="key-values"><div><dt>This period · Illustrative</dt><dd>' + money(claim.amount) + '</dd></div><div><dt>Claim state</dt><dd><span class="status ' + (claim.local ? 'local' : '') + '">' + escapeHtml(claim.status) + '</span></dd></div><div><dt>Certification</dt><dd>' + escapeHtml(claim.certificate) + '</dd></div><div><dt>Period</dt><dd>' + escapeHtml(claim.period || 'Not set') + '</dd></div></dl>' +
-    (claim.local ? '<p class="review-note"><strong>Period note:</strong> ' + escapeHtml(claim.notes || 'None') + '</p><p class="meta">Saved on this device · ' + displayDate(claim.updatedAt) + '</p>' +
-      (claim.reviewedAt ? '<p class="meta">Local review · ' + displayDate(claim.reviewedAt) + ' · Not submitted</p>' : '') +
-      (claim.lines?.length ? '<h2 class="section-gap">Claim lines</h2><ul class="row-list">' + claim.lines.map(line => '<li class="review-line"><span>' + escapeHtml(line.id + ' · ' + line.title) + '<small class="meta">' + escapeHtml(line.note || '') + '</small></span><strong>' + money(line.current || '0') + '</strong></li>').join('') + '</ul><p class="meta">Previous: ' + money(fromCents(totals.previous)) + ' · Cumulative: ' + money(fromCents(totals.cumulative)) + ' · Synthetic source</p>' : '') +
-      '<h2 class="section-gap">Evidence</h2>' + evidenceCards(claim.attachments || []) +
-      '<details class="section-gap"><summary>Technical reference</summary><p class="meta">' + escapeHtml(claim.id) + '</p><p class="meta">Source: ' + escapeHtml(claim.sourceVersion || 'Legacy demo amount') + '</p></details><button class="button danger section-gap" id="delete-draft" type="button" data-id="' + escapeHtml(claim.id) + '">Delete local draft</button>' : '<p class="meta">Synthetic record for navigation and layout review.</p>') +
-    '<h2 class="section-gap">Linked images</h2>' + (state.evidenceError ? notice('Image storage unavailable: ' + escapeHtml(state.evidenceError), 'error') : evidenceCards(linkedEvidence(state.evidence, id, claim.project))) + captureLink(claim.project, id) + '</section><aside class="panel"><h2>Certification</h2><p class="meta">Independent device-local assessments. The claim amount remains unchanged.</p>' + (canAssess(claim) ? '<a class="button" href="#certificate-new/' + encodeURIComponent(id) + '">Start assessment</a>' : '<p class="meta">Locally review a valid claim before starting an assessment.</p>') + certificateRecords(state.certificates.filter(item => item.source.id === id), state.certificateError) + (id === 'PCAP-DEMO-02' ? pageLink('certificate/CCAP-DEMO-01', 'View sample certificate') : '') + '<h3 class="section-gap">' + (claim.local ? 'Saved on this device' : 'Sample workflow') + '</h3><p class="meta">' + (claim.local ? 'Not submitted or synchronized. Device storage is not a backup.' : 'Claim, certificate, invoice and payment are separate stages. These examples are not issued business documents.') + '</p><a class="text-link" href="#claims">' + icon('back') + 'Back to claims</a></aside></div>';
+    '<p class="review-note"><strong>Period note:</strong> ' + escapeHtml(claim.notes || 'None') + '</p><p class="meta">' + (claim.local ? 'Saved on this device' : 'Bundled fictional sample') + (claim.updatedAt ? ' · ' + displayDate(claim.updatedAt) : '') + '</p>' +
+    (claim.reviewedAt ? '<p class="meta">' + (claim.local ? 'Local review' : 'Sample review') + ' · ' + displayDate(claim.reviewedAt) + ' · Not submitted</p>' : '') +
+    (claim.lines?.length ? '<h2 class="section-gap">Claim lines</h2><ul class="row-list">' + claim.lines.map(line => '<li class="review-line"><span>' + escapeHtml(line.id + ' · ' + line.title) + '<small class="meta">' + escapeHtml(line.note || '') + '</small></span><strong>' + money(line.current || '0') + '</strong></li>').join('') + '</ul><p class="meta">Previous: ' + money(fromCents(totals.previous)) + ' · Cumulative: ' + money(fromCents(totals.cumulative)) + ' · Synthetic source</p>' : '') +
+    '<h2 class="section-gap">Evidence</h2>' + evidenceCards(claim.attachments || []) +
+    '<details class="section-gap"><summary>Technical reference</summary><p class="meta">' + escapeHtml(claim.id) + '</p><p class="meta">Source: ' + escapeHtml(claim.sourceVersion || 'Legacy demo amount') + '</p></details>' + (claim.local ? '<button class="button danger section-gap" id="delete-draft" type="button" data-id="' + escapeHtml(claim.id) + '">Delete local draft</button>' : '') +
+    '<h2 class="section-gap">Linked images</h2>' + (state.evidenceError ? notice('Device image storage unavailable: ' + escapeHtml(state.evidenceError), 'error') : '') + evidenceCards(linkedEvidence([...sampleEvidence, ...state.evidence], id, claim.project)) + captureLink(claim.project, id) + '</section><aside class="panel"><h2>Certification</h2><p class="meta">Independent previews. The claim amount remains unchanged.</p>' + (canAssess(claim) ? '<a class="button" href="#certificate-new/' + encodeURIComponent(id) + '">Start assessment</a>' : '<p class="meta">Locally review a valid claim before starting an assessment.</p>') + certificateRecords(state.certificates.filter(item => item.source.id === id), state.certificateError) + (sampleCertificates.some(item => item.source.id === id) ? '<h3 class="section-gap">Sample previews</h3>' + certificateRecords(sampleCertificates.filter(item => item.source.id === id)) : '') + '<h3 class="section-gap">' + (claim.local ? 'Saved on this device' : 'Sample workflow') + '</h3><p class="meta">' + (claim.local ? 'Not submitted or synchronized. Device storage is not a backup.' : 'Claim, certificate, invoice and payment are separate stages. These examples are not issued business documents.') + '</p><a class="text-link" href="#claims">' + icon('back') + 'Back to claims</a></aside></div>';
 }
 
 function layoutCertificates() {
-  return heading('Certificate previews', 'Independent assessments · Device only · Not issued') + '<section class="panel"><h2>Local assessments</h2>' + certificateRecords(state.certificates, state.certificateError) + '</section><section class="panel section-gap"><h2>Illustrative example</h2>' + certificateRecords([sampleCertificate]) + '</section>';
+  return heading('Certificate previews', 'Sample and device-local assessments · Not issued') + '<section class="panel"><h2>Local assessments</h2>' + certificateRecords(state.certificates, state.certificateError) + '</section><section class="panel section-gap"><h2>Illustrative examples · ' + sampleCertificates.length + '</h2>' + certificateRecords(sampleCertificates) + '</section>';
 }
 
 function layoutOffline() {
@@ -129,7 +136,7 @@ function layoutOffline() {
 }
 function layoutInbox() { return heading('Inbox', 'Your review tasks and decisions.') + '<section class="panel"><h2>No review tasks</h2><p class="meta">The demo has no connected account or approval service. You can review a fictional draft on this device.</p>' + pageLink('claims', 'Explore claims') + '</section>'; }
 function evidenceData(projectId = '') {
-  return { records: state.evidence, claims: state.drafts, currentClaims: allClaims(), projectId, error: state.evidenceError, claimError: state.storageError };
+  return { records: [...sampleEvidence, ...state.evidence], claims: [...sampleClaims, ...state.drafts], currentClaims: allClaims(), projectId, error: state.evidenceError, claimError: state.storageError };
 }
 function layoutEvidence(projectId = '') {
   return evidenceGallery(evidenceData(projectId));
@@ -167,7 +174,9 @@ function route() {
       main.innerHTML = state.storageError ? heading('Draft unavailable', 'Device storage could not be read.') + notice(escapeHtml(state.storageError), 'error') + pageLink('offline', 'Open device drafts') : layoutMissing();
     } else {
       const query = new URLSearchParams(raw.split('?')[1] || '');
-      const context = { project: projects.some(project => project.id === query.get('project')) ? query.get('project') : 'harbor', direction: query.get('direction') === 'Payable' ? 'Payable' : 'Receivable' };
+      const selectedProject = projects.find(project => project.id === query.get('project')) || projects[0];
+      const direction = query.get('direction');
+      const context = { project: selectedProject.id, direction: ['Payable', 'Receivable'].includes(direction) ? direction : selectedProject.defaultDirection };
       activeEditor = createDraftEditor({
         root: main, record, context, projects, linkedAttachments: record ? linkedEvidence(state.evidence, record.id, record.project) : [], linkedImageError: state.evidenceError, announce,
         onSave: async draft => {
@@ -199,7 +208,7 @@ function route() {
   } else if (certificateTask) {
     const record = active === 'certificate-edit' ? state.certificates.find(item => item.id === path[1]) : null;
     const sourceClaim = allClaims().find(item => item.id === path[1]);
-    const claim = sourceClaim ? { ...sourceClaim, attachments: [...(sourceClaim.attachments || []), ...linkedEvidence(state.evidence, sourceClaim.id, sourceClaim.project)] } : null;
+    const claim = sourceClaim ? { ...sourceClaim, attachments: [...(sourceClaim.attachments || []), ...linkedEvidence([...sampleEvidence, ...state.evidence], sourceClaim.id, sourceClaim.project)] } : null;
     if (record?.reviewedAt) main.innerHTML = certificateDetail(record, allClaims().find(item => item.id === record.source.id), record.source.id.startsWith('LOCAL-') ? state.storageError : '');
     else if ((active === 'certificate-edit' && !record) || (!record && (!canAssess(claim) || state.evidenceError))) main.innerHTML = heading('Assessment unavailable', 'Open a locally reviewed claim with readable evidence to start an assessment.') + (state.certificateError || state.storageError || state.evidenceError ? notice(escapeHtml(state.certificateError || state.storageError || state.evidenceError), 'error') : '') + pageLink('claims', 'Open claims');
     else activeEditor = createCertificateEditor({ root: main, record, claim, announce,
@@ -223,11 +232,11 @@ function route() {
     const views = { home: layoutHome, projects: layoutProjects, claims: layoutClaims, certificates: layoutCertificates, offline: layoutOffline, inbox: layoutInbox, evidence: layoutEvidence, more: layoutMore, parties: layoutParties, reports: layoutReports, settings: layoutSettings };
     main.innerHTML = active === 'project' ? (['sov', 'variations'].includes(path[2]) ? renderProjectPage(path[1], path[2], path[3], state.drafts, state.variations, state.variationError, state.storageError) || layoutMissing() : layoutProject(path[1], path[2])) : active === 'claim' ? layoutClaim(path[1]) : views[active]?.() || layoutMissing();
     if (active === 'certificate') {
-      const record = path[1] === sampleCertificate.id ? sampleCertificate : state.certificates.find(item => item.id === path[1]);
+      const record = sampleCertificates.find(item => item.id === path[1]) || state.certificates.find(item => item.id === path[1]);
       main.innerHTML = record ? certificateDetail(record, allClaims().find(item => item.id === record.source.id), record.source.id.startsWith('LOCAL-') ? state.storageError : '') : state.certificateError ? heading('Preview unavailable', 'Device storage could not be read.') + notice(escapeHtml(state.certificateError), 'error') : layoutMissing();
     }
     if (active === 'evidence' && path[1]) {
-      const record = state.evidence.find(item => item.id === path[1]);
+      const record = sampleEvidence.find(item => item.id === path[1]) || state.evidence.find(item => item.id === path[1]);
       main.innerHTML = record ? evidenceDetail(record, allClaims().find(item => item.id === record.context.id), record.context.id.startsWith('LOCAL-') ? state.storageError : '') : state.evidenceError ? heading('Evidence unavailable', 'Device storage could not be read.') + notice(escapeHtml(state.evidenceError), 'error') : layoutMissing();
     }
     bindPage();
@@ -239,6 +248,28 @@ function route() {
   pwa.reconsider();
 }
 function bindPage() {
+  for (const [id, action, reset] of [['load-practice', loadPracticeRecords, false], ['reset-practice', resetPracticeRecords, true]]) {
+    document.querySelector('#' + id)?.addEventListener('click', async () => {
+      if (deviceChanges) return;
+      if (reset && !confirm('Delete only the 16 reserved practice records, including your edits to them? Other device records and bundled samples are kept.')) return;
+      const finish = beginDeviceChange();
+      const controls = main.querySelectorAll('#load-practice, #reset-practice');
+      controls.forEach(button => { button.disabled = true; });
+      let message;
+      try {
+        const result = await action();
+        message = reset ? result.removed + ' practice records removed. Other records kept.' : result.created + ' practice records loaded; ' + result.kept + ' existing practice records kept without changes.';
+      } catch (error) {
+        message = 'Practice ' + (reset ? 'reset' : 'load') + ' incomplete: ' + error.message;
+      } finally {
+        await refreshDrafts();
+        finish();
+      }
+      state.practiceFeedback = message;
+      if (currentHash === '#settings') route();
+      announce(message);
+    });
+  }
   document.querySelector('#delete-evidence')?.addEventListener('click', async event => {
     const { id, project } = event.currentTarget.dataset;
     if (!confirm('Permanently delete this device-only image? Claims and saved certificate snapshots are kept.')) return;

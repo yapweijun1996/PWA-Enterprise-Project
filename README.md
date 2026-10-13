@@ -39,7 +39,7 @@ node tools/prepare-pages.mjs
 python -m http.server 8765 --bind 127.0.0.1 --directory _site
 ~~~
 
-The preparation command validates manifest/icons and resource dependencies, then creates `_site` with 30 static files, including `.nojekyll`. Its inventory comes from the Service Worker's shell list plus the worker itself. It excludes Git metadata, planning/design documents, the image gallery, tools and tests; the gallery remains available from the source checkout as described above. The default output directory is Git-ignored. Use a new output directory if `_site` already exists, for example `node tools/prepare-pages.mjs <new-output-directory>`; preparation refuses to overwrite existing files.
+The preparation command validates manifest/icons and resource dependencies, then creates `_site` with 34 static files, including `.nojekyll` and the bundled demo dataset modules. Its inventory comes from the Service Worker's shell list plus the worker itself. It excludes Git metadata, planning/design documents, the image gallery, generators, tools and tests; the gallery remains available from the source checkout as described above. The default output directory is Git-ignored. Use a new output directory if `_site` already exists, for example `node tools/prepare-pages.mjs <new-output-directory>`; preparation refuses to overwrite existing files.
 
 ## PWA installation, cache and updates
 
@@ -58,6 +58,35 @@ This automatic policy is an explicit project choice requested on 2026-10-13; PWA
 **Migration from version 29:** already open older pages retain their previous update logic. Save and reopen those pages once (or use their existing guarded Update now action) to load this policy. New automatic updates fail closed if an old/suspended page cannot confirm readiness; save and close that page to allow the next retry. No storage reset is required.
 
 To recover a faulty release, revert its application changes in a new commit, increment `VERSION` in `sw.js` again, and deploy the corrected artifact. Real phone installation/camera, iOS standalone safe areas and browser-process cold launch still require device acceptance.
+
+## Expanded sample dataset and practice drafts
+
+Version 0.4.0 bundles six fictional projects: Harbor Exchange, Cedar Station, Willow Medical Campus, Riverside Logistics Park, Elm Residences and Meridian Roadworks. Browse them immediately; no database setup or sample-loading action is required for read-only examples.
+
+| Record family | Bundled examples |
+|---|---:|
+| Original SOV items | 60 |
+| Variations | 24: 7 Approved, 6 In review, 6 Draft, 5 Rejected |
+| Claim-basis/SOV items including approved additions | 67 |
+| Claims | 36: 18 Receivable, 18 Payable; six per project |
+| Reviewed certificate previews | 12: two per project |
+| Fictional PNG illustrations | 48: eight per project |
+| Text evidence documents | 24: four per project |
+
+The original Harbor/Cedar contracts, two navigation claims and CCAP-DEMO-01 financial/source snapshot remain intact. New monthly examples form separate illustrative sequences; the preserved navigation records are not posted history for those sequences. Dated claim snapshots exclude later-approved variations. SOV previous/certified figures and Overview/Reports remain independent illustrations, not aggregates of device records.
+
+Suggested browsing:
+
+1. **Projects → Willow Medical Campus → SOV**: inspect the SGD 1,800,000 original basis and two approved additions. Compare variation states and search the work items.
+2. **Claims → search Willow → PCAR-WILLOW-2026-10**: inspect all lines, the actual measurement document and linked illustrations. Its sample preview distinguishes a zero assessed line from an unassessed amount.
+3. **Claims → Open certificate previews → CCAR-DEMO-ELM-202610**: inspect the earlier source snapshot and current-source warning. The legacy CCAP-DEMO-01 still shows SGD 18,500 claimed / SGD 17,000 certified / SGD -1,500 variance.
+4. **More → Evidence**: browse 72 bundled files, filter Photos/Documents, search filenames/notes and open read-only image details. Available bundled files remain visible if device storage cannot be read.
+
+For editable examples, open **Settings → Editable practice drafts → Load practice drafts**. This explicitly creates eight claim drafts, four variation proposals and four incomplete assessments in the existing independent IndexedDB stores. Existing records, including edited practice records, are kept; repeated or competing loads never replace them. Resume through **Device drafts**.
+
+**Reset practice drafts** confirms deletion of only those 16 reserved records, including edits to them. Other user-created records, device images and bundled samples are retained. Nothing reloads automatically after reset. The stores are independently transactional: a later failure retains verified earlier writes and reports partial progress; retry continues without replacing existing work. Local review is not submission, approval, issue or synchronization.
+
+PNG bytes are bundled in `demo-images.js`; browsing/building requires no image-generation dependency. To regenerate the labelled 480 x 320 illustrations, run `python tools/generate_demo_images.py` with Pillow installed. The generator writes only that module. Runtime dataset/assets are included in the scoped offline shell; a successful first online visit remains required.
 
 ## Demo walkthrough
 
@@ -98,7 +127,7 @@ No certificate is issued. Retention, deductions, tax, net payable and PDF output
 6. Saved claim Evidence/Review shows linked images as already saved, even when the claim has unsaved edits. A new certificate assessment copies the readable linked images for that project's claim into its source snapshot. Later image deletion does not alter a saved certificate.
 7. Delete an image from its detail, or clear images through Settings. Confirmation is required. These actions keep claims, proposals and certificate snapshots; clearing claims also keeps the separately saved images and previews.
 
-Images are device-local and unuploaded, with no server queue. Context snapshots remain available after a source changes or disappears; unreadable storage is shown as unavailable. Use fictional data only. Browser eviction or site-data clearing can remove these records.
+User-added images are device-local and unuploaded, with no server queue; bundled illustrations are read-only sample resources. Context snapshots remain available after a source changes or disappears; unreadable storage is shown as unavailable without hiding readable samples. Use fictional data only. Browser eviction or site-data clearing can remove device records.
 
 ## What works
 
@@ -147,9 +176,15 @@ node --check evidence-domain.js
 node --check evidence-storage.js
 node --check evidence-editor.js
 node --check evidence-pages.js
+node --check settings-page.js
+node --check pwa-updates.js
+node --check demo-certificates.js
+node --check sample-evidence.js
+node --check demo-images.js
+node --check demo-practice.js
 node --check tools/prepare-pages.mjs
 node --test tests/*.test.mjs
 python -m json.tool manifest.webmanifest
 ~~~
 
-Thirty-nine tests cover claim/SOV/VO/cache contracts, assessment/variance readiness, immutable previews, raster bytes/type/size limits, evidence context/project isolation, unavailable-source states, deployment-scope cache ownership, HTTP-cache refresh, cross-page update readiness/cancellation and artifact completeness/overwrite protection. Syntax checks pass for all twenty-three runtime JavaScript files, the preparation tool and ten test files. Focused Chromium checks include the domain workflows recorded in PROGRESS.md, Settings at 1440/768/390/320px, automatic upgrade without clicking an upgrade action, cross-page dirty/busy protection, same-ID save/read-back before reload, update failures, and cached reload/new-tab recovery with the task server stopped. These amendment checks use an isolated baseline and exclude another session's concurrent fixture/storage changes. The previously published `4578f0d` baseline passed remote Actions/HTTPS asset and manifest diagnostics; this new amendment remains local. Production acceptance, physical installation/camera and full accessibility certification remain unverified. See [PROGRESS.md](PROGRESS.md).
+Forty-two contract tests pass, covering claim/SOV/VO arithmetic and dated sources, assessment readiness, immutable previews, raster/context boundaries, storage-error states, scoped caches, cross-page update readiness and artifact completeness/overwrite protection. Syntax checks passed for all 27 runtime JavaScript files, the preparation tool and 11 test files. The dataset amendment was exercised in Chromium: 36 claim rows/search, 72 evidence files, decode of all 48 PNGs, zero versus unknown assessment and source-change previews, real practice load/edit/reload/reset, preserved unrelated records, two-tab loading, injected partial-store failure/retry, storage-unavailable sample browsing, 1440/390/320px surfaces and server-stopped offline reload/new-tab/local writes. Temporary practice/user smoke records and build output were removed. Earlier PWA-upgrade-specific browser evidence remains separately recorded in [PROGRESS.md](PROGRESS.md). Version 0.4.0 remains a local amendment; this work did not push or deploy it. Production acceptance, physical installation/camera and full accessibility certification remain unverified.

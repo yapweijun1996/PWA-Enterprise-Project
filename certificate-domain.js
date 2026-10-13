@@ -1,5 +1,4 @@
 import { normalizeDraft, validateDraft, toCents, fromCents } from './demo-domain.js';
-import { sampleClaims } from './demo-claims.js';
 
 export function canAssess(claim) {
   if (!claim?.reviewedAt) return false;
@@ -44,8 +43,5 @@ export function checkCertificateWrite(existing, next) {
   if (existing?.reviewedAt && JSON.stringify(existing) !== JSON.stringify(next)) throw new Error('The saved reviewed preview is read-only.');
   if (validateCertificate(next, Boolean(next.reviewedAt)).length) throw new Error('The certificate preview is invalid.');
 }
-const fixture = normalizeCertificate(null, sampleClaims[1], 'CCAP-DEMO-01');
-fixture.assessments = [{ certified: '9000.00', reason: 'Fictional measurement adjustment' }, { certified: '8000.00', reason: 'Fictional inspection pending' }];
-export const sampleCertificate = savedCertificate(fixture, true, '2026-10-13T02:00:00.000Z');
-export const certificateLabel = record => record.id === 'CCAP-DEMO-01' ? record.id : 'Preview ' + record.id.replace(/^LOCAL-CERT-/, '').slice(0, 8).toUpperCase();
+export const certificateLabel = record => record.sample ? record.id : 'Preview ' + record.id.replace(/^LOCAL-CERT-/, '').slice(0, 8).toUpperCase();
 export const certifiedValue = record => assessmentTotals(record).complete ? fromCents(assessmentTotals(record).certified) : '';

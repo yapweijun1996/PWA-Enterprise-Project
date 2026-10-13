@@ -1,5 +1,5 @@
 // Release identity is shared with the UI through GET_VERSION. Bump for every asset change.
-const VERSION = '0.3.0';
+const VERSION = '0.4.0';
 // Cache Storage is shared by every application on an origin, including Pages projects.
 const CACHE_PREFIX = `constructclaim-demo:${self.registration.scope}:`;
 const CACHE_NAME = CACHE_PREFIX + VERSION;
@@ -8,6 +8,7 @@ const SHELL = [
   './demo-claims.js', './certificate-domain.js', './certificate-storage.js', './certificate-editor.js', './certificate-pages.js',
   './evidence-domain.js', './evidence-storage.js', './evidence-editor.js', './evidence-pages.js',
   './settings-page.js', './pwa-updates.js',
+  './demo-certificates.js', './sample-evidence.js', './demo-images.js', './demo-practice.js',
   './manifest.webmanifest', './icon.svg', './icon-192.png', './icon-512.png'
 ];
 const URLS = new Set(SHELL.map(path => new URL(path, self.registration.scope).href));

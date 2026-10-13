@@ -201,3 +201,11 @@ Acceptance IDs E2E-01–E2E-18 are defined in [SPEC.md](SPEC.md). Their current 
 - **Scope:** Settings hierarchy/counts/version/cache status, optional check action, automatic update detection and activation only when every open page is ready; editor/device-write guards, interaction lock/cancel, retry/failure feedback and same-route reload.
 - **Evidence:** 39 Node tests, 34 syntax checks and validated 30-file Pages artifact; Chromium 1440/768/390/320px layouts, two-page dirty/busy deferral, save/read-back before automatic reload, failure feedback and server-stopped/offline cache recovery. See PROGRESS.md.
 - **Boundary:** The user's automatic-update preference is project-specific. Older v29 pages need a saved/reopened migration; old/suspended pages defer automatic activation. Other-session fixture/storage changes were preserved and excluded from this amendment's acceptance and commit. Production E2E states and physical-device acceptance remain unchanged.
+
+### DEMO-009 — Rich fictional dataset and scoped practice loading
+
+- **Status:** Implemented and locally verified; version 0.4.0 is not deployed by this task.
+- **Scope:** six-project linked sample data, 60 original SOV items, 24 variations, 36 claims, 12 reviewed previews, 48 fictional illustrations, 24 text documents, complete sample detail/gallery discovery and project-specific direction defaults. Preserve existing baseline examples and user-created device records.
+- **Acceptance:** explicit 8/4/4 editable practice loading; transactional insert-if-absent; repeat/concurrent load preserves existing edits; confirmed exact-ID reset keeps other records; partial progress remains recoverable; sample browsing survives unavailable storage; new assets work in the offline shell.
+- **Evidence:** 42 passing Node contracts, 39 passing JavaScript syntax checks and validated 34-file temporary Pages artifact; actual Chromium search/details/evidence decode, load/edit/reset, two-tab and injected-failure paths, 1440/390/320px layouts and server-stopped offline reload/new-tab/local-write recovery. See PROGRESS.md and README.md.
+- **Boundary:** fictional/device-local only. No production workflow, push, deployment, physical-device or full accessibility claim.
