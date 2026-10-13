@@ -27,6 +27,8 @@ Progress is measured against the explicit E2E scenario IDs in [SPEC.md](SPEC.md)
 
 ## Static demo status
 
+The v2 shared shell and task-first Overview are implemented. Chromium checks at 1440, 1024, 768, 390 and 320px covered navigation, active destinations, mobile/tablet reflow, project/direction preselection, skip-link focus and network-event input preservation. Sampled routes had no horizontal overflow; no browser error/warning was observed. Claim editing/resume and the four-step main flow are the next implementation slice. These focused checks do not establish full accessibility, production acceptance or release.
+
 The owner chose a demo-first phase, with production to follow. `index.html`, `app.css`, `app.js`, `storage.js`, `sw.js`, `manifest.webmanifest` and generated icons form a GitHub Pages-compatible static walkthrough. Local drafts are not submitted commands; sample claims are synthetic. No production endpoint, permission, audit, evidence upload, financial calculator or AI provider was introduced. This slice does not satisfy any production E2E ID. Details and local run instructions are in [README.md](README.md).
 
 ## Documentation sync status

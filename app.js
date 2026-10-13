@@ -1,124 +1,147 @@
 import { listDrafts, saveDraft, removeDraft, clearDrafts } from './storage.js';
+import { escapeHtml, icon, money, displayDate, draftLabel } from './ui.js';
 
 const projects = [
-  { id: 'harbor', name: 'Harbor Exchange', place: 'Demo City', description: 'Example commercial development · contract and SOV preview' },
-  { id: 'cedar', name: 'Cedar Station', place: 'Demo City', description: 'Example public works project · payable workflow preview' }
+  { id: 'harbor', name: 'Harbor Exchange', place: 'Demo City', description: 'Commercial development', contract: 'MC-001', party: 'Harbor Developments' },
+  { id: 'cedar', name: 'Cedar Station', place: 'Demo City', description: 'Public works project', contract: 'SC-014', party: 'Cedar Concrete' }
 ];
 const sampleClaims = [
-  { id: 'PCAR-DEMO-01', project: 'harbor', direction: 'Receivable', period: '2026-04', amount: '48000.00', status: 'Sample: Draft', certificate: 'Not issued' },
-  { id: 'PCAP-DEMO-02', project: 'cedar', direction: 'Payable', period: '2026-05', amount: '18500.00', status: 'Sample: Reviewed', certificate: 'Sample CCAP-DEMO-01 (illustrative only)' }
+  { id: 'PCAR-DEMO-01', project: 'harbor', direction: 'Receivable', period: '2026-04', amount: '48000.00', status: 'Sample draft', certificate: 'Not yet certified' },
+  { id: 'PCAP-DEMO-02', project: 'cedar', direction: 'Payable', period: '2026-05', amount: '18500.00', status: 'Sample reviewed', certificate: 'CCAP-DEMO-01 · Illustrative' }
 ];
 const pages = [
-  ['home', 'Dashboard', '⌂'], ['projects', 'Projects', '▥'], ['claims', 'Claims', '▤'],
-  ['inbox', 'Inbox', '✉'], ['evidence', 'Evidence', '▣'], ['offline', 'Device drafts', '⇄'], ['settings', 'Settings', '⚙']
+  ['home', 'Overview', 'home'], ['projects', 'Projects', 'projects'], ['claims', 'Claims', 'claims'],
+  ['inbox', 'Inbox', 'inbox'], ['parties', 'Parties', 'parties'], ['reports', 'Reports', 'reports'], ['settings', 'Settings', 'settings']
 ];
-const mobilePages = [['home', 'Home', '⌂'], ['projects', 'Projects', '▥'], ['claims', 'Claims', '▤'], ['inbox', 'Inbox', '✉'], ['more', 'More', '☰']];
+const mobilePages = [['home', 'Home', 'home'], ['projects', 'Projects', 'projects'], ['claims', 'Claims', 'claims'], ['inbox', 'Inbox', 'inbox'], ['more', 'More', 'more']];
 const main = document.querySelector('#main');
 const live = document.querySelector('#live-status');
-const state = { drafts: [], storageError: '', filter: '', direction: 'All' };
+const state = { drafts: [], storageError: '', filter: '', direction: 'All', snapshotDirection: 'Receivable' };
 
-const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
 const projectName = id => projects.find(project => project.id === id)?.name || 'Unknown demo project';
-const money = value => value ? `Demo amount ${escapeHtml(value)}` : 'No amount entered';
 const announce = message => { live.textContent = ''; requestAnimationFrame(() => { live.textContent = message; }); };
-const heading = (title, subtitle, action = '') => `<div class="page-head"><div><p class="eyebrow">ConstructClaim · Local demo</p><h1>${title}</h1><p class="subtitle">${subtitle}</p></div>${action}</div>`;
-const notice = (text, type = '') => `<div class="notice ${type}" role="${type === 'error' ? 'alert' : 'note'}">${text}</div>`;
-const pageLink = (route, text) => `<a href="#${route}">${text}</a>`;
-const navLink = ([route, label, icon], active) => `<a class="nav-item" href="#${route}" ${active === route ? 'aria-current="page"' : ''}><span class="nav-icon" aria-hidden="true">${icon}</span>${label}</a>`;
-const mobileLink = ([route, label, icon], active) => `<a href="#${route}" ${active === route || (route === 'more' && ['offline', 'evidence', 'settings'].includes(active)) ? 'aria-current="page"' : ''}><span aria-hidden="true">${icon}</span>${label}</a>`;
-const displayDate = value => value ? new Date(value).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : 'Unknown';
+const heading = (title, subtitle, action = '') => '<div class="page-head"><div><h1>' + title + '</h1><p class="subtitle">' + subtitle + '</p></div>' + action + '</div>';
+const notice = (text, type = '') => '<div class="notice ' + type + '" role="' + (type === 'error' ? 'alert' : 'note') + '">' + text + '</div>';
+const pageLink = (route, text) => '<a class="text-link" href="#' + route + '">' + text + icon('arrow') + '</a>';
+const newLink = (query = '') => '<a class="button" href="#new' + query + '">' + icon('plus') + 'New draft</a>';
+const navLink = ([route, label, glyph], active) => '<a class="nav-item" href="#' + route + '" aria-label="' + label + '" title="' + label + '" ' + (active === route ? 'aria-current="page"' : '') + '>' + icon(glyph) + '<span class="nav-label">' + label + '</span></a>';
+const mobileLink = ([route, label, glyph], active) => '<a href="#' + route + '" ' + (active === route || (route === 'more' && ['offline', 'evidence', 'settings', 'parties', 'reports'].includes(active)) ? 'aria-current="page"' : '') + '>' + icon(glyph) + label + '</a>';
+const claimTitle = claim => claim.local ? draftLabel(claim) : claim.id;
 
 async function refreshDrafts() {
-  try {
-    state.drafts = await listDrafts();
-    state.storageError = '';
-  } catch (error) {
-    state.storageError = error.message || 'Device storage unavailable.';
-    state.drafts = [];
-  }
+  try { state.drafts = await listDrafts(); state.storageError = ''; }
+  catch (error) { state.storageError = error.message || 'Device storage unavailable.'; state.drafts = []; }
   document.querySelector('#draft-count').textContent = String(state.drafts.length);
 }
-
+function snapshotControls() {
+  return '<div class="segmented" role="group" aria-label="Financial direction">' + ['Receivable', 'Payable'].map(direction => '<button type="button" data-financial-direction="' + direction + '" aria-pressed="' + (state.snapshotDirection === direction) + '">' + direction + '</button>').join('') + '</div>';
+}
+function snapshotValues() {
+  const values = state.snapshotDirection === 'Receivable' ? [120000, 100000, 90000, 60000] : [75000, 60000, 50000, 40000];
+  return '<div class="financial-grid">' + ['Claimed', 'Certified', 'Invoiced', 'Paid'].map((label, index) => '<div><span class="label">' + label + '</span><p class="metric">' + values[index].toLocaleString('en-SG') + '</p><small class="meta">SGD · Sample</small></div>').join('') + '</div>';
+}
+function snapshotPanel() {
+  return '<section class="panel section-gap"><div class="panel-head"><h2>Financial position</h2>' + snapshotControls() + '</div><div id="snapshot-values">' + snapshotValues() + '</div><p class="meta">Independent synthetic snapshot · October 2026. These are separate stages; do not add the figures together.</p></section>';
+}
 function layoutHome() {
-  return heading('Your project workspace', 'Explore synthetic records and save claim drafts on this device.', '<a class="button" href="#new">+ New local draft</a>') +
-    `<div class="grid cards"><div class="card"><p class="label">Projects</p><p class="metric">${projects.length}</p>${pageLink('projects', 'Explore projects →')}</div><div class="card"><p class="label">Example claims</p><p class="metric">${sampleClaims.length}</p>${pageLink('claims', 'Explore claims →')}</div><div class="card"><p class="label">Device-only drafts</p><p class="metric">${state.drafts.length}</p>${pageLink('offline', 'Review local work →')}</div></div>` +
-    `<div class="grid columns section-gap"><section class="panel"><h2>Recent projects</h2><ul class="row-list">${projects.map(p => `<li><a class="row-link" href="#project/${p.id}"><span><strong>${p.name}</strong><small>${p.description}</small></span><span class="arrow" aria-hidden="true">→</span></a></li>`).join('')}</ul></section><section class="panel"><h2>Next steps</h2><p>This is a walk-through, not an approval inbox. Try a local claim draft, refresh the page, then review it under Device drafts.</p>${pageLink('new', 'Start a draft →')}</section></div>`;
+  const latest = [...state.drafts].sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt)))[0];
+  return heading('Overview', 'Welcome back, Alex. Pick up your project work.', newLink()) +
+    (state.storageError ? notice('Device storage unavailable: ' + escapeHtml(state.storageError), 'error') : '') +
+    '<div class="grid home-work"><section class="panel"><div class="panel-head"><h2>My work</h2><span class="status">Demo tasks</span></div><ul class="row-list"><li><a class="row-link" href="#claim/PCAR-DEMO-01"><span class="task-label"><span class="task-icon">' + icon('claims') + '</span><span><strong>Explore a receivable claim</strong><small>Harbor Exchange · Sample draft</small></span></span>' + icon('arrow') + '</a></li><li><a class="row-link" href="#new?project=cedar&direction=Payable"><span class="task-label"><span class="task-icon">' + icon('plus') + '</span><span><strong>Prepare a payable draft</strong><small>Cedar Station · SC-014</small></span></span>' + icon('arrow') + '</a></li></ul></section><section class="panel"><h2>Continue work</h2>' +
+    (latest ? '<span class="status local">Saved on this device</span><h3 class="section-gap">' + escapeHtml(draftLabel(latest)) + '</h3><p class="meta">' + projectName(latest.project) + ' · ' + escapeHtml(latest.direction) + '<br>Saved ' + displayDate(latest.updatedAt) + '</p>' + pageLink('claim/' + encodeURIComponent(latest.id), 'Open draft') : '<p class="meta">Your saved draft will appear here. Start with fictional project information.</p>' + pageLink('new', 'Start a draft')) +
+    '</section></div>' + snapshotPanel() +
+    '<section class="panel section-gap"><div class="panel-head"><h2>Recent projects</h2>' + pageLink('projects', 'View all') + '</div><ul class="row-list">' + projects.map(p => '<li><a class="row-link" href="#project/' + p.id + '"><span><strong>' + p.name + '</strong><small>' + p.description + ' · ' + p.contract + '</small></span><span class="text-link">Open project ' + icon('arrow') + '</span></a></li>').join('') + '</ul></section>';
 }
 function layoutProjects() {
-  return heading('Projects', 'Two synthetic project records for layout and navigation testing.') + `<div class="grid cards">${projects.map(p => `<article class="card"><p class="eyebrow">Sample project · ${p.place}</p><h2>${p.name}</h2><p>${p.description}</p>${pageLink(`project/${p.id}`, 'Open project →')}</article>`).join('')}</div>`;
+  return heading('Projects', 'Your assigned demo projects.') + '<div class="grid cards">' + projects.map(p => '<article class="card"><p class="eyebrow">' + p.contract + ' · ' + p.place + '</p><h2>' + p.name + '</h2><p>' + p.description + '</p><p class="meta">Next action · Prepare a local claim draft</p>' + pageLink('project/' + p.id, 'Open project') + '</article>').join('') + '</div>';
 }
 function layoutProject(id) {
   const project = projects.find(p => p.id === id);
   if (!project) return layoutMissing();
-  const related = sampleClaims.filter(c => c.project === id);
-  return heading(project.name, `Synthetic project · ${project.place}`) + `<div class="grid columns"><section class="panel"><h2>Project 360 · preview</h2><p>${project.description}</p><div class="key-values"><div><dt>Contract / SOV</dt><dd>Illustrative only</dd></div><div><dt>Approved variations</dt><dd>No live records</dd></div></div><p class="meta">Production contract totals and permissions are not available in this demo.</p></section><section class="panel"><h2>Example claims</h2><ul class="row-list">${related.map(c => `<li><a class="row-link" href="#claim/${c.id}"><span><strong>${c.id}</strong><small>${c.direction} · ${c.status}</small></span>→</a></li>`).join('')}</ul><a class="button secondary" href="#new">New device draft</a></section></div>`;
+  const related = allClaims().filter(c => c.project === id);
+  return heading(project.name, project.description + ' · ' + project.place, newLink('?project=' + id + '&direction=' + (id === 'cedar' ? 'Payable' : 'Receivable'))) +
+    '<div class="grid columns"><section class="panel"><h2>Project overview</h2><dl class="key-values"><div><dt>Contract</dt><dd>' + project.contract + ' · Sample</dd></div><div><dt>Counterparty</dt><dd>' + project.party + '</dd></div><div><dt>Contract / SOV</dt><dd>Illustrative only</dd></div><div><dt>Approved variations</dt><dd>No live records</dd></div></dl><p class="meta">Contract totals and project permissions are not authoritative in this demo.</p></section><section class="panel"><h2>Claims</h2><ul class="row-list">' + related.map(c => '<li><a class="row-link" href="#claim/' + encodeURIComponent(c.id) + '"><span><strong>' + escapeHtml(claimTitle(c)) + '</strong><small>' + escapeHtml(c.direction) + ' · ' + escapeHtml(c.status) + '</small></span>' + icon('arrow') + '</a></li>').join('') + '</ul></section></div>';
 }
-function allClaims() { return [...sampleClaims, ...state.drafts.map(d => ({ ...d, status: 'Device-only draft', certificate: 'None' }))]; }
+function allClaims() {
+  return [...sampleClaims, ...state.drafts.map(d => ({ ...d, local: true, status: d.reviewedAt ? 'Reviewed on device' : 'Device-only draft', certificate: 'Not yet certified' }))];
+}
 function claimRecords() {
   const query = state.filter.toLocaleLowerCase();
-  const records = allClaims().filter(c => (state.direction === 'All' || c.direction === state.direction) && (`${c.id} ${projectName(c.project)} ${c.period}`).toLocaleLowerCase().includes(query));
-  if (!records.length) return notice('No matching example claims or device drafts. Clear the filters or create a local draft.');
-  const table = `<div class="table-wrap"><table class="data-table"><thead><tr><th scope="col">Document</th><th scope="col">Project</th><th scope="col">Period</th><th scope="col">Requested (illustrative)</th><th scope="col">State</th></tr></thead><tbody>${records.map(c => `<tr><td>${pageLink(`claim/${escapeHtml(encodeURIComponent(c.id))}`, escapeHtml(c.id))}</td><td>${projectName(c.project)}</td><td>${escapeHtml(c.period)}</td><td>${money(c.amount)}</td><td><span class="status ${c.status === 'Device-only draft' ? 'local' : ''}">${c.status}</span></td></tr>`).join('')}</tbody></table></div>`;
-  const mobile = `<div class="mobile-records">${records.map(c => `<a href="#claim/${escapeHtml(encodeURIComponent(c.id))}"><span class="record-top"><strong>${escapeHtml(c.id)}</strong><span class="status ${c.status === 'Device-only draft' ? 'local' : ''}">${c.status}</span></span><span class="meta">${projectName(c.project)} · ${escapeHtml(c.period)}<br>${money(c.amount)}</span></a>`).join('')}</div>`;
-  return table + mobile;
+  const records = allClaims().filter(c => (state.direction === 'All' || c.direction === state.direction) && (c.id + ' ' + claimTitle(c) + ' ' + projectName(c.project) + ' ' + c.period).toLocaleLowerCase().includes(query));
+  if (!records.length) return notice('No matching claims. Clear the filters or create a local draft.');
+  return '<div class="records"><div class="table-wrap"><table class="data-table"><thead><tr><th scope="col">Document</th><th scope="col">Project / period</th><th class="amount" scope="col">Claimed · SGD</th><th scope="col">Claim state</th><th scope="col">Certification</th></tr></thead><tbody>' + records.map(c => '<tr><td>' + pageLink('claim/' + encodeURIComponent(c.id), escapeHtml(claimTitle(c))) + '<span class="meta">' + escapeHtml(c.direction) + '</span></td><td>' + projectName(c.project) + '<span class="meta">' + escapeHtml(c.period || 'Period not set') + '</span></td><td class="amount">' + money(c.amount) + '</td><td><span class="status ' + (c.local ? 'local' : '') + '">' + escapeHtml(c.status) + '</span></td><td>' + escapeHtml(c.certificate) + '</td></tr>').join('') +
+    '</tbody></table></div><div class="mobile-records">' + records.map(c => '<a href="#claim/' + encodeURIComponent(c.id) + '"><span class="record-top"><strong>' + escapeHtml(claimTitle(c)) + '</strong><span class="status ' + (c.local ? 'local' : '') + '">' + escapeHtml(c.status) + '</span></span><span class="meta">' + projectName(c.project) + ' · ' + escapeHtml(c.period || 'Period not set') + ' · ' + escapeHtml(c.direction) + '</span><span class="record-amount"><span>Claimed</span><strong>' + money(c.amount) + '</strong></span><span class="meta">' + escapeHtml(c.certificate) + '</span></a>').join('') + '</div></div>';
 }
 function layoutClaims() {
-  return heading('Claims', 'Compare sample receivable/payable claims with device-only drafts.', '<a class="button" href="#new">+ New local draft</a>') +
-    `<section class="panel"><div class="filters"><label>Search claims<input id="claim-search" type="search" placeholder="Document or project" value="${escapeHtml(state.filter)}"></label><label>Direction<select id="direction-filter"><option>All</option><option ${state.direction === 'Receivable' ? 'selected' : ''}>Receivable</option><option ${state.direction === 'Payable' ? 'selected' : ''}>Payable</option></select></label></div><div id="claim-results">${claimRecords()}</div></section>`;
+  return heading('Claims', 'Receivable and payable claims across your demo projects.', newLink(state.direction === 'Payable' ? '?direction=Payable' : '')) +
+    '<section class="panel"><div class="filters"><label>Search claims<input id="claim-search" type="search" placeholder="Document or project" value="' + escapeHtml(state.filter) + '"></label><label>Direction<select id="direction-filter"><option>All</option><option ' + (state.direction === 'Receivable' ? 'selected' : '') + '>Receivable</option><option ' + (state.direction === 'Payable' ? 'selected' : '') + '>Payable</option></select></label></div><div id="claim-results">' + claimRecords() + '</div></section>';
 }
 function layoutClaim(id) {
   const claim = allClaims().find(c => c.id === id);
   if (!claim) return layoutMissing();
-  const local = claim.status === 'Device-only draft';
-  return heading(escapeHtml(claim.id), `${projectName(claim.project)} · ${escapeHtml(claim.direction)}`) +
-    notice(local ? 'This draft exists only in this browser. It has not been submitted, synchronized or certified.' : 'This is a synthetic example. The pictured claim and certificate are not issued business documents.') +
-    `<div class="grid columns"><section class="panel"><h2>Claim details</h2><dl class="key-values"><div><dt>Period</dt><dd>${escapeHtml(claim.period)}</dd></div><div><dt>Requested value</dt><dd>${money(claim.amount)}</dd></div><div><dt>Claim state</dt><dd>${escapeHtml(claim.status)}</dd></div><div><dt>Certificate</dt><dd>${escapeHtml(claim.certificate)}</dd></div></dl>${local ? `<p><strong>Notes:</strong> ${escapeHtml(claim.notes || 'None')}</p><p class="meta">Device save: ${displayDate(claim.updatedAt)}</p><button class="button danger" id="delete-draft" type="button" data-id="${escapeHtml(claim.id)}">Delete local draft</button>` : '<p class="meta">Contract/SOV, variation, retention, evidence, invoice and payment records are not authoritative in this demo.</p>'}</section><aside class="panel"><h2>Workflow boundaries</h2><p>Claim, certificate, invoice, and payment are separate stages. This static demo cannot issue, approve or post any of them.</p><a class="button secondary" href="#claims">Back to claims</a></aside></div>`;
+  return heading(escapeHtml(claimTitle(claim)), projectName(claim.project) + ' · ' + escapeHtml(claim.direction) + ' · ' + escapeHtml(claim.period || 'Period not set'), '<a class="button secondary" href="#claims">' + icon('back') + 'Back to claims</a>') +
+    '<div class="grid columns"><section class="panel"><h2>Claim details</h2><dl class="key-values"><div><dt>Claimed · Illustrative</dt><dd>' + money(claim.amount) + '</dd></div><div><dt>Claim state</dt><dd><span class="status ' + (claim.local ? 'local' : '') + '">' + escapeHtml(claim.status) + '</span></dd></div><div><dt>Certification</dt><dd>' + escapeHtml(claim.certificate) + '</dd></div><div><dt>Period</dt><dd>' + escapeHtml(claim.period || 'Not set') + '</dd></div></dl>' +
+    (claim.local ? '<p><strong>Notes:</strong> ' + escapeHtml(claim.notes || 'None') + '</p><p class="meta">Saved on this device · ' + displayDate(claim.updatedAt) + '</p><details><summary>Technical reference</summary><p class="meta">' + escapeHtml(claim.id) + '</p></details><button class="button danger section-gap" id="delete-draft" type="button" data-id="' + escapeHtml(claim.id) + '">Delete local draft</button>' : '<p class="meta">Synthetic record for navigation and layout review.</p>') +
+    '</section><aside class="panel"><h2>' + (claim.local ? 'Saved on this device' : 'Sample workflow') + '</h2><p class="meta">' + (claim.local ? 'Not submitted or synchronized. Device storage is not a backup.' : 'Claim, certificate, invoice and payment are separate stages. These examples are not issued business documents.') + '</p></aside></div>';
 }
 function layoutNew() {
-  return heading('New claim draft', 'Save a local example on this device. There is no server submission.', '<a class="button secondary" href="#claims">Back to claims</a>') +
-    notice('Use fictional information only. Browser storage can be cleared or evicted; this draft is not a secure record or a backup.') +
-    `<section class="panel form-panel"><h2>1 · Draft details</h2><form id="draft-form" class="form" novalidate><label>Project <select name="project" required>${projects.map(p => `<option value="${p.id}">${p.name} (demo)</option>`).join('')}</select></label><label>Claim direction <select name="direction" required><option>Receivable</option><option>Payable</option></select></label><label>Period <input name="period" type="month" required aria-describedby="form-feedback"></label><label>Requested amount (illustrative only) <input name="amount" type="text" inputmode="decimal" placeholder="e.g. 1250.00" maxlength="16" required aria-describedby="amount-hint form-feedback"><span class="hint" id="amount-hint">Demo input only. No tax, retention or certification calculation.</span></label><label>Notes (optional) <textarea name="notes" maxlength="500" placeholder="Fictional site progress note"></textarea></label><div id="form-feedback" role="alert" tabindex="-1"></div><div class="form-actions"><button class="button" type="submit">Save on this device</button><span class="meta">Never sends data to a server</span></div></form></section>`;
+  const query = new URLSearchParams(location.hash.split('?')[1] || '');
+  const selectedProject = projects.some(p => p.id === query.get('project')) ? query.get('project') : 'harbor';
+  const selectedDirection = query.get('direction') === 'Payable' ? 'Payable' : 'Receivable';
+  return heading('New claim draft', 'Fictional information · Saved on this device only.', '<a class="button secondary" href="#claims">' + icon('back') + 'Back to claims</a>') +
+    '<section class="panel form-panel"><h2>Draft details</h2><form id="draft-form" class="form" novalidate><label>Project<select name="project" required>' + projects.map(p => '<option value="' + p.id + '" ' + (p.id === selectedProject ? 'selected' : '') + '>' + p.name + '</option>').join('') + '</select></label><label>Claim direction<select name="direction" required><option ' + (selectedDirection === 'Receivable' ? 'selected' : '') + '>Receivable</option><option ' + (selectedDirection === 'Payable' ? 'selected' : '') + '>Payable</option></select></label><label>Period<input name="period" type="month" required aria-describedby="form-feedback"></label><label>Claimed amount · SGD<input name="amount" type="text" inputmode="decimal" placeholder="e.g. 1250.00" maxlength="16" required aria-describedby="amount-hint form-feedback"><span class="hint" id="amount-hint">Illustrative only. No tax, retention or certification calculation.</span></label><label>Notes (optional)<textarea name="notes" maxlength="500" placeholder="Fictional site progress note"></textarea></label><div id="form-feedback" role="alert" tabindex="-1"></div><div class="form-actions"><button class="button" type="submit">Save on this device</button><span class="meta">Not submitted</span></div></form></section>';
 }
 function layoutOffline() {
-  const content = state.drafts.length ? `<ul class="row-list">${state.drafts.map(d => `<li><a class="row-link" href="#claim/${escapeHtml(encodeURIComponent(d.id))}"><span><strong>${escapeHtml(d.id)}</strong><small>${projectName(d.project)} · Saved ${displayDate(d.updatedAt)}</small></span><span class="status local">Device only</span></a></li>`).join('')}</ul>` : notice('No device-only drafts yet. Create a fictional draft to try reload and offline recovery.');
-  return heading('Device drafts', 'Review work stored in this browser; no synchronization exists.') +
-    notice(navigator.onLine ? 'Browser reports a network connection. This demo still has no API or sync target.' : 'Browser reports offline. Previously cached app files may open; saved drafts remain device-only.') +
-    (state.storageError ? notice(`Local storage error: ${escapeHtml(state.storageError)}. Drafts may not be saved.`, 'error') : '') +
-    `<div class="grid columns"><section class="panel"><h2>Local work · ${state.drafts.length}</h2>${content}</section><aside class="panel"><h2>What this is not</h2><p>No command queue, server acceptance, conflict resolution, upload or multi-device recovery is implemented. Data may disappear if site data is cleared or storage is evicted.</p><a class="button secondary" href="#new">New local draft</a></aside></div>`;
+  const content = state.drafts.length ? '<ul class="row-list">' + state.drafts.map(d => '<li><a class="row-link" href="#claim/' + encodeURIComponent(d.id) + '"><span><strong>' + escapeHtml(draftLabel(d)) + '</strong><small>' + projectName(d.project) + ' · Saved ' + displayDate(d.updatedAt) + '</small></span><span class="status local">Device only</span></a></li>').join('') + '</ul>' : notice('No device drafts yet. Start a draft to try reload and offline recovery.');
+  return heading('Device drafts', 'Work stored in this browser. No synchronization is connected.', newLink()) +
+    '<p class="meta" data-connection-description></p>' + (state.storageError ? notice('Local storage error: ' + escapeHtml(state.storageError), 'error') : '') +
+    '<div class="grid columns"><section class="panel"><h2>Local work · ' + state.drafts.length + '</h2>' + content + '</section><aside class="panel"><h2>Recovery on this device</h2><p class="meta">Cached app files can open offline after the first successful visit. Site data clearing or storage eviction may remove drafts. No cross-device backup or server acceptance exists.</p></aside></div>';
 }
-function layoutInbox() { return heading('Inbox', 'An illustrative empty state; no account or approval service is connected.') + `<section class="panel">${notice('No actionable approvals. This is not permission evidence or a real inbox.')}<p>In production, permitted actions must be checked by the server for each project and document. This demo does not support approval or issue.</p></section>`; }
-function layoutEvidence() { return heading('Evidence', 'Layout preview only: no photo or document upload in this static demo.') + `<section class="panel">${notice('No evidence files are stored or uploaded. Do not enter real site data.')}<p>The production workflow needs authorized access, file retention, a content hash and recoverable upload states. None are simulated as complete here.</p></section>`; }
-function layoutMore() { return heading('More', 'Additional demo destinations and boundaries.') + `<div class="grid cards">${[['evidence','Evidence'],['offline','Device drafts'],['settings','Settings'],['inbox','Inbox']].map(([r,l]) => `<div class="card"><h2>${l}</h2>${pageLink(r, 'Open →')}</div>`).join('')}</div>`; }
-function layoutSettings() { return heading('Settings', 'Local demo controls only; there is no user account or organization policy.') + `<section class="panel"><h2>Device data</h2><p>Delete all local drafts in this browser. This action cannot be undone. It does not affect the synthetic example records.</p><button class="button danger" id="clear-drafts" type="button" ${state.drafts.length ? '' : 'disabled'}>Delete all device drafts</button><h2 class="section-gap">Production features not connected</h2><p>Identity, tenant permissions, offline download policies, AI assistance and real synchronization require separately approved backend services.</p></section>`; }
-function layoutMissing() { return heading('Page not found', 'No demo record exists for this address.') + `<a class="button secondary" href="#home">Back to dashboard</a>`; }
+function layoutInbox() { return heading('Inbox', 'Your review tasks and decisions.') + '<section class="panel"><h2>No review tasks</h2><p class="meta">The demo has no connected account or approval service. You can review a fictional draft on this device.</p>' + pageLink('claims', 'Explore claims') + '</section>'; }
+function layoutEvidence() { return heading('Evidence', 'Fictional project evidence.') + '<section class="panel"><h2>No evidence yet</h2><p class="meta">Open a draft to add synthetic evidence to its local record.</p>' + pageLink('new', 'Start a draft') + '</section>'; }
+function layoutMore() { return heading('More', 'Tools and workspace settings.') + '<div class="grid cards">' + [['parties','Parties'],['reports','Reports'],['evidence','Evidence'],['offline','Device drafts'],['settings','Settings']].map(([r,l]) => '<div class="card"><h2>' + l + '</h2>' + pageLink(r, 'Open') + '</div>').join('') + '</div>'; }
+function layoutParties() { return heading('Parties', 'Synthetic counterparties for the demo projects.') + '<div class="grid cards">' + projects.map(p => '<article class="card"><h2>' + p.party + '</h2><p>' + p.name + ' · ' + p.contract + '</p><span class="status">Sample counterparty</span></article>').join('') + '</div>'; }
+function layoutReports() { return heading('Reports', 'Independent synthetic financial positions.') + snapshotPanel() + '<p class="meta">This snapshot is not calculated from device drafts. No financial ledger or production reporting service is connected.</p>'; }
+function layoutSettings() { return heading('Settings', 'Local demo controls.') + '<section class="panel"><h2>Device data</h2><p class="meta">Delete all drafts in this browser. This cannot be undone and does not affect synthetic examples.</p><button class="button danger" id="clear-drafts" type="button" ' + (state.drafts.length ? '' : 'disabled') + '>Delete all device drafts</button><h2 class="section-gap">Demo scope</h2><p class="meta">Use fictional information. Identity, project permissions, submission, certification, invoicing, payment and synchronization are not connected. Browser storage is not a secure business record or backup.</p></section>'; }
+function layoutMissing() { return heading('Page not found', 'No demo record exists for this address.') + '<a class="button secondary" href="#home">Back to overview</a>'; }
+function updateConnectivity() {
+  document.querySelectorAll('[data-connectivity]').forEach(el => { el.textContent = navigator.onLine ? 'Online' : 'Offline'; el.classList.toggle('is-offline', !navigator.onLine); el.setAttribute('aria-label', (navigator.onLine ? 'Online' : 'Offline') + ' · Open device drafts'); });
+  document.querySelectorAll('[data-connection-description]').forEach(el => { el.textContent = navigator.onLine ? 'Browser reports online. Drafts remain on this device only.' : 'Browser reports offline. Cached app and saved drafts remain available on this device.'; });
+}
 function route() {
   const raw = location.hash.slice(1) || 'home';
   let path;
-  try { path = decodeURIComponent(raw).split('/'); } catch { path = ['missing']; }
+  try { path = decodeURIComponent(raw.split('?')[0]).split('/'); } catch { path = ['missing']; }
   const active = path[0];
-  const section = ['new', 'claim'].includes(active) ? 'claims' : active === 'project' ? 'projects' : active;
+  const section = ['new', 'claim', 'edit'].includes(active) ? 'claims' : active === 'project' ? 'projects' : active;
   document.querySelector('#desktop-nav').innerHTML = pages.map(page => navLink(page, section)).join('');
   document.querySelector('#mobile-nav').innerHTML = mobilePages.map(page => mobileLink(page, section)).join('');
-  const views = { home: layoutHome, projects: layoutProjects, claims: layoutClaims, new: layoutNew, offline: layoutOffline, inbox: layoutInbox, evidence: layoutEvidence, more: layoutMore, settings: layoutSettings };
+  const views = { home: layoutHome, projects: layoutProjects, claims: layoutClaims, new: layoutNew, offline: layoutOffline, inbox: layoutInbox, evidence: layoutEvidence, more: layoutMore, parties: layoutParties, reports: layoutReports, settings: layoutSettings };
   main.innerHTML = active === 'project' ? layoutProject(path[1]) : active === 'claim' ? layoutClaim(path[1]) : views[active]?.() || layoutMissing();
-  document.title = `${main.querySelector('h1')?.textContent || 'Demo'} — ConstructClaim Demo`;
+  document.title = (main.querySelector('h1')?.textContent || 'Demo') + ' — ConstructClaim Demo';
   bindPage();
+  updateConnectivity();
 }
 function bindPage() {
+  document.querySelectorAll('[data-financial-direction]').forEach(button => button.addEventListener('click', () => {
+    state.snapshotDirection = button.dataset.financialDirection;
+    document.querySelectorAll('[data-financial-direction]').forEach(el => el.setAttribute('aria-pressed', String(el === button)));
+    document.querySelector('#snapshot-values').innerHTML = snapshotValues();
+  }));
   const search = document.querySelector('#claim-search');
   search?.addEventListener('input', () => { state.filter = search.value; document.querySelector('#claim-results').innerHTML = claimRecords(); });
-  document.querySelector('#direction-filter')?.addEventListener('change', event => { state.direction = event.target.value; document.querySelector('#claim-results').innerHTML = claimRecords(); });
+  document.querySelector('#direction-filter')?.addEventListener('change', event => { state.direction = event.target.value; document.querySelector('#claim-results').innerHTML = claimRecords(); document.querySelector('.page-head .button').href = '#new' + (state.direction === 'Payable' ? '?direction=Payable' : ''); });
   document.querySelector('#draft-form')?.addEventListener('submit', submitDraft);
   document.querySelector('#delete-draft')?.addEventListener('click', async event => {
     const id = event.currentTarget.dataset.id;
     if (!confirm('Permanently delete this device-only draft?')) return;
-    try { await removeDraft(id); await refreshDrafts(); location.hash = '#offline'; route(); announce('Device draft deleted.'); }
-    catch (error) { const message = `Deletion failed: ${error.message}`; main.insertAdjacentHTML('afterbegin', notice(escapeHtml(message), 'error')); announce(message); }
+    try { await removeDraft(id); await refreshDrafts(); location.hash = '#offline'; announce('Device draft deleted.'); }
+    catch (error) { main.insertAdjacentHTML('afterbegin', notice('Deletion failed: ' + escapeHtml(error.message), 'error')); }
   });
   document.querySelector('#clear-drafts')?.addEventListener('click', async () => {
     if (!confirm('Permanently delete all device-only drafts?')) return;
     try { await clearDrafts(); await refreshDrafts(); route(); announce('All device drafts deleted.'); }
-    catch (error) { const message = `Deletion failed: ${error.message}`; main.insertAdjacentHTML('afterbegin', notice(escapeHtml(message), 'error')); announce(message); }
+    catch (error) { main.insertAdjacentHTML('afterbegin', notice('Deletion failed: ' + escapeHtml(error.message), 'error')); }
   });
 }
 async function submitDraft(event) {
@@ -184,18 +207,26 @@ async function setupWorker() {
     navigator.serviceWorker.addEventListener('controllerchange', () => { if (updateRequested) location.reload(); });
   } catch (error) { console.warn('Offline shell unavailable:', error); }
 }
-window.addEventListener('hashchange', () => { route(); main.focus({ preventScroll: true }); window.scrollTo(0, 0); });
-window.addEventListener('online', route);
-window.addEventListener('offline', route);
-let previousScroll = 0;
-window.addEventListener('scroll', () => {
-  const current = window.scrollY;
-  document.querySelector('#scroll-top').hidden = current < window.innerHeight;
-  if (Math.abs(current - previousScroll) > 14) {
-    document.querySelector('.topbar').classList.toggle('is-hidden', current > previousScroll && current > 120);
-    previousScroll = current;
-  }
-}, { passive: true });
+function collapseNavigation() {
+  document.body.classList.remove('nav-expanded');
+  document.querySelector('#menu-toggle').setAttribute('aria-expanded', 'false');
+  document.querySelector('#menu-toggle').setAttribute('aria-label', 'Expand navigation');
+}
+window.addEventListener('hashchange', () => { collapseNavigation(); route(); main.focus({ preventScroll: true }); window.scrollTo(0, 0); });
+window.addEventListener('online', updateConnectivity);
+window.addEventListener('offline', updateConnectivity);
+window.addEventListener('scroll', () => { document.querySelector('#scroll-top').hidden = window.scrollY < window.innerHeight; }, { passive: true });
+document.querySelector('.skip-link').addEventListener('click', event => { event.preventDefault(); main.focus({ preventScroll: true }); main.scrollIntoView(); });
+const menu = document.querySelector('#menu-toggle');
+menu.innerHTML = icon('menu');
+menu.addEventListener('click', () => {
+  const expanded = document.body.classList.toggle('nav-expanded');
+  menu.setAttribute('aria-expanded', String(expanded));
+  menu.setAttribute('aria-label', expanded ? 'Collapse navigation' : 'Expand navigation');
+});
+window.addEventListener('keydown', event => { if (event.key === 'Escape') collapseNavigation(); });
+window.addEventListener('resize', collapseNavigation);
+document.querySelector('#scroll-top').innerHTML = icon('up');
 document.querySelector('#scroll-top').addEventListener('click', () => window.scrollTo({ top: 0, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' }));
 await refreshDrafts();
 route();

@@ -4,7 +4,7 @@ This repository now contains an **early, local-only demonstration slice** of Con
 
 ## Visual design baseline
 
-Open the [design gallery](ui/ssot-v2/pages/index.html) to review the 21 independent desktop/mobile page sheets and four existing core boards. They cover the original 24 page families plus Reports. [DESIGN.md — Active visual baseline v2](DESIGN.md#active-visual-baseline-v2) owns the page index, visual tokens, responsive rules, interaction contract and reference precedence. They guide subsequent development; the running demo has not been redesigned to match them. The original 24 images remain supporting field references.
+Open the [design gallery](ui/ssot-v2/pages/index.html) to review the 21 independent desktop/mobile page sheets and four existing core boards. They cover the original 24 page families plus Reports. [DESIGN.md — Active visual baseline v2](DESIGN.md#active-visual-baseline-v2) owns the page index, visual tokens, responsive rules, interaction contract and reference precedence. The shared demo shell and Overview now implement this baseline; wider page families remain design references. The original 24 images remain supporting field references.
 
 The gallery also opens directly from disk, or at `http://localhost:8765/ui/ssot-v2/pages/` while the local server below is running. It contains design images only and does not exercise application workflows.
 
@@ -16,7 +16,7 @@ The root `index.html` and all asset URLs use relative paths, so a GitHub Pages p
 
 ## What works in this slice
 
-- Responsive desktop rail / mobile bottom navigation for dashboard, projects, claims, inbox, evidence, device drafts, and settings, inspired by `DESIGN.md`.
+- v2 shared shell: 240px desktop sidebar, expandable 72px tablet rail, five-item mobile navigation, outline icons, task-first Overview and separate claimed/certified/invoiced/paid synthetic snapshots. Project context carries into a new draft; network changes preserve form input; the skip link focuses main content without changing routes. Claims reflow into cards on narrow content areas.
 - Synthetic project and claim records, search and receivable/payable filter. Values and document IDs are **illustrative**, not from the reference screenshots or any live tenant.
 - New fictional claim draft: validate a month and illustrative positive amount, then save locally to IndexedDB. The saved state is shown only after the local transaction completes. Refresh to read it back; inspect or delete it under Device drafts/Settings. If storage fails, the form preserves input and reports failure.
 - Static shell Service Worker, install manifest/icons, best-effort offline shell cache and visible user-controlled update prompt. `sw.js` cache version must be changed for each release that changes shell assets. With the local server stopped, a normal link navigation to the cached `index.html` loaded, but a DevTools-driven/full reload still failed. Offline cold launch and reload are **not verified** on a real device; test before calling the demo offline-complete.

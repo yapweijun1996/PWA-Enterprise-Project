@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#f6f9fd">
+  <meta name="theme-color" content="#F4F7FB">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="description" content="ConstructClaim local-only construction claim workflow demo">
@@ -18,23 +18,24 @@
   <a class="skip-link" href="#main">Skip to main content</a>
   <div class="app-shell">
     <aside class="sidebar" aria-label="Desktop navigation">
-      <a class="brand" href="#home" aria-label="ConstructClaim demo home"><span class="brand-mark" aria-hidden="true">▥</span><span>Construct<span class="orange">Claim</span><small>Construction claim demo</small></span></a>
+      <a class="brand" href="#home" aria-label="ConstructClaim demo home"><img src="./icon.svg" width="36" height="36" alt=""><span>Construct<span class="brand-blue">Claim</span><small>Local demo workspace</small></span></a>
       <nav id="desktop-nav" aria-label="Primary navigation"></nav>
-      <div class="sidebar-foot"><strong>PEOPLE<br>EVIDENCE<br>PROGRESS</strong><p>BETTER OUTCOMES</p></div>
+      <div class="sidebar-foot"><span class="demo-pill">DEMO</span><p>Synthetic records<br>Work saved on this device</p></div>
     </aside>
     <div class="workspace">
       <header class="topbar">
-        <a class="mobile-brand brand" href="#home" aria-label="ConstructClaim demo home"><span class="brand-mark" aria-hidden="true">▥</span><span>Construct<span class="orange">Claim</span></span></a>
-        <span class="topbar-label">Construction financial evidence <span class="demo-pill">DEMO ONLY</span></span>
-        <a class="topbar-link" href="#offline">Device drafts <span id="draft-count" aria-hidden="true">0</span></a>
+        <button class="menu-toggle" id="menu-toggle" type="button" aria-label="Expand navigation" aria-controls="desktop-nav" aria-expanded="false"></button>
+        <a class="mobile-brand brand" href="#home" aria-label="ConstructClaim demo home"><img src="./icon.svg" width="28" height="28" alt=""><span>Construct<span class="brand-blue">Claim</span></span></a>
+        <span class="topbar-label">Atlas Construction <span class="demo-pill">DEMO</span></span>
+        <div class="utility-actions"><a class="connection" href="#offline" data-connectivity></a><a class="topbar-link" href="#offline"><span class="draft-label">Device drafts</span> <span id="draft-count">0</span></a><span class="avatar" aria-label="Demo user Alex Lee">AL</span></div>
       </header>
-      <div class="demo-notice" role="note">Synthetic demonstration data · No sign-in, server, certification, AI provider or real synchronization. Do not enter confidential information.</div>
+      <div class="demo-notice" role="note"><span>Synthetic examples · Device-local demo</span><a href="#settings">Demo details</a></div>
       <div id="update-notice" class="update-notice" hidden role="status"><span>New demo version available.</span> <button id="update-button" type="button">Update now</button></div>
       <main id="main" tabindex="-1"></main>
     </div>
   </div>
   <nav class="mobile-nav" id="mobile-nav" aria-label="Mobile navigation"></nav>
-  <button class="scroll-top" id="scroll-top" type="button" hidden aria-label="Scroll to top">↑</button>
+  <button class="scroll-top" id="scroll-top" type="button" hidden aria-label="Scroll to top"></button>
   <div id="live-status" class="sr-only" role="status" aria-live="polite"></div>
   <div id="update-overlay" class="update-overlay" hidden role="status" aria-live="polite"><div class="spinner" aria-hidden="true"></div><strong>Updating ConstructClaim demo…</strong></div>
   <script type="module" src="./app.js"></script>
