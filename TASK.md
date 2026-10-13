@@ -209,3 +209,25 @@ Acceptance IDs E2E-01–E2E-18 are defined in [SPEC.md](SPEC.md). Their current 
 - **Acceptance:** explicit 8/4/4 editable practice loading; transactional insert-if-absent; repeat/concurrent load preserves existing edits; confirmed exact-ID reset keeps other records; partial progress remains recoverable; sample browsing survives unavailable storage; new assets work in the offline shell.
 - **Evidence:** 42 passing Node contracts, 39 passing JavaScript syntax checks and validated 34-file temporary Pages artifact; actual Chromium search/details/evidence decode, load/edit/reset, two-tab and injected-failure paths, 1440/390/320px layouts and server-stopped offline reload/new-tab/local-write recovery. See PROGRESS.md and README.md.
 - **Boundary:** fictional/device-local only. No production workflow, push, deployment, physical-device or full accessibility claim.
+
+## Demo bug backlog
+
+Review baseline: `e9e3b09`, worker v0.4.0. All findings below were reproduced in the isolated demo; source-level sibling exposure and unverified risks are distinguished in [CODE_REVIEW.md](CODE_REVIEW.md). Existing successful contracts/walkthroughs do not mark these corrections complete. No runtime fixes were made by the review.
+
+| ID | Priority | Correction | Acceptance | Status |
+|---|---|---|---|---|
+| [BUG-001](CODE_REVIEW.md#bug-001) | P1 | Guard mutable updates against stale revisions and deleted sources inside the write transaction. | Two-tab edits cannot silently replace newer fields or resurrect deleted records; recover stale input explicitly. Preserve immutable checks. | Planned |
+| [BUG-002](CODE_REVIEW.md#bug-002) | P1 | Bind asynchronous clear completion to its originating view. | Pending category clears followed by navigation/typing never dispose a different dirty editor or lose its input/focus. | Planned |
+| [BUG-003](CODE_REVIEW.md#bug-003) | P2 | Reconcile unconfirmed evidence writes before replacing their attempted snapshot. | Post-commit readback failure, retry and subsequent edits recover truthfully without immutable replacement, stuck saves or duplicates. | Planned |
+| [BUG-004](CODE_REVIEW.md#bug-004) | P2 | Preserve a pending reviewed certificate attempt across save-mode/field changes until reconciled. | Exact reviewed preview remains recoverable after readback failure; changes use a separate assessment. | Planned |
+| [BUG-005](CODE_REVIEW.md#bug-005) | P2 | Merge readable linked device images when creating a missing practice assessment. | Recreated snapshot matches normal assessment evidence, survives original image deletion and fails truthfully on unreadable storage. | Planned |
+| [BUG-006](CODE_REVIEW.md#bug-006) | P2 | Provide version-safe repair of an incomplete active shell cache. | Advertised online recovery restores offline cold-start without HTTP cache and without mixing deployment versions. | Planned |
+| [BUG-007](CODE_REVIEW.md#bug-007) | P2 | Refresh/invalidate browsing records after cross-tab changes without rebuilding dirty editors. | Create/update/delete elsewhere updates rows/counts/source status on return, while unsaved editor input survives. | Planned |
+| [BUG-008](CODE_REVIEW.md#bug-008) | P2 | Synchronize mobile pager identity and controls when selecting an invalid line. | Error field, item title, row index and previous/next states agree for amount/note validation; input is retained. | Planned |
+| [BUG-009](CODE_REVIEW.md#bug-009) | P2 | Apply the accepted blank-claimed-value rule consistently to variance reason validation. | Blank/whitespace claimed values assessed at zero require no false reason; actual non-zero differences still require one. | Planned |
+| [BUG-010](CODE_REVIEW.md#bug-010) | P2 | Render unknown certified/proposed amounts from nullable validated state, not raw Number coercion. | Blank/whitespace stays unknown across assessment/proposal details; genuine zero remains zero. | Planned |
+| [BUG-011](CODE_REVIEW.md#bug-011) | P2 | Include displayed local proposal references in search. | Displayed reference, full ID and scope searches locate the same project-owned proposal. | Planned |
+| [BUG-012](CODE_REVIEW.md#bug-012) | P2 | Include context claim IDs in image evidence search. | Sample/device claim IDs and references find their whole-claim/line images as well as documents; project isolation remains. | Planned |
+| [BUG-013](CODE_REVIEW.md#bug-013) | P3 | Restore normal mobile navigation when a claim/variation editor cannot open. | Missing/unreadable edit routes show recovery links and browsing navigation, with no focused-task mode without an editor. | Planned |
+
+Handle the two unverified risks in the report separately; they are not additional confirmed bugs. Runtime remediation needs its own behavior regression proof and updated worker version when published. Production decision gates and live-deployment status remain unchanged.

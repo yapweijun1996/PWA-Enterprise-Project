@@ -150,6 +150,12 @@ There is **no authentication, authorization, tenant isolation, production API/da
 
 T-001–T-003 and production E2E-01–E2E-18 remain open. The wider 25-family design coverage is not a claim that all production routes exist.
 
+## Known issues from code review
+
+The current `e9e3b09` / v0.4.0 implementation has **13 reproduced open defects: two High/P1, ten Medium/P2 and one Low/P3**. [CODE_REVIEW.md](CODE_REVIEW.md) owns the source locations, reproduction results, corrections and evidence limits; [TASK.md — Demo bug backlog](TASK.md#demo-bug-backlog) tracks remediation.
+
+The highest risks are stale mutable saves overwriting/resurrecting records and completion of an old Settings clear operation discarding a new dirty editor. Unconfirmed immutable writes can also lose their recoverable retry snapshot after editing or changing save mode. Do not interpret the preceding successful walkthroughs or 42 passing contract tests as coverage of these failure paths. This review changed documentation only; the defects are not fixed.
+
 ## Checks
 
 Run syntax and the focused contract tests:
