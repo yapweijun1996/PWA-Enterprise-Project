@@ -6,11 +6,12 @@ import { listDrafts, saveDraft, removeDraft, clearDrafts } from './storage.js';
 import { escapeHtml, icon, money, displayDate, draftLabel } from './ui.js';
 import { createDraftEditor, evidenceCards } from './draft-editor.js';
 import { lineTotals, fromCents } from './demo-domain.js';
+import { sampleClaims } from './demo-claims.js';
+import { listCertificates, saveCertificate, removeCertificate, clearCertificates } from './certificate-storage.js';
+import { createCertificateEditor } from './certificate-editor.js';
+import { canAssess, sampleCertificate } from './certificate-domain.js';
+import { certificateRecords, certificateDetail } from './certificate-pages.js';
 
-const sampleClaims = [
-  { id: 'PCAR-DEMO-01', project: 'harbor', direction: 'Receivable', period: '2026-04', amount: '48000.00', status: 'Sample draft', certificate: 'Not yet certified' },
-  { id: 'PCAP-DEMO-02', project: 'cedar', direction: 'Payable', period: '2026-05', amount: '18500.00', status: 'Sample reviewed', certificate: 'CCAP-DEMO-01 · Illustrative' }
-];
 const pages = [
   ['home', 'Overview', 'home'], ['projects', 'Projects', 'projects'], ['claims', 'Claims', 'claims'],
   ['inbox', 'Inbox', 'inbox'], ['parties', 'Parties', 'parties'], ['reports', 'Reports', 'reports'], ['settings', 'Settings', 'settings']
@@ -18,7 +19,7 @@ const pages = [
 const mobilePages = [['home', 'Home', 'home'], ['projects', 'Projects', 'projects'], ['claims', 'Claims', 'claims'], ['inbox', 'Inbox', 'inbox'], ['more', 'More', 'more']];
 const main = document.querySelector('#main');
 const live = document.querySelector('#live-status');
-const state = { drafts: [], storageError: '', variations: [], variationError: '', filter: '', direction: 'All', snapshotDirection: 'Receivable' };
+const state = { drafts: [], storageError: '', variations: [], variationError: '', certificates: [], certificateError: '', filter: '', direction: 'All', snapshotDirection: 'Receivable' };
 
 const projectName = id => projects.find(project => project.id === id)?.name || 'Unknown demo project';
 const announce = message => { live.textContent = ''; requestAnimationFrame(() => { live.textContent = message; }); };
@@ -33,13 +34,13 @@ let activeEditor = null;
 let currentHash = location.hash || '#home';
 
 async function refreshDrafts() {
-  const results = await Promise.allSettled([listDrafts(), listVariations()]);
-  for (const [index, records, error] of [[0, 'drafts', 'storageError'], [1, 'variations', 'variationError']]) {
+  const results = await Promise.allSettled([listDrafts(), listVariations(), listCertificates()]);
+  for (const [index, records, error] of [[0, 'drafts', 'storageError'], [1, 'variations', 'variationError'], [2, 'certificates', 'certificateError']]) {
     state[records] = results[index].status === 'fulfilled' ? results[index].value : [];
     state[error] = results[index].status === 'rejected' ? results[index].reason.message || 'Device storage unavailable.' : '';
   }
-  const count = state.drafts.length + state.variations.length;
-  const unavailable = state.storageError || state.variationError;
+  const count = state.drafts.length + state.variations.length + state.certificates.length;
+  const unavailable = state.storageError || state.variationError || state.certificateError;
   document.querySelector('#draft-count').textContent = unavailable ? '—' : String(count);
   document.querySelector('#draft-count').parentElement.setAttribute('aria-label', unavailable ? 'Some device drafts unavailable' : count + ' device draft' + (count === 1 ? '' : 's'));
 }
@@ -76,7 +77,7 @@ function layoutProject(id, view = 'overview') {
       contractCards(id) + '<div class="grid columns section-gap"><section class="panel"><h2>Project overview</h2><dl class="key-values"><div><dt>Contract</dt><dd>' + project.contract + ' · Sample</dd></div><div><dt>Counterparty</dt><dd>' + project.party + '</dd></div></dl><a class="text-link" href="#project/' + id + '/sov">Explore SOV ' + icon('arrow') + '</a><br><a class="text-link" href="#project/' + id + '/variations">Explore variations ' + icon('arrow') + '</a><p class="meta">Only sample approved variations enter the illustrative revised contract. Device drafts do not change these fixtures.</p></section>' + claims + '</div>');
 }
 function allClaims() {
-  return [...sampleClaims, ...state.drafts.map(d => ({ ...d, local: true, status: d.reviewedAt ? 'Reviewed on device' : 'Device-only draft', certificate: 'Not yet certified' }))];
+  return [...sampleClaims, ...state.drafts.map(d => ({ ...d, local: true, status: d.reviewedAt ? 'Reviewed on device' : 'Device-only draft', certificate: state.certificateError ? 'Preview storage unavailable' : state.certificates.some(item => item.source.id === d.id) ? 'Local preview · Not issued' : 'Not yet certified' }))];
 }
 function claimRecords() {
   const query = state.filter.toLocaleLowerCase();
@@ -87,7 +88,7 @@ function claimRecords() {
 }
 function layoutClaims() {
   return heading('Claims', 'Receivable and payable claims across your demo projects.', newLink(state.direction === 'Payable' ? '?direction=Payable' : '')) +
-    (state.storageError ? notice('Local drafts unavailable: ' + escapeHtml(state.storageError), 'error') : '') + '<section class="panel"><div class="filters"><label>Search claims<input id="claim-search" type="search" placeholder="Document or project" value="' + escapeHtml(state.filter) + '"></label><label>Direction<select id="direction-filter"><option>All</option><option ' + (state.direction === 'Receivable' ? 'selected' : '') + '>Receivable</option><option ' + (state.direction === 'Payable' ? 'selected' : '') + '>Payable</option></select></label></div><div id="claim-results">' + claimRecords() + '</div></section>';
+    pageLink('certificates', 'Open certificate previews') + (state.storageError ? notice('Local drafts unavailable: ' + escapeHtml(state.storageError), 'error') : '') + '<section class="panel section-gap"><div class="filters"><label>Search claims<input id="claim-search" type="search" placeholder="Document or project" value="' + escapeHtml(state.filter) + '"></label><label>Direction<select id="direction-filter"><option>All</option><option ' + (state.direction === 'Receivable' ? 'selected' : '') + '>Receivable</option><option ' + (state.direction === 'Payable' ? 'selected' : '') + '>Payable</option></select></label></div><div id="claim-results">' + claimRecords() + '</div></section>';
 }
 function layoutClaim(id) {
   const claim = allClaims().find(c => c.id === id);
@@ -100,13 +101,17 @@ function layoutClaim(id) {
       (claim.lines?.length ? '<h2 class="section-gap">Claim lines</h2><ul class="row-list">' + claim.lines.map(line => '<li class="review-line"><span>' + escapeHtml(line.id + ' · ' + line.title) + '<small class="meta">' + escapeHtml(line.note || '') + '</small></span><strong>' + money(line.current || '0') + '</strong></li>').join('') + '</ul><p class="meta">Previous: ' + money(fromCents(totals.previous)) + ' · Cumulative: ' + money(fromCents(totals.cumulative)) + ' · Synthetic source</p>' : '') +
       '<h2 class="section-gap">Sample evidence</h2>' + evidenceCards(claim.attachments || []) +
       '<details class="section-gap"><summary>Technical reference</summary><p class="meta">' + escapeHtml(claim.id) + '</p><p class="meta">Source: ' + escapeHtml(claim.sourceVersion || 'Legacy demo amount') + '</p></details><button class="button danger section-gap" id="delete-draft" type="button" data-id="' + escapeHtml(claim.id) + '">Delete local draft</button>' : '<p class="meta">Synthetic record for navigation and layout review.</p>') +
-    '</section><aside class="panel"><h2>' + (claim.local ? 'Saved on this device' : 'Sample workflow') + '</h2><p class="meta">' + (claim.local ? 'Not submitted or synchronized. Device storage is not a backup.' : 'Claim, certificate, invoice and payment are separate stages. These examples are not issued business documents.') + '</p><a class="text-link" href="#claims">' + icon('back') + 'Back to claims</a></aside></div>';
+    '</section><aside class="panel"><h2>Certification</h2><p class="meta">Independent device-local assessments. The claim amount remains unchanged.</p>' + (canAssess(claim) ? '<a class="button" href="#certificate-new/' + encodeURIComponent(id) + '">Start assessment</a>' : '<p class="meta">Locally review a valid claim before starting an assessment.</p>') + certificateRecords(state.certificates.filter(item => item.source.id === id), state.certificateError) + (id === 'PCAP-DEMO-02' ? pageLink('certificate/CCAP-DEMO-01', 'View sample certificate') : '') + '<h3 class="section-gap">' + (claim.local ? 'Saved on this device' : 'Sample workflow') + '</h3><p class="meta">' + (claim.local ? 'Not submitted or synchronized. Device storage is not a backup.' : 'Claim, certificate, invoice and payment are separate stages. These examples are not issued business documents.') + '</p><a class="text-link" href="#claims">' + icon('back') + 'Back to claims</a></aside></div>';
+}
+
+function layoutCertificates() {
+  return heading('Certificate previews', 'Independent assessments · Device only · Not issued') + '<section class="panel"><h2>Local assessments</h2>' + certificateRecords(state.certificates, state.certificateError) + '</section><section class="panel section-gap"><h2>Illustrative example</h2>' + certificateRecords([sampleCertificate]) + '</section>';
 }
 
 function layoutOffline() {
   const content = state.drafts.length ? '<ul class="row-list">' + state.drafts.map(d => '<li><a class="row-link" href="#edit/' + encodeURIComponent(d.id) + '"><span><strong>' + escapeHtml(draftLabel(d)) + '</strong><small>' + projectName(d.project) + ' · Saved ' + displayDate(d.updatedAt) + '</small></span><span class="status local">Device only</span></a></li>').join('') + '</ul>' : notice('No device drafts yet. Start a draft to try reload and offline recovery.');
   return heading('Device drafts', 'Work stored in this browser. No synchronization is connected.', newLink()) +
-    '<p class="meta" data-connection-description></p>' + (state.storageError ? notice('Local storage error: ' + escapeHtml(state.storageError), 'error') : '') +
+    '<p class="meta" data-connection-description></p>' + (state.storageError ? notice('Local storage error: ' + escapeHtml(state.storageError), 'error') : '') + '<section class="panel section-gap"><h2>Certificate previews · ' + state.certificates.length + '</h2>' + certificateRecords(state.certificates, state.certificateError) + '</section>' +
     '<section class="panel section-gap"><h2>Variation proposals · ' + state.variations.length + '</h2>' + (state.variationError ? notice('Proposal storage error: ' + escapeHtml(state.variationError), 'error') : state.variations.length ? '<ul class="row-list">' + state.variations.map(item => '<li><a class="row-link" href="#variation-edit/' + encodeURIComponent(item.id) + '"><span><strong>' + escapeHtml(item.title || 'Untitled proposal') + '</strong><small>' + projectName(item.project) + ' · Not approved</small></span>' + icon('arrow') + '</a></li>').join('') + '</ul>' : notice('No local variation proposals. Open a project’s Variations page to create one.')) + '</section><div class="grid columns section-gap"><section class="panel"><h2>Claim drafts · ' + state.drafts.length + '</h2>' + content + '</section><aside class="panel"><h2>Recovery on this device</h2><p class="meta">Cached app files can open offline after the first successful visit. Site data clearing or storage eviction may remove drafts. No cross-device backup or server acceptance exists.</p></aside></div>';
 }
 function layoutInbox() { return heading('Inbox', 'Your review tasks and decisions.') + '<section class="panel"><h2>No review tasks</h2><p class="meta">The demo has no connected account or approval service. You can review a fictional draft on this device.</p>' + pageLink('claims', 'Explore claims') + '</section>'; }
@@ -118,7 +123,7 @@ function layoutEvidence() {
 function layoutMore() { return heading('More', 'Tools and workspace settings.') + '<div class="grid cards">' + [['parties','Parties'],['reports','Reports'],['evidence','Evidence'],['offline','Device drafts'],['settings','Settings']].map(([r,l]) => '<div class="card"><h2>' + l + '</h2>' + pageLink(r, 'Open') + '</div>').join('') + '</div>'; }
 function layoutParties() { return heading('Parties', 'Synthetic counterparties for the demo projects.') + '<div class="grid cards">' + projects.map(p => '<article class="card"><h2>' + p.party + '</h2><p>' + p.name + ' · ' + p.contract + '</p><span class="status">Sample counterparty</span></article>').join('') + '</div>'; }
 function layoutReports() { return heading('Reports', 'Independent synthetic financial positions.') + snapshotPanel() + '<p class="meta">This snapshot is not calculated from device drafts. No financial ledger or production reporting service is connected.</p>'; }
-function layoutSettings() { return heading('Settings', 'Local demo controls.') + '<section class="panel"><h2>Device data</h2><p class="meta">Delete claim drafts or variation proposals in this browser. This cannot be undone and does not affect synthetic examples.</p><button class="button danger" id="clear-drafts" type="button" ' + (state.drafts.length ? '' : 'disabled') + '>Delete all claim drafts</button><button class="button danger" id="clear-variations" type="button" ' + (state.variations.length ? '' : 'disabled') + '>Delete all variation proposals</button><h2 class="section-gap">Demo scope</h2><p class="meta">Use fictional information. Identity, project permissions, submission, certification, invoicing, payment and synchronization are not connected. Browser storage is not a secure business record or backup.</p></section>'; }
+function layoutSettings() { return heading('Settings', 'Local demo controls.') + '<section class="panel"><h2>Device data</h2><p class="meta">Each action deletes only its own record family in this browser. This cannot be undone and does not affect synthetic examples.</p><button class="button danger" id="clear-drafts" type="button" ' + (state.drafts.length ? '' : 'disabled') + '>Delete all claim drafts</button><button class="button danger" id="clear-variations" type="button" ' + (state.variations.length ? '' : 'disabled') + '>Delete all variation proposals</button><button class="button danger" id="clear-certificates" type="button" ' + (state.certificates.length ? '' : 'disabled') + '>Delete all certificate previews</button><h2 class="section-gap">Demo scope</h2><p class="meta">Use fictional information. Identity, project permissions, submission, certificate issue, invoicing, payment and synchronization are not connected. Browser storage is not a secure business record or backup.</p></section>'; }
 function layoutMissing() { return heading('Page not found', 'No demo record exists for this address.') + '<a class="button secondary" href="#home">Back to overview</a>'; }
 function updateConnectivity() {
   document.querySelectorAll('[data-connectivity]').forEach(el => { el.textContent = navigator.onLine ? 'Online' : 'Offline'; el.classList.toggle('is-offline', !navigator.onLine); el.setAttribute('aria-label', (navigator.onLine ? 'Online' : 'Offline') + ' · Open device drafts'); });
@@ -132,12 +137,13 @@ function route() {
   let path;
   try { path = decodeURIComponent(raw.split('?')[0]).split('/'); } catch { path = ['missing']; }
   const active = path[0];
-  const section = ['new', 'claim', 'edit'].includes(active) ? 'claims' : ['project', 'variation-new', 'variation-edit'].includes(active) ? 'projects' : active;
+  const section = ['new', 'claim', 'edit', 'certificates', 'certificate', 'certificate-new', 'certificate-edit'].includes(active) ? 'claims' : ['project', 'variation-new', 'variation-edit'].includes(active) ? 'projects' : active;
   document.querySelector('#desktop-nav').innerHTML = pages.map(page => navLink(page, section)).join('');
   document.querySelector('#mobile-nav').innerHTML = mobilePages.map(page => mobileLink(page, section)).join('');
   const claimTask = active === 'new' || active === 'edit';
   const variationTask = active === 'variation-new' || active === 'variation-edit';
-  const focusedTask = claimTask || variationTask;
+  const certificateTask = active === 'certificate-new' || active === 'certificate-edit';
+  const focusedTask = claimTask || variationTask || certificateTask;
   document.body.classList.toggle('task-mode', focusedTask);
   if (claimTask) {
     const record = active === 'edit' ? state.drafts.find(draft => draft.id === path[1]) : null;
@@ -174,9 +180,24 @@ function route() {
         onDone: id => { location.hash = '#project/' + projectId + '/variations/' + encodeURIComponent(id); }
       });
     }
+  } else if (certificateTask) {
+    const record = active === 'certificate-edit' ? state.certificates.find(item => item.id === path[1]) : null;
+    const claim = allClaims().find(item => item.id === path[1]);
+    if (record?.reviewedAt) main.innerHTML = certificateDetail(record, allClaims().find(item => item.id === record.source.id));
+    else if ((active === 'certificate-edit' && !record) || (!record && !canAssess(claim))) main.innerHTML = heading('Assessment unavailable', 'Open a locally reviewed claim to start an assessment.') + (state.certificateError || state.storageError ? notice(escapeHtml(state.certificateError || state.storageError), 'error') : '') + pageLink('claims', 'Open claims');
+    else activeEditor = createCertificateEditor({ root: main, record, claim, announce,
+      onSave: async preview => { await saveCertificate(preview); await refreshDrafts(); if (state.certificateError || !state.certificates.some(item => item.id === preview.id && item.updatedAt === preview.updatedAt)) throw new Error('Device read-back failed after the write.'); },
+      onRouteChange: id => { currentHash = '#certificate-edit/' + encodeURIComponent(id); history.replaceState(null, '', currentHash); },
+      onDone: id => { location.hash = '#certificate/' + encodeURIComponent(id); }
+    });
+    if (!activeEditor) { document.body.classList.remove('task-mode'); bindPage(); }
   } else {
-    const views = { home: layoutHome, projects: layoutProjects, claims: layoutClaims, offline: layoutOffline, inbox: layoutInbox, evidence: layoutEvidence, more: layoutMore, parties: layoutParties, reports: layoutReports, settings: layoutSettings };
+    const views = { home: layoutHome, projects: layoutProjects, claims: layoutClaims, certificates: layoutCertificates, offline: layoutOffline, inbox: layoutInbox, evidence: layoutEvidence, more: layoutMore, parties: layoutParties, reports: layoutReports, settings: layoutSettings };
     main.innerHTML = active === 'project' ? (['sov', 'variations'].includes(path[2]) ? renderProjectPage(path[1], path[2], path[3], state.drafts, state.variations, state.variationError, state.storageError) || layoutMissing() : layoutProject(path[1], path[2])) : active === 'claim' ? layoutClaim(path[1]) : views[active]?.() || layoutMissing();
+    if (active === 'certificate') {
+      const record = path[1] === sampleCertificate.id ? sampleCertificate : state.certificates.find(item => item.id === path[1]);
+      main.innerHTML = record ? certificateDetail(record, allClaims().find(item => item.id === record.source.id)) : state.certificateError ? heading('Preview unavailable', 'Device storage could not be read.') + notice(escapeHtml(state.certificateError), 'error') : layoutMissing();
+    }
     bindPage();
     if (active === 'project') bindProjectPages(main, path[1], state.variations);
   }
@@ -184,6 +205,17 @@ function route() {
   updateConnectivity();
 }
 function bindPage() {
+  document.querySelector('#delete-certificate')?.addEventListener('click', async event => {
+    const id = event.currentTarget.dataset.id;
+    if (!confirm('Permanently delete this device-only certificate preview? Its source claim is kept.')) return;
+    try { await removeCertificate(id); await refreshDrafts(); if (state.certificateError || state.certificates.some(item => item.id === id)) throw new Error('Device read-back failed after deletion.'); location.hash = '#certificates'; announce('Local preview deleted. Source claim kept.'); }
+    catch (error) { main.insertAdjacentHTML('afterbegin', notice('Deletion failed: ' + escapeHtml(error.message), 'error')); }
+  });
+  document.querySelector('#clear-certificates')?.addEventListener('click', async () => {
+    if (!confirm('Permanently delete all device-only certificate previews? Claims and proposals are kept.')) return;
+    try { await clearCertificates(); await refreshDrafts(); if (state.certificateError || state.certificates.length) throw new Error('Device read-back failed after deletion.'); route(); announce('Local previews deleted.'); }
+    catch (error) { main.insertAdjacentHTML('afterbegin', notice('Deletion failed: ' + escapeHtml(error.message), 'error')); }
+  });
   document.querySelector('#delete-variation')?.addEventListener('click', async event => {
     const { id, project } = event.currentTarget.dataset;
     if (!confirm('Permanently delete this device-only variation proposal?')) return;

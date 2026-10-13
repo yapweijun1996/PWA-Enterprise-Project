@@ -1,7 +1,8 @@
 // Bump this identifier with every published demo asset change to offer an explicit update.
-const VERSION = 'constructclaim-demo-20';
+const VERSION = 'constructclaim-demo-21';
 const SHELL = [
   './', './index.html', './app.css', './app.js', './storage.js', './ui.js', './demo-domain.js', './draft-editor.js', './demo-contracts.js', './project-pages.js', './record-store.js', './variation-storage.js', './variation-domain.js', './variation-editor.js',
+  './demo-claims.js', './certificate-domain.js', './certificate-storage.js', './certificate-editor.js', './certificate-pages.js',
   './manifest.webmanifest', './icon.svg', './icon-192.png', './icon-512.png'
 ];
 const URLS = new Set(SHELL.map(path => new URL(path, self.registration.scope).href));

@@ -6,7 +6,7 @@ This repository contains a **device-local demonstration** of ConstructClaim. It 
 
 Open the [design gallery](ui/ssot-v2/pages/index.html) to review 21 independent desktop/mobile page sheets and four core boards. [DESIGN.md — Active visual baseline v2](DESIGN.md#active-visual-baseline-v2) owns the page index, tokens, responsive rules and interaction contract. The running demo implements the shared shell, Overview, local claim main flow and project SOV/variation workflows. The remaining page families are target designs; the 24 original images remain supporting references.
 
-The gallery opens directly from disk, or at http://127.0.0.1:8765/ui/ssot-v2/pages/ with the local server running.
+The gallery opens directly from disk, or at http://127.0.0.1:8765/ui/ssot-v2/pages/ with the local server running. Local certification and certificate previews also follow core board 03 and page 11.
 
 ## Run locally
 
@@ -40,6 +40,15 @@ Relative asset URLs support a GitHub Pages repository subpath. Publication is a 
 6. Save, reload and resume the proposal from Variations or Device drafts. Editing clears the local review. **Save local review** opens the detail with **Reviewed on device**, never Approved. Proposals do not enter contract totals or claim lines.
 7. Delete individual proposals from their detail. Settings has separate clear actions for claim drafts and variation proposals; each requires confirmation. Device storage is not a backup.
 
+## Certification walkthrough
+
+1. Save and locally review a valid fictional claim, then open its detail and choose **Start assessment**. The sample payable claim also provides an entry and a read-only example.
+2. Enter each line's illustrative certified amount. The summary keeps claimed and certified separate; variance is certified minus claimed. Blank assessments remain unknown. Save draft accepts incomplete work; local review requires every amount and a reason for each non-zero variance.
+3. Check the acknowledgement and choose **Save reviewed preview**. The resulting certificate detail is read-only and retains the exact saved source claim, line basis and supporting evidence. Later edits/deletion of the source do not rewrite it; the detail warns when the current source differs.
+4. Resume incomplete assessments or open reviewed previews through **Claims → Open certificate previews** or **Device drafts**. Start a new assessment for another snapshot. Individual deletion and Settings clear affect only local certificate previews.
+
+No certificate is issued. Retention, deductions, tax, net payable and PDF output await selected contract/output rules. Local previews do not change SOV figures, claims, invoices or payments.
+
 ## What works
 
 - v2 shell: 240px desktop sidebar, expandable 72px tablet rail, five-item mobile browsing navigation and consistent outline icons. Focused mobile editing replaces bottom navigation with persistent Save/Continue actions and explicit back/close paths.
@@ -48,6 +57,7 @@ Relative asset URLs support a GitHub Pages repository subpath. Publication is a 
 - Claim search, receivable/payable filters, short draft references and responsive list cards. Claim state and certification remain separate.
 - IndexedDB draft create/edit/read/delete, incomplete draft saves, integer-cent illustrative line totals, local review and sample evidence content/metadata saved in one record. The existing claim store/key contract is unchanged. Variation proposals use a separate database and share only transaction handling.
 - Validation and failure feedback retain input. Network changes preserve the editor, focus and selection. Leaving with unsaved changes requires an explicit discard decision; app updates wait for dirty/busy drafts to be saved.
+- Independent assessment drafts and read-only reviewed certificate previews, exact-cent signed variances, required reasons, source/evidence snapshots and guarded, idempotent retries. Certificates use a separate database; an atomic check prevents replacement of a reviewed preview by another tab.
 - A static manifest and versioned Service Worker cache. Hash routes resolve to the static shell. Chromium verified offline reload, local read/write and cached navigation/new-tab recovery after the local server was stopped.
 
 Browser storage can be evicted or cleared and is not a backup. Cache availability requires a successful first visit. Real device installation, browser-process cold launch, iOS standalone safe areas and screen-reader acceptance are not verified.
@@ -75,8 +85,13 @@ node --check record-store.js
 node --check variation-storage.js
 node --check variation-domain.js
 node --check variation-editor.js
+node --check demo-claims.js
+node --check certificate-domain.js
+node --check certificate-storage.js
+node --check certificate-editor.js
+node --check certificate-pages.js
 node --test tests/*.test.mjs
 python -m json.tool manifest.webmanifest
 ~~~
 
-Eighteen tests cover decimal boundaries, totals, old-draft compatibility, draft/review readiness, snapshot isolation, evidence bytes/context, approved-only contract inclusion, project isolation, fixture immutability, proposal review boundaries, unknown values/storage errors and Service Worker route/cache boundaries. Chromium checks covered the four-step journey at 1440, 768, 390 and 320px, targeted keyboard actions, failure/retry, unchanged identifiers, deletion, escaping, network transitions, offline reload and compatible updates. SOV/VO checks also covered source integration, old snapshot preservation, proposal failure/read-back/retry, local review reset, independent deletion, offline cached recovery after stopping the server and dirty-update protection. These are bounded demo checks, not production acceptance or full accessibility certification. See [PROGRESS.md](PROGRESS.md).
+Twenty-one tests cover the existing claim/SOV/VO/cache contracts plus assessment readiness, signed exact-cent variance, required reasons, immutable source/reviewed snapshots and rejected issue flags. Focused Chromium checks cover claim/VO flows and certification save/review/detail/reload, source changes, quota/read-back failure/retry, network state preservation, unsaved departure cancellation and offline-emulated recovery. Layout checks use 1440/768/390/320px. These are bounded demo checks, not production acceptance or full accessibility certification. See [PROGRESS.md](PROGRESS.md).

@@ -16,7 +16,7 @@
 |---|---|---|---|---|
 | Product requirements E2E-01–E2E-18 | 18 | 0 | 0 | 0 |
 | Production application/API/data/PWA capabilities | Entire intended V1 | 0 evidenced | 0 evidenced | 0 evidenced |
-| Static local-only demo (DEMO-001 / DEMO-002) | v2 local claim main flow | Responsive shell, four-step create/edit/review, sample evidence and cached recovery | Nine contract tests and focused Chromium workflow/recovery checks passed | Not published |
+| Static local-only demo (DEMO-001–DEMO-005) | v2 claims, SOV/VO and certification previews | Shared shell, claim/variation workflows, independent assessments and read-only reviewed snapshots | Twenty-one contract tests and bounded Chromium workflow/recovery checks passed | Not published |
 | Core planning documents | 8 requested files | 8 present; relevant UI-reference sections updated | Markdown consistency checks passed | Not applicable |
 | Documentation task T-017 | 1 UI-reference synchronization | 1 implemented | 1 verified by documentation checks | Not applicable |
 | UI reference assets | 24 user-provided PNGs | 0 modified/staged | 24 image files visually inspected as static references | Not applicable |
@@ -70,6 +70,13 @@ They distinguish user-approved product intent, proposed architecture, user-selec
 - Created the earlier local documentation commit containing only the eight requested files, parented directly to `dbca199`; verified that commit's file list. That UI-reference documentation change was Markdown-only and did not include the PNGs. No push or release was performed as part of that change.
 
 ### Static demo checks (not production verification)
+
+#### Local certification and certificate previews — 2026-10-13
+
+- Twenty-one Node tests passed, including reviewed-source readiness, signed exact-cent variance, required reasons, unknown incomplete amounts and immutable source/reviewed snapshots. All seventeen JavaScript syntax checks passed.
+- Chromium completed saved reviewed claim → assessment draft → validation failure without a variance reason → reviewed preview → read-only detail. SGD 26,000.10 claimed remained unchanged while SGD 25,500.10 certified and SGD -500.00 variance reconciled. Literal HTML remained text. A later source edit retained the original preview and displayed the changed-source warning; transactional replacement of a reviewed preview was rejected.
+- Synthetic quota and post-write read-back failures retained input. Retrying a reviewed write confirmed the same identifier rather than creating a duplicate. Incomplete save/reload, unsaved departure cancellation and dispatched network transitions preserving form/focus/selection passed. Cached certificate detail reloaded under DevTools Offline network emulation in version 21; navigator.onLine remained true in this emulation, so this is not an OS connectivity claim.
+- Assessment/detail at tested 1440/768/390/320px widths had no document overflow; mobile task actions measured 44px. The desktop assessment screenshot was inspected. Wider iOS, screen-reader, cross-browser, installed/cold-launch and production acceptance remain unverified.
 
 #### v2 main flow — 2026-10-13
 
@@ -127,4 +134,4 @@ These are unavailable or failed checks, not passing checks. See [SPEC.md](SPEC.m
 
 **Owner scope choice:** retain the full V1 scope (option 1). This approves no specific platform, money/state rule, permission grant, offline/data policy, or AI provider. At the start of this update, local `main` and `origin/main` were both at `89370cd`, which added the 24 `ui/` images; no application source or runtime appeared.
 
-The independent designs and bounded demo main flow are complete. The current review point is the local demo walkthrough in README.md; SOV/variation workflows and claim-source integration are also complete; wider certification and production workflows remain separate scopes. Production work still resumes with **T-001** in [TASK.md](TASK.md): fill its unapproved decision-to-verification worksheet and confirm/replace D-001/D-006. T-001–T-003 remain Planned pending owner decisions. Local Node/Compose/PostgreSQL client versions do not satisfy those gates, and Docker Compose cannot run until a daemon is available. Do not scaffold packages or migrations until platform, financial, and security/privacy decisions are resolved. No release, push, PR, or deployment is authorized.
+The independent designs and bounded demo claims/SOV/variation/certification previews are complete. The current review point is the local walkthrough in README.md. Evidence capture is the next authorized demo amendment; production workflows remain separate. Production work still resumes with **T-001** in [TASK.md](TASK.md): fill its unapproved decision-to-verification worksheet and confirm/replace D-001/D-006. T-001–T-003 remain Planned pending owner decisions. Local Node/Compose/PostgreSQL client versions do not satisfy those gates, and Docker Compose cannot run until a daemon is available. Do not scaffold packages or migrations until platform, financial, and security/privacy decisions are resolved. No release, push, PR, or deployment is authorized.

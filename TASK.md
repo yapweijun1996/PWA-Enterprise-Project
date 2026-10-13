@@ -171,3 +171,10 @@ Acceptance IDs E2E-01–E2E-18 are defined in [SPEC.md](SPEC.md). Their current 
 - **Scope:** Use one project SOV/approved-VO fixture source for new claims, preserve historical draft snapshots, and implement local variation create/edit/save/review/read/delete with independent storage.
 - **Evidence:** Eighteen Node tests, twelve JavaScript syntax checks and manifest parsing passed. Focused Chromium flows verified source/evidence persistence, legacy compatibility, proposal review/reset, failed write/read-back/retry, independent clear/delete/cancel, 1440/768/390/320px layouts, guarded updates and cached recovery with the test server stopped. See PROGRESS.md.
 - **Boundary:** Local review cannot approve, submit or add a proposal to revised contract/claim lines. No real VO authority, SOV version editing, certificate issue, upload or server workflow exists. T-006 and production E2E states remain unchanged. Both completed amendments are committed locally; no publication is authorized.
+
+### DEMO-005 — Local certification and certificate previews
+
+- **Status:** Verified within the synthetic/device-local demo scope; not released.
+- **Scope:** Independent line assessments, exact-cent signed variance, required reasons, incomplete save/resume, local review and read-only certificate/source/evidence snapshots, separate persistence and deletion.
+- **Evidence:** Twenty-one Node tests; focused Chromium create/save/review/detail/reload, invalid review, source preservation, atomic immutable writes, quota/read-back retry without duplicates, network/leave guards, offline-emulated recovery and 1440/768/390/320px layouts. See PROGRESS.md.
+- **Boundary:** Not issued or authorized; no contract/claim/invoice/payment change, retention/tax/deduction/net-payable policy, PDF output or production financial acceptance. T-002/T-010 and E2E states remain unchanged.

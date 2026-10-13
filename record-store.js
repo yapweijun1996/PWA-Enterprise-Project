@@ -26,5 +26,22 @@ export function createRecordStore(database, storeName = 'drafts') {
       });
     } finally { db.close(); }
   }
-  return { open, list: () => transaction('readonly', store => store.getAll()), save: record => transaction('readwrite', store => store.put(record)), remove: id => transaction('readwrite', store => store.delete(id)), clear: () => transaction('readwrite', store => store.clear()) };
+  // Check and write in the same transaction so another tab cannot replace a final snapshot.
+  async function saveChecked(record, check) {
+    const db = await open();
+    try {
+      return await new Promise((resolve, reject) => {
+        const tx = db.transaction(storeName, 'readwrite');
+        const store = tx.objectStore(storeName);
+        let failure;
+        store.get(record.id).onsuccess = event => {
+          try { check(event.target.result, record); store.put(record); }
+          catch (error) { failure = error; tx.abort(); }
+        };
+        tx.oncomplete = () => resolve(record.id);
+        tx.onerror = tx.onabort = () => reject(failure || tx.error || new Error('Local write failed.'));
+      });
+    } finally { db.close(); }
+  }
+  return { open, list: () => transaction('readonly', store => store.getAll()), save: record => transaction('readwrite', store => store.put(record)), saveChecked, remove: id => transaction('readwrite', store => store.delete(id)), clear: () => transaction('readwrite', store => store.clear()) };
 }
