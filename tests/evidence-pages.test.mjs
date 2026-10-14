@@ -40,6 +40,14 @@ test('claim ID search finds linked photos and documents even when their referenc
   assert.ok(!evidenceGallery({ records: [record], claims: [claim], currentClaims: [claim], projectId: 'cedar' }).includes('fictional.png'));
 });
 
+test('caption search finds its original image without relying on a duplicated note', () => {
+  const captioned = { ...record, note: '', file: { ...record.file, caption: 'Podium foundation layout' } };
+  const other = { ...record, id: 'LOCAL-EVIDENCE-other', file: { ...record.file, name: 'other.png' } };
+  const html = evidenceResults([captioned, other], [], [], '  FOUNDATION  ', 'Photos');
+  assert.ok(html.includes('href="#evidence/' + encodeURIComponent(captioned.id) + '"'));
+  assert.ok(!html.includes('href="#evidence/' + encodeURIComponent(other.id) + '"'));
+});
+
 test('certificate detail distinguishes unassessed amounts from explicit zero in table and mobile rows', () => {
   for (const [value, expected] of [['', 'Not assessed'], ['   ', 'Not assessed'], ['0', 'SGD 0.00'], ['12.34', 'SGD 12.34']]) {
     const certificate = structuredClone(sampleCertificates.find(item => item.id === 'CCAP-DEMO-01'));

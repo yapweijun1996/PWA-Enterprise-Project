@@ -1,5 +1,5 @@
 // Release identity is shared with the UI through GET_VERSION. Bump for every asset change.
-const VERSION = '0.6.1';
+const VERSION = '0.6.2';
 // Cache Storage is shared by every application on an origin, including Pages projects.
 const CACHE_PREFIX = `constructclaim-demo:${self.registration.scope}:`;
 // A requested complete reinstall must not overwrite the active release while installing.

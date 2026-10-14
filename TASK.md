@@ -228,10 +228,19 @@ Acceptance IDs E2E-01–E2E-18 are defined in [SPEC.md](SPEC.md). Their current 
 ### DEMO-012 — Four selected visual refinements
 
 - **Status:** Implemented and Verified locally on 2026-10-14; worker v0.6.1; not Released.
-- **Scope:** owner-selected VIS-01 through VIS-04 only: mobile Evidence identity/action layout; explicit Claims current-period labels; mobile form step spacing with 44px targets; compact read-only certificate summary. Other visual candidates are not accepted implementation tasks.
+- **Scope:** owner-selected VIS-01 through VIS-04 only at this milestone: mobile Evidence identity/action layout; explicit Claims current-period labels; mobile form step spacing with 44px targets; compact read-only certificate summary. Subsequent VIS-05 through VIS-08 selection is tracked under DEMO-013.
 - **Acceptance:** at 390x844, first attachment identity/context/view action fits above bottom navigation, the required period control fits above the task footer, step-track/form gap is 20px with native 44px targets, and certificate summary is below 180px with all values/basis preserved and right-aligned. Desktop/tablet composition, financial values, filters, source snapshots, local-only state and save/reload remain intact; 320px may wrap/scroll without document overflow.
 - **Evidence:** 103 existing contracts, four changed JS syntax checks, 35-file artifact, 48 six-size route screenshots, two independent screenshot reviews, native hit/Enter/validation checks and actual fictional draft save/reload. See [CODE_REVIEW.md](CODE_REVIEW.md#visual-audit-and-four-scoped-fixes) and PROGRESS.md.
 - **Boundary:** no fixture/schema/calculation/update-policy/brand change, new test/dependency/module, push/deployment or physical-device/full-accessibility claim. Local commit is authorized by the owner's subsequent B selection. Scoped source checkpoint/evidence retained outside the repo; owned browser data and runtime cleaned.
+
+### DEMO-013 — Follow-up linked-document and section access
+
+- **Status:** Implemented and Verified locally on 2026-10-14; worker v0.6.2; local commit authorized by subsequent owner B selection, not Released. Previous four fixes are committed on local main as `5fbab1c`.
+- **Scope:** owner C selection covers VIS-05 through VIS-08: linked preview access in claim summary; truthful snapshot/current-source header; descriptive identities with original identifiers retained; Settings existing-section navigation.
+- **Acceptance:** initial mobile/tablet summary exposes claim amount/state and actionable preview amount/state; amount digits do not split. Source identity/basis/saved time and conditional current-source entry are discoverable and do not imply historical navigation. Captions/references remain searchable with original IDs/files available. Native 44px Settings buttons focus existing headings without changing hash, preserve actions and respect reduced motion.
+- **Evidence:** 104 contracts, six modified JS syntax checks, 35-file final artifact, 48 six-size route captures, independent review and correction of the initial 768px numeric wrap, native navigation/search/reduced-motion/partial-preview/source-deletion proof. See [CODE_REVIEW.md](CODE_REVIEW.md#follow-up-visual-findings-05-08) and PROGRESS.md.
+- **Boundary:** findings 09-13 remain unselected at this milestone; no fixture/schema/calculation/update-policy/production change, new runtime dependency/module, push/deployment or full physical-device/a11y claim. Owned practice data/runtime cleaned; checkpoint and actual screenshot/JSON evidence retained.
+
 
 ## Demo bug backlog
 

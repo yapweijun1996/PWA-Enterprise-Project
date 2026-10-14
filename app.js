@@ -39,7 +39,7 @@ const pageLink = (route, text) => '<a class="text-link" href="#' + route + '">' 
 const newLink = (query = '') => '<a class="button" href="#new' + query + '">' + icon('plus') + 'New draft</a>';
 const navLink = ([route, label, glyph], active) => '<a class="nav-item" href="#' + route + '" aria-label="' + label + '" title="' + label + '" ' + (active === route ? 'aria-current="page"' : '') + '>' + icon(glyph) + '<span class="nav-label">' + label + '</span></a>';
 const mobileLink = ([route, label, glyph], active) => '<a href="#' + route + '" ' + (active === route || (route === 'more' && ['offline', 'evidence', 'settings', 'parties', 'reports'].includes(active)) ? 'aria-current="page"' : '') + '>' + icon(glyph) + label + '</a>';
-const claimTitle = claim => claim.local ? draftLabel(claim) : claim.id;
+const claimTitle = claim => String(claim.reference || '').trim() || projectName(claim.project) + ' · ' + (claim.period || 'Period not set');
 let activeEditor = null;
 let currentHash = location.hash || '#home';
 let deviceChanges = 0;
@@ -246,14 +246,18 @@ function layoutClaim(id) {
   const claim = allClaims().find(c => c.id === id);
   if (!claim) return layoutMissing();
   const totals = lineTotals(claim.lines || []);
+  const localPreviews = state.certificates.filter(item => item.source.id === id);
+  const bundledPreviews = sampleCertificates.filter(item => item.source.id === id);
+  const previewSummary = (state.certificateError ? certificateRecords([], state.certificateError) : localPreviews.length ? '<span class="meta">Device-local previews · Not issued</span>' + certificateRecords(localPreviews) : '') +
+    (bundledPreviews.length ? '<span class="meta">Illustrative sample previews · Not issued</span>' + certificateRecords(bundledPreviews) : '');
   return heading(escapeHtml(claimTitle(claim)), projectName(claim.project) + ' · ' + escapeHtml(claim.direction) + ' · ' + escapeHtml(claim.period || 'Period not set'), claim.local ? '<a class="button" href="#edit/' + encodeURIComponent(claim.id) + '">' + icon('claims') + 'Edit draft</a>' : '<a class="button secondary" href="#claims">' + icon('back') + 'Back to claims</a>') +
-    '<div class="grid columns"><section class="panel"><h2>Claim details</h2><dl class="key-values"><div><dt>This period · Illustrative</dt><dd>' + money(claim.amount) + '</dd></div><div><dt>Claim state</dt><dd><span class="status ' + (claim.local ? 'local' : '') + '">' + escapeHtml(claim.status) + '</span></dd></div><div><dt>Certification</dt><dd>' + escapeHtml(claim.certificate) + '</dd></div><div><dt>Period</dt><dd>' + escapeHtml(claim.period || 'Not set') + '</dd></div></dl>' +
+    '<div class="grid columns"><section class="panel"><h2>Claim details</h2><dl class="key-values"><div><dt>This period · Illustrative</dt><dd>' + money(claim.amount) + '</dd></div><div><dt>Claim state</dt><dd><span class="status ' + (claim.local ? 'local' : '') + '">' + escapeHtml(claim.status) + '</span></dd></div><div class="claim-preview-field"><dt>Certification</dt><dd class="linked-previews">' + (previewSummary || escapeHtml(claim.certificate)) + '</dd></div><div><dt>Period</dt><dd>' + escapeHtml(claim.period || 'Not set') + '</dd></div></dl>' +
     '<p class="review-note"><strong>Period note:</strong> ' + escapeHtml(claim.notes || 'None') + '</p><p class="meta">' + (claim.local ? 'Saved on this device' : 'Bundled fictional sample') + (claim.updatedAt ? ' · ' + displayDate(claim.updatedAt) : '') + '</p>' +
     (claim.reviewedAt ? '<p class="meta">' + (claim.local ? 'Local review' : 'Sample review') + ' · ' + displayDate(claim.reviewedAt) + ' · Not submitted</p>' : '') +
     (claim.lines?.length ? '<h2 class="section-gap">Claim lines</h2><ul class="row-list">' + claim.lines.map(line => '<li class="review-line"><span>' + escapeHtml(line.id + ' · ' + line.title) + '<small class="meta">' + escapeHtml(line.note || '') + '</small></span><strong>' + money(line.current || '0') + '</strong></li>').join('') + '</ul><p class="meta">Previous: ' + money(fromCents(totals.previous)) + ' · Cumulative: ' + money(fromCents(totals.cumulative)) + ' · Synthetic source</p>' : '') +
     '<h2 class="section-gap">Evidence</h2>' + evidenceCards(claim.attachments || []) +
     '<details class="section-gap"><summary>Technical reference</summary><p class="meta">' + escapeHtml(claim.id) + '</p><p class="meta">Source: ' + escapeHtml(claim.sourceVersion || 'Legacy demo amount') + '</p></details>' + (claim.local ? '<button class="button danger section-gap" id="delete-draft" type="button" data-id="' + escapeHtml(claim.id) + '">Delete local draft</button>' : '') +
-    '<h2 class="section-gap">Linked images</h2>' + (state.evidenceError ? notice('Device image storage unavailable: ' + escapeHtml(state.evidenceError), 'error') : '') + evidenceCards(linkedEvidence([...sampleEvidence, ...state.evidence], id, claim.project)) + captureLink(claim.project, id) + '</section><aside class="panel"><h2>Certification</h2><p class="meta">Independent previews. The claim amount remains unchanged.</p>' + (canAssess(claim) ? '<a class="button" href="#certificate-new/' + encodeURIComponent(id) + '">Start assessment</a>' : '<p class="meta">Locally review a valid claim before starting an assessment.</p>') + certificateRecords(state.certificates.filter(item => item.source.id === id), state.certificateError) + (sampleCertificates.some(item => item.source.id === id) ? '<h3 class="section-gap">Sample previews</h3>' + certificateRecords(sampleCertificates.filter(item => item.source.id === id)) : '') + '<h3 class="section-gap">' + (claim.local ? 'Saved on this device' : 'Sample workflow') + '</h3><p class="meta">' + (claim.local ? 'Not submitted or synchronized. Device storage is not a backup.' : 'Claim, certificate, invoice and payment are separate stages. These examples are not issued business documents.') + '</p><a class="text-link" href="#claims">' + icon('back') + 'Back to claims</a></aside></div>';
+    '<h2 class="section-gap">Linked images</h2>' + (state.evidenceError ? notice('Device image storage unavailable: ' + escapeHtml(state.evidenceError), 'error') : '') + evidenceCards(linkedEvidence([...sampleEvidence, ...state.evidence], id, claim.project)) + captureLink(claim.project, id) + '</section><aside class="panel"><h2>Certification</h2><p class="meta">Independent previews. The claim amount remains unchanged.</p>' + (canAssess(claim) ? '<a class="button" href="#certificate-new/' + encodeURIComponent(id) + '">Start assessment</a>' : '<p class="meta">Locally review a valid claim before starting an assessment.</p>') + '<h3 class="section-gap">' + (claim.local ? 'Saved on this device' : 'Sample workflow') + '</h3><p class="meta">' + (claim.local ? 'Not submitted or synchronized. Device storage is not a backup.' : 'Claim, certificate, invoice and payment are separate stages. These examples are not issued business documents.') + '</p><a class="text-link" href="#claims">' + icon('back') + 'Back to claims</a></aside></div>';
 }
 
 function layoutCertificates() {
@@ -377,6 +381,15 @@ function route() {
   scheduleViewportLayout();
 }
 function bindPage() {
+  main.querySelectorAll('[data-settings-section]').forEach(button => {
+    button.addEventListener('click', () => {
+      const target = main.querySelector('#' + button.dataset.settingsSection);
+      if (!target) return;
+      target.setAttribute('tabindex', '-1');
+      target.focus({ preventScroll: true });
+      target.scrollIntoView({ block: 'start', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+    });
+  });
   for (const [id, action, reset] of [['load-practice', loadPracticeRecords, false], ['reset-practice', resetPracticeRecords, true]]) {
     document.querySelector('#' + id)?.addEventListener('click', async event => {
       if (deviceChanges) return;

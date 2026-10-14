@@ -273,7 +273,7 @@ Audited on 2026-10-14 against canonical KB-MCP skill `pwa:product-standard` v1.0
 
 **Baseline:** main `1f143a0`, worker v0.6.0, read-only screenshot review on 2026-10-14. Eight routes at six sizes plus supplemental states produced 54 frames and 13 visual improvement candidates. These are presentation observations/recommendations, not 13 additional confirmed functional bugs. The owner selected only VIS-01 through VIS-04 for implementation.
 
-**Current status:** those four refinements are Implemented and Verified locally under DEMO-012 / worker v0.6.1, with local commit authorized by the owner's subsequent B selection. No push or deployment. Existing BUG-001 through BUG-016 history and RISK-02 are unchanged.
+**Milestone status:** those four refinements are Implemented and Verified locally under DEMO-012 / worker v0.6.1 and committed on main as `5fbab1c` after owner B selection. No push or deployment. The subsequent C follow-up below covers 05-08 separately. Existing BUG-001 through BUG-016 history and RISK-02 are unchanged.
 
 | Finding | Baseline observation | Current correction and local evidence |
 |---|---|---|
@@ -288,7 +288,27 @@ Audited on 2026-10-14 against canonical KB-MCP skill `pwa:product-standard` v1.0
 - Real Chromium: 48 after captures across the same eight routes and six sizes; no document horizontal overflow. Two independent reviewers inspected 16 before/after images each and accepted their assigned fixes. No numeric taste score or full WCAG conclusion.
 - Browser smoke: original gallery filtering/link, Claims directional filtering, native step hit/keyboard/validation, saved amount/note persistence through reload, current-period list value and active v0.6.1 complete-cache identity. Observed page exception logs were empty.
 - At 320x720, some identity/context/actions and period fields still require scrolling; certificate summary is about 204px with values wrapping, not clipped. The 390x844 first-viewport criteria are not generalized to every phone height.
-- Findings 05-13 remain unselected: preview/source entry hierarchy, descriptive identity, Settings section access, duplicate evidence empty state, repeated gallery prose, home empty-panel density, project metadata order and partial floating-button overlap. No implementation or approval claim for them.
+- At this milestone findings 05-13 were unselected. The subsequent owner C selection implements 05-08 below; 09-13 remain unselected: duplicate evidence empty state, repeated gallery prose, home empty-panel density, project metadata order and partial floating-button overlap.
 - Physical iOS/Safari/installed PWA/software keyboard, full screen reader/contrast/zoom and production financial correctness are not covered. Prior update/offline/inset results remain dated DEMO-011 evidence.
 - LSP unavailable; impact CLI returned PROJECT_CONFIG_NOT_FOUND. Bounded imports, exported consumers, amount sources and relevant tests were inspected instead; no complete static graph is claimed.
 - Scoped source ZIP and screenshot/JSON evidence retained outside the repo; restore not executed. Owned smoke data/caches/registration/tab/service/runtime artifact cleaned. Reference PNGs and existing `_site` unchanged.
+
+## Follow-up visual findings 05-08
+
+**Baseline and status:** previous fixes committed locally as `5fbab1c` / v0.6.1; owner then selected C. VIS-05 through VIS-08 are Implemented and Verified locally under DEMO-013 / v0.6.2. Subsequent owner B selection authorizes local commit only; no push/deployment.
+
+| Finding | Correction | Exercised evidence |
+|---|---|---|
+| VIS-05 | Existing sample/device preview entries move into the claim summary, with independent amount/state and not-issued labels; duplicate lower lists removed | Initial 390px entry ends at y=553 above nav y=783; claim/preview/current-claim native round trip retained 18,500/17,000/-1,500. After review found decimal-digit splitting at 768px, full-row layout and fixed-width/nowrap amount display restored one text line with 598px entry width. |
+| VIS-06 | Header shows actual snapshot reference/full ID, basis and saved time; current-source entry is conditional and explicitly current, with existing error/change notice moved alongside | Initial current-source entry ends around y=392 at 390px. Actual incomplete local preview keeps No amount yet / Not assessed. Deleting its owned source hides the current link, shows retained-snapshot warning and preserves source identity/time and amounts. No historical-version or issued-state fiction. |
+| VIS-07 | Existing references or project/period titles identify claims; existing captions identify images, with raw filenames retained and no guessed note parsing | Caption query found the original PNG; detail retained harbor-demo-01.png. Original PCAP-DEMO-02 ID search and links still worked; Technical reference retained the full ID. One regression covers caption matching without duplicated note content and exclusion of a different image. |
+| VIS-08 | Three native Settings buttons target existing section headings; no competing hash links | Enter focused each actual heading while retaining #settings; reduced-motion navigation followed by Tab reached View saved records. Six-size captures showed 44px targets and normal narrow wrapping. Existing update/practice/delete handlers unchanged. |
+
+### Follow-up acceptance and limits
+
+- Final regression: **104 passed, zero failed**; six modified JS syntax checks; 35 validated final runtime files. No fixture/database/calculation change or new runtime dependency/module.
+- Final Chromium matrix: eight routes at six sizes, 48 screenshots without document horizontal overflow. Source/identity/navigation reviews accepted the final scope; initial failing 768px screenshot/source evidence retained rather than silently replaced.
+- Active worker returned v0.6.2, complete cache and zero missing; observed page exception logs empty. Native links, original identifiers, focus/route behavior, reduced motion and actual incomplete/missing-source state exercised.
+- Readiness/cache/update/inset proof from DEMO-011 remains historical. No new physical iOS/Safari/keyboard/installed mode, full screen-reader/contrast/zoom/eviction or production-money acceptance.
+- LSP unavailable and impact analyzer lacks JS/TS config; bounded static imports/callers/data-source inspection substituted, not a complete graph.
+- Two isolated origins' owned practice data/caches/registration cleared; tabs/services closed and final runtime removed. Baseline ZIP, before/after/failed screenshots and JSON retained outside the repo; restore not executed. Existing `_site` and reference PNGs unchanged. Findings 09-13 remain outside the selected implementation.

@@ -68,6 +68,13 @@ The owner selected visual findings 01-04 for the v0.6.1 refinement, not a new br
 
 Mobile claim steps keep 44px native hit targets around a 5px visual track without reserving a blank 39px row. The 20px track-to-form gap preserves form workspace and the existing footer/keyboard guards. Only `.certificate-summary` reflows into compact label/amount rows on mobile, with right-aligned values and unchanged snapshot/illustrative/variance semantics; project contract cards and assessment controls do not inherit that style. Smaller screens may wrap values and scroll, rather than shrink text or hide context. Original/v2 PNGs, calculation rules and the wider product targets remain unchanged.
 
+The subsequent C selection implements visual findings 05-08 in the v0.6.2 working tree. Existing sample/device preview records move into the claim's Certification summary, with their independent status/amount and not-issued meaning. The field spans the summary row; the amount column retains its width and numeric text does not break at arbitrary digits.
+
+Certificate source context precedes financial details: display the stored reference/full source ID, actual source basis and saved time. A current-claim link is conditional on a readable current source and is explicitly not a saved historical-version link. Existing changed/unavailable-source notices move with that context, while source snapshots and all calculations remain unchanged.
+
+Claims favour an existing reference or project/period description, keeping full IDs available through original links, search and technical detail. Evidence captions are existing file metadata, not extracted guesses from note prose or new AI labels; filenames remain secondary and caption search does not replace prior matching fields. Settings uses native buttons for existing section headings, not competing hash-fragment routes; activation moves focus and respects reduced motion. These are scoped presentation changes, not approval of findings 09-13 or new product policies.
+
+
 
 
 ## Proposed system context
