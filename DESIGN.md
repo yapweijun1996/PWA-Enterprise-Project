@@ -25,7 +25,7 @@ The v2 shared shell, local claim/SOV/VO workflows, certification previews and de
 
 | Source | Demo responsibility |
 |---|---|
-| app.js | Hash navigation, synthetic read models, local persistence/read-back and editor lifecycle. |
+| app.js | Hash navigation, local persistence/read-back, editor/view/focus ownership and scroll/viewport clearance. |
 | draft-editor.js | One active draft state, Details/Lines/Evidence/Review UI, dirty/busy guards and explicit save feedback. |
 | demo-contracts.js | Single synthetic project/SOV/VO source; approved-only revised values and immutable returned basis snapshots. |
 | project-pages.js | Project SOV/VO browsing, responsive records, filtering, source facts and project tabs. |
@@ -59,6 +59,11 @@ The claim editor displays independently saved images without changing their save
 Incomplete saves and optional fictional evidence are scoped demo choices. Local review is not submission or certificate issue. There is no production permission, authoritative money, upload, command queue, server acceptance or conflict implementation. Rollback of source must retain browser data; historical records remain readable by the adapter. The Service Worker caches only declared static assets and normalizes hash fragments for shell matching. From demo v0.3.0, the worker owns the release identity; GET_VERSION reports that identity and actual shell completeness to the UI. The user's 2026-10-13 request changes this project's manual update policy to automatic application at a safe point. APPLY_UPDATE checks all window clients within its registration scope using transferred MessageChannel ports. Ready clients block interaction until controller change or cancellation; unsaved/busy, unresponsive or newly opened clients defer activation. The page rechecks its own editor/device-operation state before reloading. Updates do not rewrite any IndexedDB schema or record. Older v29 clients retain their guarded explicit action for migration. README.md owns operational details and rollback.
 
 Settings is a scoped runtime refinement of v2's Device data anchor. A 1040px reading column places Application/version/update status first, three compact environment facts next, independent record-count/delete rows below, and demo limitations last. Mobile stacks facts and actions; unreadable stores show an unavailable count and disabled deletion rather than a fabricated zero. Existing confirmation text and the four database owners remain unchanged. The original/v2 image anchors remain unchanged; they do not illustrate these new update states.
+
+From demo v0.6.0, the shell consumes one set of fallback-aware safe-area variables for its opaque top surface, content/notices, navigation, floating controls, editor footer and update loader. Editor clearance uses measured footer height; VisualViewport geometry adjusts keyboard offset and focused-field visibility without rebuilding form state. Visible text/select/textarea controls use at least 16px, while mobile amount controls retain 22px and relevant touch targets are at least 44px. Long-page topbar hide/reveal uses 48px/24px movement thresholds and transforms, with focus/editing/navigation/route/viewport guards and reduced-motion support. Settings mutations restore a usable focus target only for their owned view and do not steal intentional later focus.
+
+Update readiness now distinguishes incomplete candidate caches, failed cache checks, busy/unconfirmed pages and activation failure. Candidate metadata never replaces active-release offline facts; incomplete candidates use separate complete installation. Local digest failures are distinct from an actually rejected server response, and matching-repair retry remains possible after server correction. The safe automatic policy remains an explicit project exception to the canonical KB user-controlled activation MUST. [CODE_REVIEW.md](CODE_REVIEW.md#pwa-product-standard-audit-and-remediation) and PROGRESS.md own local proof and physical-device/accessibility limits; per-request integrity verification of existing cached hits remains outside this correction.
+
 
 ## Proposed system context
 

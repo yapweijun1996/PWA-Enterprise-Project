@@ -4,6 +4,8 @@
 
 The review observations below are historical evidence from v0.4.0. **All 13 confirmed findings are now fixed and locally verified in v0.5.0**, following the approved full-remediation option. See [Local remediation and verification](#local-remediation-and-verification). Original reproduction text and baseline line references are retained; they do not describe the current implementation.
 
+The separate [PWA product standard audit and remediation](#pwa-product-standard-audit-and-remediation) records the 2026-10-14 v0.5.0 audit and approved v0.6.0 corrections. Its three additional bugs do not reopen BUG-001 through BUG-013.
+
 - **Reviewed runtime baseline:** `e9e3b09` on `main`, worker version `0.4.0`; review performed on 2026-10-13. The worktree was clean at intake.
 - **Goal:** identify current codebase defects, including pre-existing defects, document them, and commit documentation locally. This is not limited to regressions introduced by the latest feature commit.
 - **Coverage:** all 27 runtime JavaScript modules and their consumers; 11 existing test files; application HTML/CSS/manifest; Pages packaging and workflow; the two Python asset generators and generated-image metadata; static design-gallery HTML. Generated `_site` duplicates and visual design images were not independently re-audited as application implementations.
@@ -217,3 +219,52 @@ Completed on 2026-10-13 after review commit `ac794ba`; repository worker version
 - Synthetic 0.5.1/0.5.2 releases were served only from owned temporary artifacts to test version mismatch, missing authority and current recovery code; they are not repository releases. Final server-stopped fresh-tab boot retained the same claim/note at revision 1.
 - Cleanup: all four isolated stores returned to zero; owned scoped cache/registration removed; managed tabs and both services closed; all three temporary build/synthetic-release directories removed. Existing `_site`, generated illustration/icon bytes and deployment settings were untouched.
 - Limits: no configured LSP/project impact graph, remote deployment, physical phone/iOS/Safari, full accessibility/security acceptance or prolonged eviction/stress proof. RISK-02 remains unverified; no production task/E2E state changed.
+
+## PWA product standard audit and remediation
+
+Audited on 2026-10-14 against canonical KB-MCP skill `pwa:product-standard` v1.0, ref `270d896a-12b0-40b4-856f-f6274d872c95:3f932f5e-8bc9-40c6-86e9-e676d47e1c52`. This is the product-grade acceptance contract, not minimum browser installability. The baseline was v0.5.0; the owner selected remediation B, retaining the documented safe automatic-update exception. Corrections below are **Verified locally in v0.6.0**, not Released.
+
+### BUG-014
+
+**P1 — An incomplete waiting release is misreported as another-page readiness problem (audit F1).**
+
+- **Failing before:** remove one candidate-cache icon while another tab is dirty, then save its input. Waiting metadata reports `offlineReady: false`, `cacheState: repairable`, `missing: 1`; the UI still says to save/close other pages.
+- **Correction:** `sw.js` `applyUpdate` preserves `incomplete-cache`, `cache-check-failed`, `pages-busy`, `readiness-cancelled` and `activation-failed` causes. `pwa-updates.js` selects recovery by cause, leaves active metadata intact and offers separate complete-release recovery for an incomplete candidate.
+- **Passing after:** the same native two-tab scenario shows `data-reason="incomplete-cache"`, keeps active v0.6.0 offline state complete, disables the irrelevant active-cache repair and enables complete installation. A UUID-isolated complete release activated with the visible loader/interaction lock; the saved note, hash route and revision 2 survived.
+- **Regression:** real worker/cache contracts cover missing/corrupt candidates, cache-read/activation failures, busy/unresponsive/new pages, unknown failures and recovery isolation. Known incomplete candidates do not spin through the visible-page automatic retry loop; a new candidate or explicit check can reevaluate readiness.
+
+### BUG-015
+
+**P2 — Local cache corruption is labelled as a confirmed server-release change (audit F2).**
+
+- **Failing before:** alter only a locally cached icon; metadata paints `Different server release / complete install required`, although ordinary repair succeeds against the unchanged server.
+- **Correction:** local digest failures report `corrupt`; only observed rejected network bytes report `server-mismatch`. Missing entries remain `repairable`, absent authority remains `unverified`, and matching repairs clear the failure state. A rejected server response does not disable later repair retry when installed authority exists.
+- **Passing after:** actual altered-cache status identifies local verification failure and enables repair. The unchanged server restores completeness; the existing practice claim remains revision 1. Behavioral contracts also prove retry after the server restores the expected bytes.
+
+### BUG-016
+
+**P2 — Settings mutation completion removes the focused keyboard control (audit F3).**
+
+- **Failing before:** focus Load practice drafts and press Enter; the same-route redraw leaves focus on BODY.
+- **Correction:** `app.js` focus capture/restoration and mutation-view ownership retain a usable replacement target. Disabled deletion controls fall back to the relevant heading/main; intentional later focus and newer routes/editors are not overridden. Render/device-change generations prevent stale live-refresh completion from racing that ownership.
+- **Passing after:** keyboard load and reset retain their button focus; all four delete-all completions focus `device-settings-title` after disabling the deleted category. A native delayed claim clear followed by focus on Check for updates preserves that later control. Delayed clears for all four families followed by a new editor retain its note and notes-field focus.
+
+### UI standard corrections
+
+| Finding | Baseline gap | Current correction and local evidence |
+|---|---|---|
+| PWA-001 / P1 | Missing top inset; incomplete side/bottom coverage; fixed task/footer offsets | Shared fallback-aware safe-area tokens cover opaque top surface, content/notices, sidebar/nav, floating actions, footer and overlay. Actual footer measurement drives clearance. With simulated 47px top, 34px bottom and 44px sides, the 390px bar was 107px, footer 112px, main bottom clearance 136px and note bottom above the footer top. A simulated 484px VisualViewport placed the footer bottom at 484px and the note above it. |
+| PWA-002 / P1 | Claim/filter controls at 14px or 13px, smaller pager/segmented/brand targets | Visible controls across the checked routes are at least 16px; mobile line amounts retain 22px. Actual pagers are 44 by 44px. User zoom remains enabled. |
+| PWA-003 / P2 | Permanently sticky bar on long pages | Downward/upward thresholds are 48px/24px, transform-only. Actual down/up and 10px reverse-motion checks show hiding, reveal and no jitter; document main position stays constant. Focusing a bar control reveals it. Route/viewport/short-page/expanded-nav and editing-focus guards preserve access. Reduced-motion transition is 0s and spinner animation stops. |
+
+### Acceptance and remaining boundaries
+
+- **Commands:** 103/103 behavior contracts; 43 syntax targets; manifest JSON; pristine 35-file Pages artifact. No dependencies or new runtime modules were added. One incidental Settings navigation-link assertion was removed rather than pinned; substantive category/count guards remain.
+- **Layout/browser:** 48 checks across six routes at 320/390/820/1440px, with zero and simulated nonzero insets, had no document overflow or visible sub-16px text controls. Screenshots inspected; observed page exception logs were empty.
+- **Updates/offline:** temporary 0.6.1/0.6.2 artifacts proved distinct candidate recovery, dirty-tab protection, UUID staging, loader/inert-before-controllerchange, safe automatic activation and cache cleanup. A pristine v0.6.0 fresh tab loaded after clearing HTTP cache and stopping the server; offline local save/reload retained the same note at revision 3.
+- **Exception:** canonical explicit user activation remains a MUST with documented exceptions. The user's prior automatic all-pages-ready policy was explicitly retained; this is not strict manual-update compliance. No Update-now cutover, dark theme or optional icon redesign was introduced.
+- **Additional risk, out of scope:** existing cached hits bypass per-request digest verification. Readiness checks and matching repair verify snapshots; they do not guarantee signed release authenticity or verification of every served hit. The audit demonstrated an altered cached icon being served, but the owner-selected correction scope did not include per-hit hashing.
+- **Unverified:** physical iOS/Safari standalone/status bar/keyboard, OS installation/camera, full screen-reader/contrast/zoom and eviction/stress acceptance. RISK-02 remains unchanged. Simulated insets/VisualViewport are geometry checks, not device proof.
+- **Static evidence:** LSP unavailable; installed `agent-impact file pwa-updates.js --json` returned `PROJECT_CONFIG_NOT_FOUND`. Bounded imports/consumers were inspected; no complete graph is claimed.
+- **Cleanup/release:** both isolated origins' four stores returned to zero; own registrations/caches removed; managed tabs/services closed; the owned artifact tree removed. Existing `_site`, icons/illustrations, database names, source fixtures and deployment configuration stayed unchanged. This task did not push or deploy. A read-only public worker fetch reported v0.5.0, not its exact commit or remote installation acceptance.
+- **SCMC:** Simple PASS, Clear PASS, Modular PASS, Consistent PASS within this correction scope: preserve causes instead of hiding failures, keep existing store/update owners, use one shared inset/layout model and retain the documented policy exception. Wider product/device/security acceptance remains separate.

@@ -10,6 +10,7 @@ async function worker(scope = 'https://example.test/demo/', options = {}) {
   const handlers = {}, network = [], opened = [], deleted = [], precached = [];
   const stores = options.stores || new Map();
   const server = { online: true, overrides: new Map() };
+  const faults = { cacheOpen: false, cacheRead: false, activation: false };
   let skipped = 0;
   const key = request => typeof request === 'string' ? request : request.url;
   async function fetchResource(request) {
@@ -26,10 +27,11 @@ async function worker(scope = 'https://example.test/demo/', options = {}) {
     registration: { scope }, location: { origin: new URL(scope).origin, href: new URL(options.script || 'sw.js', scope).href },
     addEventListener: (name, callback) => { handlers[name] = callback; },
     clients: { claim: async () => {}, matchAll: async () => typeof options.clients === 'function' ? options.clients() : options.clients || [] },
-    skipWaiting: async () => { skipped++; }
+    skipWaiting: async () => { if (faults.activation) throw new Error('Activation unavailable'); skipped++; }
   };
   const cacheStorage = {
     open: async name => {
+      if (faults.cacheOpen) throw new Error('Cache unavailable');
       opened.push(name);
       if (!stores.has(name)) stores.set(name, new Map());
       const entries = stores.get(name);
@@ -40,7 +42,10 @@ async function worker(scope = 'https://example.test/demo/', options = {}) {
           if (responses.some(response => !response.ok)) throw new TypeError('Incomplete install');
           requests.forEach((request, index) => entries.set(key(request), responses[index].clone()));
         },
-        match: async request => entries.get(key(request))?.clone(),
+        match: async request => {
+          if (faults.cacheRead) throw new Error('Cache read unavailable');
+          return entries.get(key(request))?.clone();
+        },
         put: async (request, response) => { entries.set(key(request), response.clone()); }
       };
     },
@@ -52,7 +57,7 @@ async function worker(scope = 'https://example.test/demo/', options = {}) {
     AbortController, MessageChannel, setTimeout, clearTimeout, caches: cacheStorage, fetch: fetchResource
   });
   const app = {
-    scope, server, stores, network, opened, deleted, precached,
+    scope, server, faults, stores, network, opened, deleted, precached,
     get skipped() { return skipped; },
     get entries() { return stores.get(opened[0]); },
     async message(data, source = { url: scope }) {
@@ -136,6 +141,25 @@ test('bounded full repair restores every missing entry and confirms the whole sn
   app.server.online = false;
   for (const name of missing) assert.equal((await app.fetch(app.scope + name, name.endsWith('.js') ? 'cors' : 'navigate')).status, 200);
 });
+test('local cached corruption is repairable with the same server release without claiming server mismatch', async () => {
+  const app = await worker();
+  const url = app.scope + 'icon-192.png';
+  const original = await app.entries.get(url).clone().text();
+  const manifest = await app.entries.get(app.scope + '.offline-integrity').clone().text();
+  app.entries.set(url, new Response('Damaged device cache bytes'));
+  const info = await app.message({ type: 'GET_VERSION' });
+  assert.equal(info.cacheState, 'corrupt');
+  assert.equal(info.offlineReady, false);
+  assert.equal(info.missing, 1);
+  assert.equal(app.network.length, 0);
+  const repair = await app.message({ type: 'REPAIR_SHELL' });
+  assert.equal(repair.ok, true);
+  assert.equal(repair.cacheState, 'complete');
+  assert.deepEqual(app.network, [url]);
+  assert.equal(await app.entries.get(app.scope + '.offline-integrity').clone().text(), manifest);
+  app.server.online = false;
+  assert.equal(await (await app.fetch(url, 'cors')).text(), original);
+});
 test('a repaired missing app dependency leaves the real boot module graph available offline', async () => {
   const app = await worker(undefined, { runtime: true });
   app.entries.delete(app.scope + 'demo-images.js');
@@ -172,7 +196,7 @@ test('changed deployment bytes are rejected and never mixed into the installed c
   assert.equal(app.entries.has(url), false);
   const repair = await app.message({ type: 'REPAIR_SHELL' });
   assert.equal(repair.ok, false);
-  assert.equal(repair.cacheState, 'mismatch');
+  assert.equal(repair.cacheState, 'server-mismatch');
   assert.equal(repair.offlineReady, false);
   assert.equal(await app.entries.get(app.scope + 'app.js').clone().text(), original);
   app.server.overrides.delete(url);
@@ -195,7 +219,9 @@ test('absent or foreign integrity metadata cannot authorize network repair', asy
     assert.equal(result.cacheState, 'unverified');
     assert.equal(app.network.length, 0);
     assert.equal(app.entries.has(url), false);
-    assert.equal((await app.message({ type: 'APPLY_UPDATE' })).ok, false);
+    const activation = await app.message({ type: 'APPLY_UPDATE' });
+    assert.equal(activation.ok, false);
+    assert.equal(activation.reason, 'incomplete-cache');
     assert.equal(app.skipped, 0);
     app.entries.delete(app.scope + 'index.html');
     const page = await app.fetch(app.scope + 'index.html');
@@ -214,7 +240,8 @@ test('a failed server repair reports incomplete state and retains all surviving 
   assert.equal(result.ok, false);
   assert.equal(result.offlineReady, false);
   assert.equal(app.entries.size, count);
-  assert.match(result.error, /Server stopped/);
+  assert.equal(result.cacheState, 'repairable');
+  assert.ok(result.error);
 });
 test('complete reinstall stages separately and activation deletes only the same deployment old cache', async () => {
   const scope = 'https://example.test/PWA-Enterprise-Project/';
@@ -245,7 +272,10 @@ function client(id, ready = true, url = 'https://example.test/demo/#home') {
   const messages = [];
   return { id, url, messages, postMessage(message, ports) {
     messages.push(message);
-    if (message.type === 'PREPARE_UPDATE' && ready !== null) { ports[0].postMessage({ ready }); ports[0].close(); }
+    if (message.type === 'PREPARE_UPDATE' && ready !== null) {
+      ports[0].postMessage(ready ? { ready: true } : { ready: false, reason: 'pages-busy' });
+      ports[0].close();
+    }
   } };
 }
 test('automatic activation requires all scoped pages and ignores other projects', async () => {
@@ -257,10 +287,45 @@ test('automatic activation requires all scoped pages and ignores other projects'
   assert.equal(second.messages[0].type, 'PREPARE_UPDATE');
   assert.equal(unrelated.messages.length, 0);
 });
+test('an incomplete or corrupted waiting candidate refuses activation before preparing any pages', async () => {
+  for (const corrupt of [false, true]) {
+    const page = client('ready');
+    const app = await worker(undefined, { clients: [page] });
+    const url = app.scope + 'icon-192.png';
+    if (corrupt) app.entries.set(url, new Response('Damaged candidate bytes'));
+    else app.entries.delete(url);
+    const result = await app.message({ type: 'APPLY_UPDATE' });
+    assert.equal(result.ok, false);
+    assert.equal(result.reason, 'incomplete-cache');
+    assert.equal(result.cacheState, corrupt ? 'corrupt' : 'repairable');
+    assert.equal(result.offlineReady, false);
+    assert.equal(app.skipped, 0);
+    assert.equal(page.messages.length, 0);
+  }
+});
+test('cache-check failure and activation failure report their own causes without switching', async () => {
+  for (const [fault, reason] of [['cacheOpen', 'cache-check-failed'], ['cacheRead', 'cache-check-failed'], ['activation', 'activation-failed']]) {
+    const page = client('ready');
+    const app = await worker(undefined, { clients: [page] });
+    app.faults[fault] = true;
+    const result = await app.message({ type: 'APPLY_UPDATE' });
+    assert.equal(result.ok, false);
+    assert.equal(result.reason, reason);
+    assert.equal(app.skipped, 0);
+    if (fault !== 'activation') assert.equal(page.messages.length, 0);
+    else {
+      assert.equal(page.messages[0].type, 'PREPARE_UPDATE');
+      assert.equal(page.messages.at(-1).type, 'CANCEL_UPDATE');
+      assert.equal(page.messages[0].attempt, page.messages.at(-1).attempt);
+    }
+  }
+});
 test('complete recovery cannot override a dirty page or use legacy skipWaiting', async () => {
   const ready = client('a'), dirty = client('b', false);
   const app = await worker(undefined, { clients: [ready, dirty], script: 'sw.js?recovery=456' });
-  assert.equal((await app.message({ type: 'APPLY_UPDATE' })).ok, false);
+  const result = await app.message({ type: 'APPLY_UPDATE' });
+  assert.equal(result.ok, false);
+  assert.equal(result.reason, 'pages-busy');
   await app.message({ type: 'SKIP_WAITING' });
   assert.equal(app.skipped, 0);
   assert.equal(ready.messages.at(-1).type, 'CANCEL_UPDATE');
@@ -270,13 +335,17 @@ test('a tab opened during readiness prevents switching until it participates', a
   const first = client('a'), newcomer = client('b');
   let reads = 0;
   const app = await worker(undefined, { clients: () => ++reads === 1 ? [first] : [first, newcomer] });
-  assert.equal((await app.message({ type: 'APPLY_UPDATE' })).ok, false);
+  const result = await app.message({ type: 'APPLY_UPDATE' });
+  assert.equal(result.ok, false);
+  assert.equal(result.reason, 'readiness-cancelled');
   assert.equal(app.skipped, 0);
   assert.equal(first.messages.at(-1).type, 'CANCEL_UPDATE');
 });
 test('a suspended page that cannot respond blocks activation', async () => {
   const app = await worker(undefined, { clients: [client('old', null)] });
-  assert.equal((await app.message({ type: 'APPLY_UPDATE' })).ok, false);
+  const result = await app.message({ type: 'APPLY_UPDATE' });
+  assert.equal(result.ok, false);
+  assert.equal(result.reason, 'readiness-cancelled');
   assert.equal(app.skipped, 0);
 });
 
@@ -287,6 +356,7 @@ async function updatePage(options = {}) {
     engine.entries.delete(engine.scope + 'app.js');
     if (!options.matchingRepair) engine.server.overrides.set(engine.scope + 'app.js', new Response('Different release bytes'));
   }
+  if (options.corrupt) engine.entries.set(engine.scope + 'icon-192.png', new Response('Damaged device cache bytes'));
   const handlers = {}, elements = new Map();
   let busy = false, reloads = 0, waitingEngine, partialForm = Boolean(options.form), taskMode = Boolean(options.taskMode);
   const input = { value: 'Unfinished local claim input' };
@@ -295,8 +365,15 @@ async function updatePage(options = {}) {
     return elements.get(selector);
   };
   const bridge = (target, scriptURL) => ({
-    scriptURL,
+    scriptURL, state: 'installed',
+    addEventListener(type, callback) { handlers['candidate:' + type] = callback; },
     postMessage(message, ports) {
+      if (target !== engine && message.type === 'APPLY_UPDATE' && options.applyThrows) throw new Error('Worker messaging unavailable');
+      if (target !== engine && message.type === 'APPLY_UPDATE' && options.applyResult) {
+        ports[0].postMessage(options.applyResult);
+        ports[0].close();
+        return;
+      }
       target.message(message).then(value => { ports[0].postMessage(value); ports[0].close(); });
     }
   });
@@ -311,7 +388,12 @@ async function updatePage(options = {}) {
       const newest = registration.installing || registration.waiting || registration.active;
       if (script.href !== newest?.scriptURL) {
         waitingEngine = await worker(engine.scope, { stores: engine.stores, clients: [otherTab], script: 'sw.js' + script.search, release: 'New complete snapshot bytes: ' });
-        registration.waiting = bridge(waitingEngine, script.href);
+        const candidate = bridge(waitingEngine, script.href);
+        if (options.installingRecovery && registration.waiting) {
+          candidate.state = 'installing';
+          registration.installing = candidate;
+          registration.waiting = null;
+        } else registration.waiting = candidate;
       }
       return registration;
     }
@@ -330,7 +412,10 @@ async function updatePage(options = {}) {
   };
   const window = { location: { href: 'https://example.test/demo/', protocol: 'https:', reload() { reloads++; }, replace() { reloads++; } }, matchMedia: () => ({ matches: false }), setInterval() {}, addEventListener(type, callback) { handlers['window:' + type] = callback; } };
   const navigator = { serviceWorker, onLine: true };
-  if (options.existingWaiting) await serviceWorker.register('./sw.js?recovery=456');
+  if (options.existingWaiting) {
+    await serviceWorker.register('./sw.js?recovery=456');
+    if (options.incompleteWaiting) waitingEngine.entries.delete(engine.scope + 'icon-192.png');
+  }
   const behavior = options.partialBoot ? createBootRecoveryGuard({ document, window }) : { isBusy: () => busy };
   const api = createPwaUpdates({ ...behavior, document, navigator, window });
   return { api, handlers, elements, engine, otherTab, input, registration, worker: workerBridge, serviceWorker, get waitingEngine() { return waitingEngine; }, set partialForm(value) { partialForm = value; }, set taskMode(value) { taskMode = value; }, set busy(value) { busy = value; }, get reloads() { return reloads; }, click(selector) { if (!element(selector).disabled) handlers['document:click']({ target: { closest: candidate => candidate === selector } }); } };
@@ -366,8 +451,10 @@ test('repair consumers retain failure and complete recovery uses the same readin
   page.click('[data-pwa-repair]');
   await settle(page);
   assert.equal(page.engine.entries.has(page.engine.scope + 'app.js'), false);
-  assert.equal((await page.engine.message({ type: 'GET_VERSION' })).cacheState, 'mismatch');
+  assert.equal((await page.engine.message({ type: 'GET_VERSION' })).cacheState, 'server-mismatch');
+  assert.equal(page.elements.get('offline').dataset.cacheState, 'server-mismatch');
   assert.equal(page.elements.get('[data-pwa-repair]').disabled, false);
+  assert.equal(page.elements.get('[data-pwa-recover]').disabled, false);
   page.click('[data-pwa-recover]');
   await settle(page);
   assert.equal(page.waitingEngine.skipped, 0);
@@ -376,12 +463,87 @@ test('repair consumers retain failure and complete recovery uses the same readin
   page.busy = true;
   page.handlers['worker:message']({ source: page.registration.waiting, data: { type: 'PREPARE_UPDATE', attempt: 'recovery' }, ports: [{ postMessage(value) { response = value; } }] });
   assert.equal(response.ready, false);
+  assert.equal(response.reason, 'pages-busy');
   page.serviceWorker.controller = page.registration.waiting;
   await page.handlers['worker:controllerchange']();
   assert.equal(page.reloads, 0);
   page.busy = false;
   page.api.reconsider();
   assert.equal(page.reloads, 1);
+});
+test('a rejected server download still allows matching repair after the server restores installed bytes', async () => {
+  const page = await updatePage({ incomplete: true });
+  await page.api.start();
+  await settle(page);
+  page.click('[data-pwa-repair]');
+  await settle(page);
+  assert.equal(page.elements.get('offline').dataset.cacheState, 'server-mismatch');
+  assert.equal(page.elements.get('[data-pwa-repair]').disabled, false);
+  page.engine.server.overrides.delete(page.engine.scope + 'app.js');
+  page.click('[data-pwa-repair]');
+  await settle(page);
+  assert.equal(page.elements.get('offline').dataset.cacheState, 'complete');
+  assert.equal((await page.engine.message({ type: 'GET_VERSION' })).offlineReady, true);
+  assert.equal(page.waitingEngine, undefined);
+});
+test('local corruption offers matching repair instead of requiring a complete release', async () => {
+  const page = await updatePage({ corrupt: true });
+  const manifest = await page.engine.entries.get(page.engine.scope + '.offline-integrity').clone().text();
+  await page.api.start();
+  await settle(page);
+  assert.equal(page.elements.get('offline').dataset.cacheState, 'corrupt');
+  assert.equal(page.elements.get('[data-pwa-repair]').disabled, false);
+  page.click('[data-pwa-repair]');
+  await settle(page);
+  assert.equal(page.elements.get('offline').dataset.cacheState, 'complete');
+  assert.equal(page.elements.get('[data-pwa-repair]').disabled, true);
+  assert.equal(await page.engine.entries.get(page.engine.scope + '.offline-integrity').clone().text(), manifest);
+  assert.equal(page.waitingEngine, undefined);
+});
+test('an incomplete candidate offers separate complete recovery without changing active offline readiness', async () => {
+  const page = await updatePage({ existingWaiting: true, incompleteWaiting: true, installingRecovery: true });
+  const incomplete = page.waitingEngine;
+  const activeBytes = await page.engine.entries.get(page.engine.scope + 'app.js').clone().text();
+  await page.api.start();
+  page.api.reconsider();
+  await settle(page);
+  assert.equal(page.elements.get('#update-notice').dataset.reason, 'incomplete-cache');
+  assert.equal(page.elements.get('#update-notice').hidden, false);
+  assert.equal(page.elements.get('offline').dataset.cacheState, 'complete');
+  assert.equal(page.elements.get('[data-pwa-repair]').disabled, true);
+  assert.equal(page.elements.get('[data-pwa-recover]').disabled, false);
+  assert.equal(incomplete.skipped, 0);
+  assert.equal(page.otherTab.messages.length, 0);
+  page.click('[data-pwa-recover]');
+  await settle(page);
+  const staged = page.registration.installing;
+  assert.ok(staged);
+  page.registration.waiting = staged;
+  page.registration.installing = null;
+  staged.state = 'installed';
+  page.handlers['candidate:statechange']();
+  page.api.reconsider();
+  await settle(page);
+  assert.notEqual(page.waitingEngine, incomplete);
+  assert.equal((await page.waitingEngine.message({ type: 'GET_VERSION' })).offlineReady, true);
+  assert.equal(page.waitingEngine.skipped, 0);
+  assert.equal(page.elements.get('#update-notice').dataset.reason, 'pages-busy');
+  assert.equal(await page.engine.entries.get(page.engine.scope + 'app.js').clone().text(), activeBytes);
+});
+test('update consumer keeps readiness, cache, activation and unknown failures distinct and recoverable', async () => {
+  for (const reason of ['pages-busy', 'readiness-cancelled', 'cache-check-failed', 'activation-failed', undefined, 'unexpected', 'transport']) {
+    const page = await updatePage({ existingWaiting: true, applyResult: { ok: false, reason }, applyThrows: reason === 'transport' });
+    await page.api.start();
+    page.api.reconsider();
+    await settle(page);
+    assert.equal(page.elements.get('#update-notice').dataset.reason, !reason || ['unexpected', 'transport'].includes(reason) ? 'unknown-failure' : reason);
+    assert.equal(page.elements.get('offline').dataset.cacheState, 'complete');
+    assert.equal(page.elements.get('[data-pwa-recover]').disabled, false);
+    assert.equal(page.elements.get('[data-pwa-repair]').disabled, true);
+    assert.equal(page.waitingEngine.skipped, 0);
+    assert.equal(page.reloads, 0);
+    assert.equal(page.elements.get('shell').inert, false);
+  }
 });
 
 test('partial-boot recovery preserves forms and task mode through successful repair and activation', async () => {
@@ -401,6 +563,7 @@ test('partial-boot recovery preserves forms and task mode through successful rep
     let response;
     page.handlers['worker:message']({ source: page.registration.waiting, data: { type: 'PREPARE_UPDATE', attempt: 'partial-boot' }, ports: [{ postMessage(value) { response = value; } }] });
     assert.equal(response.ready, false);
+    assert.equal(response.reason, 'pages-busy');
     page.serviceWorker.controller = page.registration.waiting;
     await page.handlers['worker:controllerchange']();
     assert.equal(page.reloads, 0);

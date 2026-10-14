@@ -15,5 +15,4 @@ test('settings keeps deletion controls and counts attached to their independent 
   assert.ok(html.includes('2 saved on this device'));
   assert.match(html, /id="clear-variations" type="button" disabled/);
   assert.doesNotMatch(html, /id="clear-evidence" type="button" disabled/);
-  assert.match(html, /href="#offline"/);
 });

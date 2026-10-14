@@ -1,5 +1,5 @@
 // Release identity is shared with the UI through GET_VERSION. Bump for every asset change.
-const VERSION = '0.5.0';
+const VERSION = '0.6.0';
 // Cache Storage is shared by every application on an origin, including Pages projects.
 const CACHE_PREFIX = `constructclaim-demo:${self.registration.scope}:`;
 // A requested complete reinstall must not overwrite the active release while installing.
@@ -15,7 +15,8 @@ const SHELL = [
   './manifest.webmanifest', './icon.svg', './icon-192.png', './icon-512.png'
 ];
 const URLS = new Set(SHELL.map(path => new URL(path, self.registration.scope).href));
-const mismatches = new Set();
+// Only a rejected network download proves different server release bytes.
+const serverMismatches = new Set();
 const repairs = new Map();
 let fullRepair = null;
 
@@ -25,9 +26,9 @@ async function digest(response) {
   return Array.from(new Uint8Array(hash), byte => byte.toString(16).padStart(2, '0')).join('');
 }
 async function integrity(cache) {
+  const stored = await cache.match(MANIFEST_URL);
+  if (!stored) return null;
   try {
-    const stored = await cache.match(MANIFEST_URL);
-    if (!stored) return null;
     const manifest = await stored.json();
     if (manifest.version !== VERSION || manifest.scope !== self.registration.scope || manifest.cache !== CACHE_NAME) return null;
     if (Object.keys(manifest.entries || {}).length !== URLS.size) return null;
@@ -38,14 +39,15 @@ async function integrity(cache) {
 async function cacheStatus(cache) {
   const manifest = await integrity(cache);
   if (!manifest) return { version: VERSION, offlineReady: false, cacheState: 'unverified', missing: URLS.size };
-  let missing = 0;
+  let missing = 0, corrupt = 0, serverMismatch = false;
   for (const url of URLS) {
     const response = await cache.match(url);
-    if (!response) { missing++; continue; }
-    if (await digest(response) !== manifest.entries[url]) { missing++; mismatches.add(url); }
-    else mismatches.delete(url);
+    if (!response) missing++;
+    else if (await digest(response) !== manifest.entries[url]) { missing++; corrupt++; }
+    else serverMismatches.delete(url);
+    if (serverMismatches.has(url)) serverMismatch = true;
   }
-  return { version: VERSION, offlineReady: missing === 0, cacheState: missing === 0 ? 'complete' : mismatches.size ? 'mismatch' : 'repairable', missing };
+  return { version: VERSION, offlineReady: missing === 0, cacheState: missing === 0 ? 'complete' : serverMismatch ? 'server-mismatch' : corrupt ? 'corrupt' : 'repairable', missing };
 }
 function repairEntry(cache, manifest, url) {
   if (repairs.has(url)) return repairs.get(url);
@@ -56,11 +58,11 @@ function repairEntry(cache, manifest, url) {
       const response = await fetch(new Request(url, { cache: 'reload', signal: controller.signal }));
       if (!response.ok || response.type === 'opaque') throw new Error('The shell resource could not be downloaded.');
       if (await digest(response) !== manifest.entries[url]) {
-        mismatches.add(url);
-        throw new Error('The server has different release bytes. Install a complete release instead.');
+        serverMismatches.add(url);
+        throw new Error('The downloaded server bytes differ from the installed release. Retry when the installed files are available, or install a complete release.');
       }
       await cache.put(url, response.clone());
-      mismatches.delete(url);
+      serverMismatches.delete(url);
       return response;
     } finally { clearTimeout(timer); }
   })().finally(() => repairs.delete(url));
@@ -101,7 +103,7 @@ async function shellResponse(url, navigation) {
       const html = counterpart && await cache.match(counterpart);
       if (html && await digest(html) === manifest.entries[url]) {
         await cache.put(url, html.clone());
-        mismatches.delete(url);
+        serverMismatches.delete(url);
         return html;
       }
     }
@@ -134,30 +136,44 @@ async function scopedClients() {
 function prepareClient(client, attempt) {
   return new Promise(resolve => {
     const channel = new MessageChannel();
-    const timer = setTimeout(() => { channel.port1.close(); resolve(false); }, 3000);
-    channel.port1.onmessage = event => { clearTimeout(timer); channel.port1.close(); resolve(event.data?.ready === true); };
+    const timer = setTimeout(() => { channel.port1.close(); resolve('readiness-cancelled'); }, 3000);
+    channel.port1.onmessage = event => {
+      clearTimeout(timer); channel.port1.close();
+      resolve(event.data?.ready === true ? 'ready' : event.data?.reason === 'pages-busy' ? 'pages-busy' : 'readiness-cancelled');
+    };
     try { client.postMessage({ type: 'PREPARE_UPDATE', attempt }, [channel.port2]); }
-    catch { clearTimeout(timer); channel.port1.close(); resolve(false); }
+    catch { clearTimeout(timer); channel.port1.close(); resolve('readiness-cancelled'); }
   });
 }
 async function applyUpdate() {
+  let info;
+  try { info = await cacheStatus(await caches.open(CACHE_NAME)); }
+  catch { return { ok: false, reason: 'cache-check-failed' }; }
+  if (!info.offlineReady) return { ok: false, reason: 'incomplete-cache', ...info };
   const attempt = VERSION + ':' + ++attemptNumber;
-  const clients = await scopedClients();
+  let clients = [];
+  const cancel = () => clients.forEach(client => {
+    try { client.postMessage({ type: 'CANCEL_UPDATE', attempt }); } catch {}
+  });
   try {
-    if (!(await cacheStatus(await caches.open(CACHE_NAME))).offlineReady) return { ok: false };
+    clients = await scopedClients();
     const ready = await Promise.all(clients.map(client => prepareClient(client, attempt)));
     const current = await scopedClients();
     // Fail closed for old/suspended clients and tabs opened during the readiness check.
-    if (!ready.every(Boolean) || current.some(client => !clients.some(previous => previous.id === client.id))) {
-      clients.forEach(client => client.postMessage({ type: 'CANCEL_UPDATE', attempt }));
-      return { ok: false };
+    if (ready.some(result => result !== 'ready') || current.some(client => !clients.some(previous => previous.id === client.id))) {
+      cancel();
+      return { ok: false, reason: ready.includes('pages-busy') ? 'pages-busy' : 'readiness-cancelled' };
     }
-    await self.skipWaiting();
-    return { ok: true };
   } catch {
-    clients.forEach(client => client.postMessage({ type: 'CANCEL_UPDATE', attempt }));
-    return { ok: false };
+    cancel();
+    return { ok: false, reason: 'readiness-cancelled' };
   }
+  try { await self.skipWaiting(); }
+  catch {
+    cancel();
+    return { ok: false, reason: 'activation-failed' };
+  }
+  return { ok: true };
 }
 self.addEventListener('message', event => {
   if (!event.source?.url?.startsWith(self.registration.scope)) return;

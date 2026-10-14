@@ -44,11 +44,15 @@ let activeEditor = null;
 let currentHash = location.hash || '#home';
 let deviceChanges = 0;
 let navigationGeneration = 0;
+let renderGeneration = 0;
+let deviceChangeGeneration = 0;
+let focusIntentGeneration = 0;
 let refreshPromise = null;
 let refreshAgain = false;
 const pwa = createPwaUpdates({ isBusy: () => Boolean(activeEditor?.dirty || activeEditor?.busy || deviceChanges), document, navigator, window });
 function beginDeviceChange() {
   deviceChanges++;
+  deviceChangeGeneration++;
   return () => { deviceChanges--; pwa.reconsider(); };
 }
 
@@ -93,7 +97,50 @@ async function saveAndConfirm(save, get, record, expectedRevision, onCommitted) 
 function browsingOwner() {
   const generation = navigationGeneration;
   const hash = currentHash;
-  return () => generation === navigationGeneration && hash === currentHash && !activeEditor;
+  const render = renderGeneration;
+  return () => generation === navigationGeneration && render === renderGeneration && hash === currentHash && hash === (location.hash || '#home') && !activeEditor;
+}
+
+function captureFocus(element = document.activeElement, fallback = '#main') {
+  let selector = '';
+  if (element?.id) selector = '#' + CSS.escape(element.id);
+  else if (element) {
+    for (const attribute of ['name', 'href', 'data-pwa-check', 'data-pwa-repair', 'data-pwa-recover', 'data-financial-direction']) {
+      if (!element.hasAttribute(attribute)) continue;
+      let candidate = element.tagName.toLowerCase() + '[' + attribute + '="' + CSS.escape(element.getAttribute(attribute)) + '"]';
+      if (document.querySelectorAll(candidate).length !== 1) {
+        const scope = element.closest('#desktop-nav, #mobile-nav, .sidebar, .topbar, #main');
+        if (scope) candidate = (scope.id ? '#' + CSS.escape(scope.id) : '.' + scope.classList[0]) + ' ' + candidate;
+      }
+      if (document.querySelectorAll(candidate).length === 1) { selector = candidate; break; }
+    }
+  }
+  return { element, selector, fallback, start: element?.selectionStart, end: element?.selectionEnd };
+}
+
+function restoreFocus(snapshot) {
+  if (!snapshot || snapshot.element?.isConnected) return;
+  const replacement = snapshot.selector ? document.querySelector(snapshot.selector) : null;
+  const target = replacement && !replacement.disabled ? replacement : document.querySelector(snapshot.fallback) || main;
+  if (!target.matches('a[href], button, input, select, textarea, [tabindex]')) target.tabIndex = -1;
+  target.focus({ preventScroll: true });
+  if (target === replacement && snapshot.start != null && target.setSelectionRange) target.setSelectionRange(snapshot.start, snapshot.end);
+}
+
+function mutationView(control, fallback) {
+  const ownsView = browsingOwner();
+  const intent = focusIntentGeneration;
+  const initiatingFocus = document.activeElement === control ? captureFocus(control, fallback) : null;
+  return {
+    ownsView,
+    render() {
+      if (!ownsView()) return;
+      const snapshot = intent === focusIntentGeneration && initiatingFocus
+        ? initiatingFocus : captureFocus(document.activeElement, fallback);
+      route();
+      restoreFocus(snapshot);
+    }
+  };
 }
 
 function actionError(ownsView, message) {
@@ -108,13 +155,15 @@ function recordStateKey() {
 async function refreshBrowsingView() {
   if (deviceChanges) return;
   const ownsView = browsingOwner();
+  const changeGeneration = deviceChangeGeneration;
   const previous = recordStateKey();
   await refreshDrafts();
-  if (!ownsView() || previous === recordStateKey()) return;
+  if (deviceChanges || changeGeneration !== deviceChangeGeneration || !ownsView() || previous === recordStateKey()) return;
   const filters = [...main.querySelectorAll('input[type="search"], select')].map(field => ({
     id: field.id, value: field.value, focused: field === document.activeElement,
     start: field.selectionStart, end: field.selectionEnd
   }));
+  const focused = captureFocus(document.activeElement, '#main');
   route();
   for (const filter of filters) {
     if (!filter.id) continue;
@@ -122,11 +171,9 @@ async function refreshBrowsingView() {
     if (!field || (field.tagName === 'SELECT' && ![...field.options].some(option => option.value === filter.value))) continue;
     field.value = filter.value;
     field.dispatchEvent(new Event(field.tagName === 'SELECT' ? 'change' : 'input', { bubbles: true }));
-    if (filter.focused) {
-      field.focus({ preventScroll: true });
-      if (filter.start != null) field.setSelectionRange(filter.start, filter.end);
-    }
+    if (filter.focused && filter.start != null) field.setSelectionRange(filter.start, filter.end);
   }
+  restoreFocus(focused);
 }
 
 async function navigate() {
@@ -238,6 +285,7 @@ function updateConnectivity() {
   pwa.paint();
 }
 function route() {
+  renderGeneration++;
   activeEditor?.dispose();
   activeEditor = null;
   const raw = location.hash.slice(1) || 'home';
@@ -325,13 +373,15 @@ function route() {
   document.title = (main.querySelector('h1')?.textContent || 'Demo') + ' — ConstructClaim Demo';
   updateConnectivity();
   pwa.reconsider();
+  resetScrollChrome();
+  scheduleViewportLayout();
 }
 function bindPage() {
   for (const [id, action, reset] of [['load-practice', loadPracticeRecords, false], ['reset-practice', resetPracticeRecords, true]]) {
-    document.querySelector('#' + id)?.addEventListener('click', async () => {
+    document.querySelector('#' + id)?.addEventListener('click', async event => {
       if (deviceChanges) return;
       if (reset && !confirm('Delete only the 16 reserved practice records, including your edits to them? Other device records and bundled samples are kept.')) return;
-      const ownsView = browsingOwner();
+      const view = mutationView(event.currentTarget, '#practice-settings-title');
       const finish = beginDeviceChange();
       const controls = main.querySelectorAll('#load-practice, #reset-practice');
       controls.forEach(button => { button.disabled = true; });
@@ -346,7 +396,7 @@ function bindPage() {
         finish();
       }
       state.practiceFeedback = message;
-      if (ownsView()) route();
+      view.render();
       announce(message);
     });
   }
@@ -359,12 +409,12 @@ function bindPage() {
     catch (error) { actionError(ownsView, 'Deletion failed: ' + error.message); }
     finally { finish(); }
   });
-  document.querySelector('#clear-evidence')?.addEventListener('click', async () => {
+  document.querySelector('#clear-evidence')?.addEventListener('click', async event => {
     if (!confirm('Permanently delete all device-only images? Claim documents and certificate snapshots are kept.')) return;
-    const ownsView = browsingOwner();
+    const view = mutationView(event.currentTarget, '#device-settings-title');
     const finish = beginDeviceChange();
-    try { await clearEvidence(); await refreshDrafts(); if (state.evidenceError || state.evidence.length) throw new Error('Device read-back failed after deletion.'); if (ownsView()) route(); announce('Local images deleted.'); }
-    catch (error) { actionError(ownsView, 'Deletion failed: ' + error.message); }
+    try { await clearEvidence(); await refreshDrafts(); if (state.evidenceError || state.evidence.length) throw new Error('Device read-back failed after deletion.'); view.render(); announce('Local images deleted.'); }
+    catch (error) { actionError(view.ownsView, 'Deletion failed: ' + error.message); }
     finally { finish(); }
   });
   document.querySelector('#delete-certificate')?.addEventListener('click', async event => {
@@ -376,12 +426,12 @@ function bindPage() {
     catch (error) { actionError(ownsView, 'Deletion failed: ' + error.message); }
     finally { finish(); }
   });
-  document.querySelector('#clear-certificates')?.addEventListener('click', async () => {
+  document.querySelector('#clear-certificates')?.addEventListener('click', async event => {
     if (!confirm('Permanently delete all device-only certificate previews? Claims and proposals are kept.')) return;
-    const ownsView = browsingOwner();
+    const view = mutationView(event.currentTarget, '#device-settings-title');
     const finish = beginDeviceChange();
-    try { await clearCertificates(); await refreshDrafts(); if (state.certificateError || state.certificates.length) throw new Error('Device read-back failed after deletion.'); if (ownsView()) route(); announce('Local previews deleted.'); }
-    catch (error) { actionError(ownsView, 'Deletion failed: ' + error.message); }
+    try { await clearCertificates(); await refreshDrafts(); if (state.certificateError || state.certificates.length) throw new Error('Device read-back failed after deletion.'); view.render(); announce('Local previews deleted.'); }
+    catch (error) { actionError(view.ownsView, 'Deletion failed: ' + error.message); }
     finally { finish(); }
   });
   document.querySelector('#delete-variation')?.addEventListener('click', async event => {
@@ -393,12 +443,12 @@ function bindPage() {
     catch (error) { actionError(ownsView, 'Deletion failed: ' + error.message); }
     finally { finish(); }
   });
-  document.querySelector('#clear-variations')?.addEventListener('click', async () => {
+  document.querySelector('#clear-variations')?.addEventListener('click', async event => {
     if (!confirm('Permanently delete all device-only variation proposals?')) return;
-    const ownsView = browsingOwner();
+    const view = mutationView(event.currentTarget, '#device-settings-title');
     const finish = beginDeviceChange();
-    try { await clearVariations(); await refreshDrafts(); if (state.variationError || state.variations.length) throw new Error('Device read-back failed after deletion.'); if (ownsView()) route(); announce('Local variation proposals deleted.'); }
-    catch (error) { actionError(ownsView, 'Deletion failed: ' + error.message); }
+    try { await clearVariations(); await refreshDrafts(); if (state.variationError || state.variations.length) throw new Error('Device read-back failed after deletion.'); view.render(); announce('Local variation proposals deleted.'); }
+    catch (error) { actionError(view.ownsView, 'Deletion failed: ' + error.message); }
     finally { finish(); }
   });
   document.querySelectorAll('[data-financial-direction]').forEach(button => button.addEventListener('click', () => {
@@ -418,15 +468,123 @@ function bindPage() {
     catch (error) { actionError(ownsView, 'Deletion failed: ' + error.message); }
     finally { finish(); }
   });
-  document.querySelector('#clear-drafts')?.addEventListener('click', async () => {
+  document.querySelector('#clear-drafts')?.addEventListener('click', async event => {
     if (!confirm('Permanently delete all device-only claim drafts?')) return;
-    const ownsView = browsingOwner();
+    const view = mutationView(event.currentTarget, '#device-settings-title');
     const finish = beginDeviceChange();
-    try { await clearDrafts(); await refreshDrafts(); if (state.storageError || state.drafts.length) throw new Error('Device read-back failed after deletion.'); if (ownsView()) route(); announce('All device claim drafts deleted.'); }
-    catch (error) { actionError(ownsView, 'Deletion failed: ' + error.message); }
+    try { await clearDrafts(); await refreshDrafts(); if (state.storageError || state.drafts.length) throw new Error('Device read-back failed after deletion.'); view.render(); announce('All device claim drafts deleted.'); }
+    catch (error) { actionError(view.ownsView, 'Deletion failed: ' + error.message); }
     finally { finish(); }
   });
 }
+
+const topbar = document.querySelector('.topbar');
+const scrollTop = document.querySelector('#scroll-top');
+const rootStyle = document.documentElement.style;
+let scrollAnchor = window.scrollY;
+let previousScrollY = window.scrollY;
+let scrollDirection = 0;
+let scrollFrame = 0;
+let layoutFrame = 0;
+let observedFooter = null;
+const footerResize = new ResizeObserver(() => scheduleViewportLayout());
+const editableControl = element => element?.matches('input, select, textarea, [contenteditable="true"]');
+
+function setLayoutValue(name, value) {
+  if (rootStyle.getPropertyValue(name) !== value) rootStyle.setProperty(name, value);
+}
+
+function resetScrollChrome() {
+  topbar.classList.remove('is-scroll-hidden');
+  scrollAnchor = Math.max(0, window.scrollY);
+  previousScrollY = scrollAnchor;
+  scrollDirection = 0;
+  updateScrollChrome();
+}
+
+function updateScrollChrome() {
+  const y = Math.max(0, window.scrollY);
+  const delta = y - previousScrollY;
+  previousScrollY = y;
+  const height = window.visualViewport?.height || window.innerHeight;
+  const longPage = document.documentElement.scrollHeight - window.innerHeight > Math.max(120, height / 2);
+  const protectedFocus = topbar.contains(document.activeElement) || editableControl(document.activeElement);
+  const protectedNavigation = document.body.classList.contains('nav-expanded');
+  const visibleTop = window.visualViewport?.offsetTop || 0;
+  const keyboard = editableControl(document.activeElement) && window.innerHeight - height - visibleTop > 80;
+  const showReturn = longPage && y >= height && !keyboard;
+  // Do not remove a keyboard user's currently focused return action.
+  scrollTop.hidden = !showReturn && document.activeElement !== scrollTop;
+  if (!longPage || y <= topbar.offsetHeight || protectedFocus || protectedNavigation) {
+    topbar.classList.remove('is-scroll-hidden');
+    scrollAnchor = y;
+    scrollDirection = 0;
+    return;
+  }
+  const direction = Math.sign(delta);
+  if (direction && direction !== scrollDirection) {
+    scrollDirection = direction;
+    scrollAnchor = y - delta;
+  }
+  const threshold = direction > 0 ? 48 : 24;
+  if (direction && Math.abs(y - scrollAnchor) >= threshold) {
+    topbar.classList.toggle('is-scroll-hidden', direction > 0);
+    scrollAnchor = y;
+  }
+}
+
+function scheduleScrollChrome() {
+  if (scrollFrame) return;
+  scrollFrame = requestAnimationFrame(() => { scrollFrame = 0; updateScrollChrome(); });
+}
+
+function keepEditorFieldVisible() {
+  const field = document.activeElement;
+  if (!activeEditor || !main.contains(field) || !editableControl(field) || field.closest('.editor-actions')) return;
+  const footer = main.querySelector('.editor-actions');
+  const viewport = window.visualViewport;
+  const top = (viewport?.offsetTop || 0) + topbar.offsetHeight + 12;
+  const bottom = Math.min((viewport?.offsetTop || 0) + (viewport?.height || window.innerHeight), footer?.getBoundingClientRect().top ?? window.innerHeight) - 12;
+  const box = field.getBoundingClientRect();
+  if (box.bottom > bottom) window.scrollBy(0, box.height > bottom - top ? box.top - top : box.bottom - bottom);
+  else if (box.top < top) window.scrollBy(0, box.top - top);
+}
+
+function updateViewportLayout() {
+  const viewport = window.visualViewport;
+  const height = viewport?.height || window.innerHeight;
+  const keyboardOffset = viewport && viewport.scale === 1 && editableControl(document.activeElement)
+    ? Math.max(0, window.innerHeight - viewport.height - viewport.offsetTop) : 0;
+  setLayoutValue('--viewport-height', height + 'px');
+  setLayoutValue('--keyboard-offset', keyboardOffset + 'px');
+  const footer = activeEditor ? main.querySelector('.editor-actions') : null;
+  if (footer !== observedFooter) {
+    footerResize.disconnect();
+    if (footer) footerResize.observe(footer);
+    observedFooter = footer;
+  }
+  setLayoutValue('--editor-footer-height', (footer?.getBoundingClientRect().height || 0) + 'px');
+  updateScrollChrome();
+  keepEditorFieldVisible();
+}
+
+function scheduleViewportLayout() {
+  if (layoutFrame) return;
+  layoutFrame = requestAnimationFrame(() => { layoutFrame = 0; updateViewportLayout(); });
+}
+
+new ResizeObserver(() => scheduleViewportLayout()).observe(main);
+new MutationObserver(() => scheduleViewportLayout()).observe(main, { childList: true, subtree: true, attributes: true, attributeFilter: ['hidden', 'class'] });
+document.addEventListener('pointerdown', () => { focusIntentGeneration++; }, { passive: true });
+document.addEventListener('keydown', event => { if (event.key === 'Tab') focusIntentGeneration++; });
+document.addEventListener('focusin', () => {
+  focusIntentGeneration++;
+  resetScrollChrome();
+  scheduleViewportLayout();
+});
+document.addEventListener('focusout', scheduleViewportLayout);
+window.visualViewport?.addEventListener('resize', () => { resetScrollChrome(); scheduleViewportLayout(); });
+window.visualViewport?.addEventListener('scroll', scheduleViewportLayout);
 
 
 function collapseNavigation() {
@@ -453,7 +611,7 @@ window.addEventListener('offline', updateConnectivity);
 subscribeRecordChanges(() => { void refreshBrowsingView(); });
 window.addEventListener('focus', () => { void refreshBrowsingView(); });
 document.addEventListener('visibilitychange', () => { if (!document.hidden) void refreshBrowsingView(); });
-window.addEventListener('scroll', () => { document.querySelector('#scroll-top').hidden = window.scrollY < window.innerHeight; }, { passive: true });
+window.addEventListener('scroll', scheduleScrollChrome, { passive: true });
 document.querySelector('.skip-link').addEventListener('click', event => { event.preventDefault(); main.focus({ preventScroll: true }); main.scrollIntoView(); });
 const menu = document.querySelector('#menu-toggle');
 menu.innerHTML = icon('menu');
@@ -461,9 +619,10 @@ menu.addEventListener('click', () => {
   const expanded = document.body.classList.toggle('nav-expanded');
   menu.setAttribute('aria-expanded', String(expanded));
   menu.setAttribute('aria-label', expanded ? 'Collapse navigation' : 'Expand navigation');
+  resetScrollChrome();
 });
 window.addEventListener('keydown', event => { if (event.key === 'Escape') collapseNavigation(); });
-window.addEventListener('resize', collapseNavigation);
+window.addEventListener('resize', () => { collapseNavigation(); resetScrollChrome(); scheduleViewportLayout(); });
 document.querySelector('#scroll-top').innerHTML = icon('up');
 document.querySelector('#scroll-top').addEventListener('click', () => window.scrollTo({ top: 0, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' }));
 await navigate();

@@ -217,9 +217,17 @@ Acceptance IDs E2E-01–E2E-18 are defined in [SPEC.md](SPEC.md). Their current 
 - **Evidence:** 96 passing behavior contracts, 43 JavaScript syntax targets and a fresh 35-file artifact; actual two-tab IndexedDB conflicts/ABA, all four delayed clears, native post-commit read failures, practice image/partial-read behavior, 390px UI and server-stopped/HTTP-cache-cleared cold boot. Wrong bytes, missing authority, staged readiness and two concurrent response bodies exercised. See [CODE_REVIEW.md](CODE_REVIEW.md#local-remediation-and-verification) and PROGRESS.md.
 - **Boundary:** source fixtures/database identities unchanged; no production API/workflow, push/deploy or physical-device/full-accessibility claim. Only owned test records/cache/registration/services/artifacts were cleaned.
 
+### DEMO-011 — KB PWA product-standard remediation
+
+- **Status:** Implemented and Verified locally on 2026-10-14; worker v0.6.0; not Released.
+- **Scope:** BUG-014/F1 candidate recovery cause, BUG-015/F2 local-versus-server integrity diagnosis, BUG-016/F3 Settings focus continuity; shared safe-area coverage, measured editor/keyboard clearance, 16px inputs/touch targets and focus-safe directional topbar.
+- **Acceptance:** distinct failure reasons and actionable candidate recovery leave active offline metadata/data intact; matching corruption repair and server-correction retry remain possible; same-route load/reset/delete focus survives without stealing later focus; delayed clears keep new editors; inset/size/scroll checks pass; guarded automatic updates and offline local writes still work.
+- **Evidence:** 103 passing behavior contracts, 43 syntax targets, manifest JSON and pristine 35-file artifact; 48 six-route/width/inset checks, native keyboard/transaction-delay focus tests, actual 44px pagers/16px fields, transform hysteresis and measured footer clearance. Incomplete temporary candidate recovery, dirty-tab deferral, loader-backed automatic activation and server-stopped/HTTP-cache-cleared v0.6.0 cold launch/save/reload passed. See [CODE_REVIEW.md](CODE_REVIEW.md#pwa-product-standard-audit-and-remediation) and PROGRESS.md.
+- **Exception/boundary:** retain the documented automatic all-pages-ready exception to the KB manual-activation MUST. No per-hit cache hashing, dark theme, optional icon redesign, production behavior or device/full-accessibility claim. No push/deploy; only owned browser data/artifacts cleaned.
+
 ## Demo bug backlog
 
-Historical review baseline: `e9e3b09`, worker v0.4.0, documented in review commit `ac794ba`. **All 13 findings below are now Verified locally under DEMO-010/v0.5.0**, not Released. [CODE_REVIEW.md](CODE_REVIEW.md#local-remediation-and-verification) distinguishes failing-before evidence, current fixes and remaining unverified risks.
+Historical review baseline: `e9e3b09`, worker v0.4.0, documented in review commit `ac794ba`. **BUG-001 through BUG-013 were Verified locally under DEMO-010/v0.5.0. BUG-014 through BUG-016 were subsequently Verified locally under DEMO-011/v0.6.0**, not Released. [CODE_REVIEW.md](CODE_REVIEW.md#pwa-product-standard-audit-and-remediation) distinguishes the new KB audit from the historical review.
 
 | ID | Priority | Correction | Acceptance | Status |
 |---|---|---|---|---|
@@ -236,5 +244,17 @@ Historical review baseline: `e9e3b09`, worker v0.4.0, documented in review commi
 | [BUG-011](CODE_REVIEW.md#bug-011) | P2 | Include displayed local proposal references in search. | Displayed reference, full ID and scope searches locate the same project-owned proposal. | Verified locally |
 | [BUG-012](CODE_REVIEW.md#bug-012) | P2 | Include context claim IDs in image evidence search. | Sample/device claim IDs and references find their whole-claim/line images as well as documents; project isolation remains. | Verified locally |
 | [BUG-013](CODE_REVIEW.md#bug-013) | P3 | Restore normal mobile navigation when a claim/variation editor cannot open. | Missing/unreadable edit routes show recovery links and browsing navigation, with no focused-task mode without an editor. | Verified locally |
+| [BUG-014 / F1](CODE_REVIEW.md#bug-014) | P1 | Preserve candidate-cache, readiness and activation failure causes. | Incomplete candidate offers separate complete recovery, retains active offline state/data and never gives a false save/close-only instruction. | Verified locally |
+| [BUG-015 / F2](CODE_REVIEW.md#bug-015) | P2 | Separate local digest failure from actually rejected server bytes. | Local alteration remains repairable; server-correction retry remains available; matching repair retains saved records. | Verified locally |
+| [BUG-016 / F3](CODE_REVIEW.md#bug-016) | P2 | Restore usable focus after owned Settings mutations. | Load/reset retain button focus; disabled deletion uses a stable fallback; intentional later focus and newer editors survive completion. | Verified locally |
 
-Historical RISK-01 deletion/readback hardening is now exercised; RISK-02 source-version transition remains unverified and is not another confirmed bug. Runtime version is 0.5.0; publication still requires separate authorization. Production decision gates and live-deployment status remain unchanged.
+Historical RISK-01 deletion/readback hardening is exercised; RISK-02 source-version transition remains unverified. Runtime version is 0.6.0; publication requires separate authorization. Existing-hit per-request cache integrity remains additional out-of-scope hardening. Physical-device/full-accessibility and production decision gates are unchanged.
+
+### PWA standard UI findings
+
+| ID | Priority | Correction / acceptance | Status |
+|---|---|---|---|
+| PWA-001 | P1 | Shared inset-aware opaque top surface, content/navigation/actions/overlay; actual footer and VisualViewport clearance; no overflow with zero/simulated insets. | Verified locally; physical iOS unverified |
+| PWA-002 | P1 | Visible inputs/selects/textareas at least 16px, preserve 22px amount inputs; relevant targets and pagers at least 44px without disabling zoom. | Verified locally |
+| PWA-003 | P2 | Long-page directional transform hide/reveal with hysteresis, stable document layout, focus/route/viewport/navigation guards and reduced motion. | Verified locally |
+

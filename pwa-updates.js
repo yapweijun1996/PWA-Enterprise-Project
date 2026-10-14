@@ -26,17 +26,21 @@ export function createBootRecoveryGuard({ document, window }) {
 export function createPwaUpdates({ isBusy, document, navigator, window, onRepaired, onReload }) {
   let registration, applying = false, checking = false, repairing = false, recovering = false, lock = '', lockTimer, retryAfter = 0, previousFocus;
   let hadController = Boolean(navigator.serviceWorker?.controller), reloaded = false;
-  const state = { version: 'Not available', title: 'Preparing offline app', detail: 'Checking this browser’s app status.', offline: 'Not ready', cacheState: '', checked: '', pending: '', next: '' };
+  const state = { version: 'Not available', title: 'Preparing offline app', detail: 'Checking this browser’s app status.', offline: 'Not ready', cacheState: '', checked: '', pending: '', next: '', reason: '' };
   const shell = [...document.querySelectorAll('.app-shell, .mobile-nav, #scroll-top')];
 
   function paint() {
     const values = { ...state, connection: navigator.onLine ? 'Browser reports online' : 'Browser reports offline', mode: window.matchMedia('(display-mode: standalone)').matches || navigator.standalone ? 'Installed app' : 'Browser tab' };
-    document.querySelectorAll('[data-pwa]').forEach(element => { element.textContent = values[element.dataset.pwa]; });
+    document.querySelectorAll('[data-pwa]').forEach(element => {
+      element.textContent = values[element.dataset.pwa];
+      if (element.dataset.pwa === 'offline') element.dataset.cacheState = state.cacheState;
+    });
     document.querySelectorAll('[data-pwa-check]').forEach(button => { button.disabled = checking || repairing || recovering || applying || !registration || !navigator.onLine; button.textContent = checking ? 'Checking…' : 'Check for updates'; });
-    document.querySelectorAll('[data-pwa-repair]').forEach(button => { button.disabled = checking || repairing || recovering || applying || !registration?.active || !navigator.onLine || state.cacheState === 'complete'; button.textContent = repairing ? 'Repairing…' : 'Repair offline app'; });
+    document.querySelectorAll('[data-pwa-repair]').forEach(button => { button.disabled = checking || repairing || recovering || applying || !registration?.active || !navigator.onLine || ['complete', 'unverified'].includes(state.cacheState); button.textContent = repairing ? 'Repairing…' : 'Repair offline app'; });
     document.querySelectorAll('[data-pwa-recover]').forEach(button => { button.disabled = checking || repairing || recovering || applying || !registration || !navigator.onLine; button.textContent = recovering ? 'Downloading complete release…' : 'Install complete release'; });
     const banner = document.querySelector('#update-notice');
     banner.hidden = !state.pending;
+    banner.dataset.reason = state.reason;
     document.querySelector('#update-message').textContent = state.pending ? state.detail : '';
   }
   function status(title, detail) { state.title = title; state.detail = detail; paint(); }
@@ -53,7 +57,8 @@ export function createPwaUpdates({ isBusy, document, navigator, window, onRepair
     state.cacheState = info.cacheState || (info.offlineReady ? 'complete' : 'unverified');
     state.offline = info.offlineReady ? 'Ready on this device'
       : state.cacheState === 'repairable' ? 'Incomplete · repair available online'
-      : state.cacheState === 'mismatch' ? 'Different server release · complete install required'
+      : state.cacheState === 'corrupt' ? 'Local cached files failed verification · repair available online'
+      : state.cacheState === 'server-mismatch' ? 'Downloaded files differed from installed release · retry repair or complete install'
       : 'Integrity unavailable · complete install required';
   }
   async function metadata(worker) {
@@ -72,22 +77,47 @@ export function createPwaUpdates({ isBusy, document, navigator, window, onRepair
   async function reconsider() {
     if (!registration?.waiting || applying || lock || Date.now() < retryAfter) return;
     state.pending = 'ready';
-    if (isBusy()) { status('Update ready', (state.next ? 'Version v' + state.next : 'A new version') + ' is ready. It will apply automatically after you save or finish your current task.'); return; }
+    if (isBusy()) {
+      state.reason = 'pages-busy';
+      status('Update ready', (state.next ? 'Version v' + state.next : 'A new version') + ' is ready. It will apply automatically after you save or finish your current task.');
+      return;
+    }
     applying = true;
+    state.reason = '';
     status('Update ready', 'Checking that all open ConstructClaim pages have saved their work…');
     try {
       const result = await request(registration.waiting, { type: 'APPLY_UPDATE' }, 10000);
       if (!result.ok) {
+        unlock();
+        state.reason = result.reason || 'unknown-failure';
         retryAfter = Date.now() + 10000;
-        status('Update paused', 'Save work in your other ConstructClaim pages, or close older pages. The update will then apply automatically.');
+        if (state.reason === 'incomplete-cache') {
+          retryAfter = Infinity;
+          status('Update needs a complete download', 'The waiting release is incomplete or failed integrity verification. Reconnect and install a complete release. The active app and your device records are kept.');
+        } else if (state.reason === 'cache-check-failed') {
+          status('Update cache could not be verified', 'The waiting release could not be checked. Retry the update check, or install a complete release online. The active app and your device records are kept.');
+        } else if (state.reason === 'pages-busy') {
+          status('Update paused', 'Save work in your other ConstructClaim pages, or close older pages. The update will then apply automatically.');
+        } else if (state.reason === 'readiness-cancelled') {
+          status('Update readiness not confirmed', 'An open page did not confirm readiness, or the open pages changed. Keep unsaved work open; retry after unresponsive pages are reopened or closed.');
+        } else if (state.reason === 'activation-failed') {
+          status('Update activation failed', 'The verified release could not activate. Your saved data is kept; the app will retry automatically. You can also install a complete release online.');
+        } else {
+          state.reason = 'unknown-failure';
+          status('Update delayed', 'The update did not finish and its cause could not be confirmed. Your saved data is kept; retry the update check or install a complete release online.');
+        }
       }
     } catch {
       unlock();
+      state.reason = 'unknown-failure';
       retryAfter = Date.now() + 15000;
-      status('Update delayed', 'The update could not finish. Your saved data is kept; the app will retry automatically.');
+      status('Update delayed', 'The update could not finish and its cause could not be confirmed. Your saved data is kept; retry the update check or install a complete release online.');
     } finally { applying = false; paint(); }
   }
   async function ready() {
+    // Waiting metadata identifies the candidate; it must not replace active offline readiness.
+    state.reason = '';
+    retryAfter = 0;
     try { state.next = (await request(registration.waiting, { type: 'GET_VERSION' })).version || ''; }
     catch { state.next = ''; }
     return reconsider();
@@ -111,7 +141,7 @@ export function createPwaUpdates({ isBusy, document, navigator, window, onRepair
     try {
       await registration.update();
       state.checked = 'Last checked ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      if (registration.waiting) { retryAfter = 0; await ready(); }
+      if (registration.waiting) await ready();
       else if (!registration.installing) {
         await metadata(navigator.serviceWorker.controller || registration.active);
         status(state.cacheState === 'complete' ? 'Up to date' : 'Offline app needs recovery', state.cacheState === 'complete'
@@ -152,7 +182,7 @@ export function createPwaUpdates({ isBusy, document, navigator, window, onRepair
       script.searchParams.set('recovery', crypto.randomUUID());
       registration = await navigator.serviceWorker.register(script.href, { scope: './', updateViaCache: 'none' });
       watch(registration.installing);
-      if (registration.waiting) { retryAfter = 0; await ready(); }
+      if (registration.waiting) await ready();
     } catch {
       status('Complete install could not start', 'Reconnect and retry. The installed app and your device records have not been deleted.');
     } finally { recovering = false; paint(); }
@@ -164,7 +194,8 @@ export function createPwaUpdates({ isBusy, document, navigator, window, onRepair
       const { type, attempt } = event.data || {};
       if (type === 'CANCEL_UPDATE' && lock === attempt) { unlock(); return; }
       if (type !== 'PREPARE_UPDATE' || !event.ports[0]) return;
-      const ready = !isBusy() && (!lock || lock === attempt);
+      const busy = isBusy();
+      const ready = !busy && (!lock || lock === attempt);
       if (ready) {
         lock = attempt;
         previousFocus = document.activeElement;
@@ -172,7 +203,7 @@ export function createPwaUpdates({ isBusy, document, navigator, window, onRepair
         document.querySelector('#update-overlay').hidden = false;
         lockTimer = setTimeout(() => { unlock(); status('Update delayed', 'The update is taking longer than expected. Your saved data is kept; the app will retry.'); }, 12000);
       }
-      event.ports[0].postMessage({ ready });
+      event.ports[0].postMessage(ready ? { ready: true } : { ready: false, reason: busy ? 'pages-busy' : 'readiness-cancelled' });
     });
     navigator.serviceWorker.addEventListener('controllerchange', async () => {
       const controller = navigator.serviceWorker.controller;
