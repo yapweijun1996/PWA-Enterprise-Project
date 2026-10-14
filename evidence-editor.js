@@ -61,7 +61,6 @@ export function createEvidenceEditor({ root, claims, context, onSave, onDone, an
     if (event.target.name === 'line') { lineId = event.target.value; changed(); }
     if (['kind', 'capturedAt'].includes(event.target.name)) changed();
   });
-  form.addEventListener('focusin', event => { if (!event.target.closest('.editor-actions') && event.target.getBoundingClientRect().bottom > root.querySelector('.editor-actions').getBoundingClientRect().top - 12) event.target.scrollIntoView({ block: 'center' }); });
   async function selectImage(selected) {
     if (!selected || busy || knownCommit) return;
     busy = true; feedback.hidden = true; update();

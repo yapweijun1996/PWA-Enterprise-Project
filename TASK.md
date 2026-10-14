@@ -235,12 +235,33 @@ Acceptance IDs E2E-01–E2E-18 are defined in [SPEC.md](SPEC.md). Their current 
 
 ### DEMO-013 — Follow-up linked-document and section access
 
-- **Status:** Implemented and Verified locally on 2026-10-14; worker v0.6.2; local commit authorized by subsequent owner B selection, not Released. Previous four fixes are committed on local main as `5fbab1c`.
+- **Status:** Implemented and Verified locally on 2026-10-14; worker v0.6.2; committed on local main as `1cf57c7`, not Released. Previous four fixes are committed as `5fbab1c`.
 - **Scope:** owner C selection covers VIS-05 through VIS-08: linked preview access in claim summary; truthful snapshot/current-source header; descriptive identities with original identifiers retained; Settings existing-section navigation.
 - **Acceptance:** initial mobile/tablet summary exposes claim amount/state and actionable preview amount/state; amount digits do not split. Source identity/basis/saved time and conditional current-source entry are discoverable and do not imply historical navigation. Captions/references remain searchable with original IDs/files available. Native 44px Settings buttons focus existing headings without changing hash, preserve actions and respect reduced motion.
 - **Evidence:** 104 contracts, six modified JS syntax checks, 35-file final artifact, 48 six-size route captures, independent review and correction of the initial 768px numeric wrap, native navigation/search/reduced-motion/partial-preview/source-deletion proof. See [CODE_REVIEW.md](CODE_REVIEW.md#follow-up-visual-findings-05-08) and PROGRESS.md.
 - **Boundary:** findings 09-13 remain unselected at this milestone; no fixture/schema/calculation/update-policy/production change, new runtime dependency/module, push/deployment or full physical-device/a11y claim. Owned practice data/runtime cleaned; checkpoint and actual screenshot/JSON evidence retained.
 
+
+### DEMO-014 — Remaining visual findings 09-13
+
+- **Status:** Implemented and Verified locally; initially v0.6.3, retained in combined v0.6.4 local release with subsequent owner C commit authorization; not Released.
+- **Scope:** subsequent owner C selection within A/B/C/D covers VIS09-13 only.
+- **Acceptance:** one claim Evidence parent/empty state/contextual entry; unavailable is not empty. Sample notes remain fully discoverable and local notes remain visible. Empty resume is compact without altering saved context/step. Project names lead, original IDs/routes/actions remain. Return action does not cover main controls; keyboard focus has a protected slot, pointer activation remains stationary and works on its first press/release.
+- **Evidence:** 104 contracts, three syntax targets, 35-file artifact, 48 final six-size captures; local image and injected-read scenarios; native mouse/keyboard and emulated touch; independent review accepted corrected failed candidates. See CODE_REVIEW.md and PROGRESS.md.
+- **Boundary:** no fixture/schema/financial/update-policy change, new dependency/module, new commit/push/deployment, physical phone/software-keyboard or full WCAG claim. Specialist acceptance is tracked separately.
+
+### Specialist acceptance — owner D selection
+
+- **Performed:** available desktop keyboard/focus, six-route 200% reflow approximation, actual AX names and isolated Lighthouse snapshot. See CODE_REVIEW.md; not full WCAG.
+- **Blocked:** physical iPhone/Android, software keyboard and installed-mode acceptance. No trusted controllable device channel was found; provide an approved device session and candidate access before closing this gate. Do not substitute viewport/UA/inset emulation.
+- **Audit work:** BUG-017 and CAND-A11Y-001 were found outside VIS09-13 and subsequently authorized for correction under DEMO-015. Physical/full-accessibility acceptance remains open.
+
+### DEMO-015 — Picker activation and visible-label alignment
+
+- **Status:** Implemented and Verified locally; v0.6.4; owner A/B/C authorizes combined local main commit with DEMO-014, not push/deployment.
+- **Acceptance:** first exposed Load demo illustration mouse/touch activation remains stationary and selects actual image bytes; editable-field/footer clearance and keyboard save remain. Accessible names contain visible category/count in order; unknown is not zero; aggregation/original routes unchanged.
+- **Evidence:** six native mouse/CDP-touch cases, note and reduced-viewport clearance, native save/detail, counts0/1/17 and injected-unavailable AX names; Lighthouse35 passed/0 failed with label rule score1; 104 contracts, four syntax targets, 35-file artifact, 48 final captures.
+- **Limits:** touch/viewport are simulation, not physical software keyboard. No new dependencies/schema/calculations/update policy; no new permanent copy/wiring test or deployment.
 
 ## Demo bug backlog
 
@@ -264,8 +285,10 @@ Historical review baseline: `e9e3b09`, worker v0.4.0, documented in review commi
 | [BUG-014 / F1](CODE_REVIEW.md#bug-014) | P1 | Preserve candidate-cache, readiness and activation failure causes. | Incomplete candidate offers separate complete recovery, retains active offline state/data and never gives a false save/close-only instruction. | Verified locally |
 | [BUG-015 / F2](CODE_REVIEW.md#bug-015) | P2 | Separate local digest failure from actually rejected server bytes. | Local alteration remains repairable; server-correction retry remains available; matching repair retains saved records. | Verified locally |
 | [BUG-016 / F3](CODE_REVIEW.md#bug-016) | P2 | Restore usable focus after owned Settings mutations. | Load/reset retain button focus; disabled deletion uses a stable fallback; intentional later focus and newer editors survive completion. | Verified locally |
+| [BUG-017](CODE_REVIEW.md#bug-017) | P2 | Remove duplicate capture form focus scrolling; reuse shared editable-field/footer clearance so pointer buttons stay stationary. | Six first mouse/CDP-touch activations decode real PNG bytes; note/reduced-viewport clearance and keyboard save retain input. Physical keyboard remains unverified. | Verified locally in0.6.4 |
+| CAND-A11Y-001 | P2 candidate | Align accessible name with visible Device drafts/count order and retain unknown-state context. | Actual AX names match counts0/1/17; unreadable stays —, not0; experimental Lighthouse label rule passes. No blanket manual WCAG claim. | Resolved by verified alignment in0.6.4 |
 
-Historical RISK-01 deletion/readback hardening is exercised; RISK-02 source-version transition remains unverified. Runtime version is 0.6.0; publication requires separate authorization. Existing-hit per-request cache integrity remains additional out-of-scope hardening. Physical-device/full-accessibility and production decision gates are unchanged.
+Historical RISK-01 deletion/readback hardening is exercised; RISK-02 source-version transition remains unverified. Historical remediation runtime is0.6.0; current verified local version is0.6.4. Publication requires separate authorization. Existing-hit per-request cache integrity remains out-of-scope hardening. Physical-device/full-accessibility and production decision gates remain open.
 
 ### PWA standard UI findings
 

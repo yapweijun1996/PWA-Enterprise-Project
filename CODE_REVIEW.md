@@ -295,7 +295,7 @@ Audited on 2026-10-14 against canonical KB-MCP skill `pwa:product-standard` v1.0
 
 ## Follow-up visual findings 05-08
 
-**Baseline and status:** previous fixes committed locally as `5fbab1c` / v0.6.1; owner then selected C. VIS-05 through VIS-08 are Implemented and Verified locally under DEMO-013 / v0.6.2. Subsequent owner B selection authorizes local commit only; no push/deployment.
+**Baseline and status:** previous fixes committed locally as `5fbab1c` / v0.6.1; owner then selected C. VIS-05 through VIS-08 are Implemented and Verified locally under DEMO-013 / v0.6.2, committed on local main as `1cf57c7`. No push/deployment.
 
 | Finding | Correction | Exercised evidence |
 |---|---|---|
@@ -311,4 +311,76 @@ Audited on 2026-10-14 against canonical KB-MCP skill `pwa:product-standard` v1.0
 - Active worker returned v0.6.2, complete cache and zero missing; observed page exception logs empty. Native links, original identifiers, focus/route behavior, reduced motion and actual incomplete/missing-source state exercised.
 - Readiness/cache/update/inset proof from DEMO-011 remains historical. No new physical iOS/Safari/keyboard/installed mode, full screen-reader/contrast/zoom/eviction or production-money acceptance.
 - LSP unavailable and impact analyzer lacks JS/TS config; bounded static imports/callers/data-source inspection substituted, not a complete graph.
-- Two isolated origins' owned practice data/caches/registration cleared; tabs/services closed and final runtime removed. Baseline ZIP, before/after/failed screenshots and JSON retained outside the repo; restore not executed. Existing `_site` and reference PNGs unchanged. Findings 09-13 remain outside the selected implementation.
+- Two isolated origins' owned practice data/caches/registration cleared; tabs/services closed and final runtime removed. Baseline ZIP, before/after/failed screenshots and JSON retained outside the repo; restore not executed. Existing `_site` and reference PNGs unchanged. Findings 09-13 were outside this milestone and subsequently selected below.
+
+## Remaining visual findings 09-13
+
+**Baseline and status:** local `main` baseline `1cf57c7` / v0.6.2; owner selected A/B/C/D. DEMO-014 was initially verified as v0.6.3 and is retained in v0.6.4 with subsequent A/B/C local commit authorization. No push/deployment.
+
+| Finding | Correction | Exercised evidence |
+|---|---|---|
+| VIS09 | Existing attachments and linked images share one Evidence section and contextual entry; one total empty state only when readable and empty | Cedar detail: two empty messages to one. Native local image appears under Linked images with no total empty message. Injected image-read failure shows unavailable and no empty message. |
+| VIS10 | Captioned bundled cards omit repeated long notes; full detail/local/no-caption notes and source/file markers remain | 48 bundled cards/72 files retained; native local note search finds the original detail route and visible device-local note. Full bundled note remains on detail. |
+| VIS11 | Compact no-draft resume, unavailable distinction and non-stretching grid | 390px empty resume 172px to 101.5px. Actual Cedar practice resume retains Payable, 2026-08, reference and saved Review step; injected read failure does not claim no drafts. |
+| VIS12 | Project name before secondary contract/location; scoped secondary spacing | Six-size screenshots retain descriptions, next action and original Open project links; first 390px card 228.375px to 208.1875px. |
+| VIS13 | Cached generic control collision check; protected keyboard slot; stationary pointer activation | Enabled baseline clear action was intercepted. Final four clear-control geometries are reachable; native confirmation was reached and dismissed. Mouse and CDP touch return to y=0/main; Tab/Enter returns to y=0 with action focus retained. |
+
+### Final verification and candidate corrections
+
+- Final 104 behavior contracts, zero failures; three modified JS syntax targets; 35-file pristine artifact. Final eight-route/six-size matrix: 48 captures, no document horizontal overflow.
+- Initial keyboard slot failed at 320px because the mobile avatar was display:none. Final focus mode allocates a 44px utility slot and preserves the named home icon. Twelve final default/simulated-inset keyboard captures have no header-control overlap/overflow.
+- Independent review identified focus relocation breaking the first pointer click. Native before proof: press moved y724 to y8, release left scrollY unchanged. A pointer-capture revision still lost the emulated touch click. Final pointer mode leaves the press/release target stationary and transfers activation focus to main; keyboard mode uses the top-bar slot. Failed screenshots/JSON/candidates retained, not silently replaced.
+- Independent evidence/home and project/return reviews accepted the final scope. Actual local image/detail/gallery and injected-unavailable branches were exercised separately from the bundled/empty screenshot matrix.
+- LSP/project-config impact graph remains unavailable; bounded actual imports/callers/source units used. Fixtures, schemas, calculations, source snapshots, original identifiers and safe automatic update policy are unchanged. No new runtime dependency/module or permanent copy/wiring test.
+- Evidence is retained outside the repository in `constructclaim-visual-final-1PpTPT`; final screenshots are in `complete/`. CSS insets and CDP touch are simulations, not physical iOS/keyboard acceptance. Specialist verification below does not imply complete WCAG or bug-free certification.
+
+## Specialist keyboard, accessibility and device audit
+
+**Scope:** owner D selection; current v0.6.3 local candidate, non-production records only. This was verification/reporting, not authorization to fix additional findings.
+
+| Coverage | Observed result | Limit |
+|---|---|---|
+| Native Settings Enter/Tab | Three destinations keep #settings and focus visible headings; next Tab reaches View saved records with3px outline | Desktop Chromium keyboard, not mobile software keyboard |
+| Six-route reflow | Home/Projects/Claims/Evidence/Settings/New at720x450CSS/DSF2: no horizontal overflow, one main/H1 | 200% layout approximation of1440x900, not real browser zoom |
+| Actual accessibility tree | No unnamed sampled interactive AX controls on those six routes | Does not prove complete semantics, reading order or screen-reader behavior |
+| Lighthouse desktop snapshot | Accessibility100; one experimental label-in-name failure | Not full WCAG; inspect the actual failed item below |
+| Worker/mode |0.6.3, complete cache, missing0, offlineReadytrue; Windows Chromium browser mode | Not installation/standalone/cold-launch acceptance |
+| Phone control prerequisites | Bounded PnP query0 matches; no adb/standard SDK/device-farm endpoint; mounted browser only about:blank | No verified physical phone or software-keyboard control channel |
+
+### BUG-017
+
+**Confirmed P2; subsequently fixed and Verified locally in v0.6.4 under DEMO-015.** Historical failing-before evidence follows.
+
+- Route: `#evidence-new?project=cedar&claim=PCAP-DEMO-02`; viewport390x844; no selected file.
+- Place Load demo illustration near the task footer. Its exposed center at(121.55,735.77) hits the actual button; footer top754px.
+- Native mouse down focuses the button and moves its rectangle from top713.77px to378.77px. Mouse up at the original point yields click count0, Save remains disabled and No file selected remains.
+- Source: unchanged `evidence-editor.js:64`, form-wide focus clearance calls scrollIntoView for buttons as well as editing fields. The event/geometry evidence confirms lost activation; this is not the corrected return-button code.
+- Keyboard Enter successfully loaded/saved a real fictional image but did not close the original pointer defect. Subsequent owner B selection authorized the narrow root correction described below.
+- Evidence: `specialist-picker-pointer.json/png`, and separate successful `local-image-proof.json`.
+- **Correction:** deleted the duplicate capture form focus-scroll handler. Shared app `keepEditorFieldVisible()` owns editable-field/footer/VisualViewport clearance and excludes buttons; no new pointer modality state, capture, retry or timer.
+- **Passing-after:** native mouse and CDP touch at320/390/1440 produce six first activations, one click each, unchanged press geometry and decoded640x480/21,112-byte PNG. Note input stays above the footer; a reduced viewport retains note text and12px clearance. Native keyboard save opens the actual local image detail. All simulation limits remain explicit.
+
+### CAND-A11Y-001
+
+**Automated candidate, not a manually confirmed WCAG violation.** Lighthouse experimental `label-content-name-mismatch` flags `.utility-actions > .topbar-link`: visible `Device drafts 0`, accessible name `0 device drafts`. The same words appear in a different order; verify visible-label scope and voice-control semantics before declaring a violation. Preserve unknown/unavailable count semantics if correcting it. Report: external `lighthouse/report.json/html`. A weighted Accessibility100 score does not clear the flagged item.
+
+**Subsequent owner B resolution in v0.6.4:** [W3C Label in Name guidance](https://www.w3.org/WAI/WCAG22/Understanding/label-in-name.html) recommends visible text at the start of the accessible name and warns about reordered labels. Conservatively aligned the existing category/count order rather than claiming OS voice-control testing or reclassifying every badge as a label. Actual visible/AX names match Device drafts1/17, zero is Device drafts0, unreadable remains Device drafts — with Some records unavailable. No count calculation, storage or route change. New isolated Lighthouse snapshot passes this rule (score1),35 audits passed/0 failed; complete WCAG remains unverified.
+
+
+### Physical-device gate and verification boundaries
+
+Actual iPhone/Safari or Android browser installation, safe areas, camera, software keyboard and OS screen reader were not exercised. Windows PnP/SDK/PATH/tool/browser probes found no verified controllable phone channel in this runtime; this is not a claim that no phone exists anywhere. Missing prerequisite is an approved controllable real-device session with keyboard and access to the current owned candidate. No device-farm install, public deployment, firewall/LAN change or credentials request was performed.
+
+Real browser zoom, full contrast/manual WCAG, browser-process cold launch and eviction are also not established. All CSS-inset, CDP touch and layout-reflow evidence is labelled simulation. The audit found the issues above; it does not assert all bugs were found.
+
+Cleanup completed for current managed8903/8904 and the isolated audit context: four known stores cleared, owned worker/cache removed, tabs/services closed and accepted temporary runtime deleted. Checkpoint/failed candidates and actual PNG/JSON/Lighthouse evidence remain outside the repository. No unrelated origin, source checkpoint restore, new commit, push or deployment.
+
+## Authorized post-audit correction and local release v0.6.4
+
+- Owner A/B/C selected actual VIS09-13 comparisons, BUG-017/label correction, and combined local main commit only.
+- Final104 behavior contracts, four modified JS syntax targets and35-file pristine runtime passed. Final eight-route/six-size matrix:48 actual screenshots, no horizontal overflow or observed page exceptions. Worker0.6.4 is complete with missing0/offlineReadytrue.
+- Exact pre-edit working-tree ZIP and actual pointer/field/save/count/unavailable/Lighthouse evidence retained externally in `constructclaim-picker-label-BxtujW`. Existing reference PNGs and `_site` untouched.
+- No new dependency/module/schema/calculation/update policy, no permanent wording/wiring tests, no push/deployment. Real phone/software keyboard/OS screen reader, actual browser zoom and full WCAG remain outside verified coverage.
+
+Post-fix cleanup: both owned8905 contexts' four known stores confirmed0; owned cache/registration removed; tabs/service closed and accepted runtime deleted. Exact source checkpoint and actual PNG/JSON/Lighthouse evidence retained; no restore or unrelated origin change.
+

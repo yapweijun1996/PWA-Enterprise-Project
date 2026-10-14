@@ -70,7 +70,7 @@ function refreshDrafts() {
     const count = state.drafts.length + state.variations.length + state.certificates.length + state.evidence.length;
     const unavailable = state.storageError || state.variationError || state.certificateError || state.evidenceError;
     document.querySelector('#draft-count').textContent = unavailable ? '—' : String(count);
-    document.querySelector('#draft-count').parentElement.setAttribute('aria-label', unavailable ? 'Some device drafts unavailable' : count + ' device draft' + (count === 1 ? '' : 's'));
+    document.querySelector('#draft-count').parentElement.setAttribute('aria-label', unavailable ? 'Device drafts — · Some records unavailable' : 'Device drafts ' + count);
   })().finally(() => { refreshPromise = null; });
   return refreshPromise;
 }
@@ -206,13 +206,13 @@ function layoutHome() {
   const latest = [...state.drafts].sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt)))[0];
   return heading('Overview', 'Welcome back, Alex. Pick up your project work.', newLink()) +
     (state.storageError ? notice('Device storage unavailable: ' + escapeHtml(state.storageError), 'error') : '') +
-    '<div class="grid home-work"><section class="panel"><div class="panel-head"><h2>My work</h2><span class="status">Demo tasks</span></div><ul class="row-list"><li><a class="row-link" href="#claim/PCAR-DEMO-01"><span class="task-label"><span class="task-icon">' + icon('claims') + '</span><span><strong>Explore a receivable claim</strong><small>Harbor Exchange · Sample draft</small></span></span>' + icon('arrow') + '</a></li><li><a class="row-link" href="#new?project=cedar&direction=Payable"><span class="task-label"><span class="task-icon">' + icon('plus') + '</span><span><strong>Prepare a payable draft</strong><small>Cedar Station · SC-014</small></span></span>' + icon('arrow') + '</a></li></ul></section><section class="panel"><h2>Continue work</h2>' +
-    (latest ? '<span class="status local">Saved on this device</span><h3 class="section-gap">' + escapeHtml(draftLabel(latest)) + '</h3><p class="meta">' + projectName(latest.project) + ' · ' + escapeHtml(latest.direction) + '<br>Saved ' + displayDate(latest.updatedAt) + '</p>' + pageLink('edit/' + encodeURIComponent(latest.id), 'Resume draft') : '<p class="meta">Your saved draft will appear here. Start with fictional project information.</p>' + pageLink('new', 'Start a draft')) +
-    '</section></div>' + snapshotPanel() +
+    '<div class="grid home-work"><section class="panel"><div class="panel-head"><h2>My work</h2><span class="status">Demo tasks</span></div><ul class="row-list"><li><a class="row-link" href="#claim/PCAR-DEMO-01"><span class="task-label"><span class="task-icon">' + icon('claims') + '</span><span><strong>Explore a receivable claim</strong><small>Harbor Exchange · Sample draft</small></span></span>' + icon('arrow') + '</a></li><li><a class="row-link" href="#new?project=cedar&direction=Payable"><span class="task-label"><span class="task-icon">' + icon('plus') + '</span><span><strong>Prepare a payable draft</strong><small>Cedar Station · SC-014</small></span></span>' + icon('arrow') + '</a></li></ul></section>' +
+    (latest ? '<section class="panel"><h2>Continue work</h2><span class="status local">Saved on this device</span><h3 class="section-gap">' + escapeHtml(draftLabel(latest)) + '</h3><p class="meta">' + projectName(latest.project) + ' · ' + escapeHtml(latest.direction) + '<br>Saved ' + displayDate(latest.updatedAt) + '</p>' + pageLink('edit/' + encodeURIComponent(latest.id), 'Resume draft') + '</section>' : '<section class="panel empty-resume"><div class="panel-head"><h2>Continue work</h2>' + pageLink('new', 'Start a draft') + '</div><p class="meta">' + (state.storageError ? 'Saved drafts unavailable.' : 'No device drafts yet.') + '</p></section>') +
+    '</div>' + snapshotPanel() +
     '<section class="panel section-gap"><div class="panel-head"><h2>Recent projects</h2>' + pageLink('projects', 'View all') + '</div><ul class="row-list">' + projects.map(p => '<li><a class="row-link" href="#project/' + p.id + '"><span><strong>' + p.name + '</strong><small>' + p.description + ' · ' + p.contract + '</small></span><span class="text-link">Open project ' + icon('arrow') + '</span></a></li>').join('') + '</ul></section>';
 }
 function layoutProjects() {
-  return heading('Projects', 'Your assigned demo projects.') + '<div class="grid cards">' + projects.map(p => '<article class="card"><p class="eyebrow">' + p.contract + ' · ' + p.place + '</p><h2>' + p.name + '</h2><p>' + p.description + '</p><p class="meta">Next action · Prepare a local claim draft</p>' + pageLink('project/' + p.id, 'Open project') + '</article>').join('') + '</div>';
+  return heading('Projects', 'Your assigned demo projects.') + '<div class="grid cards">' + projects.map(p => '<article class="card project-card"><h2>' + p.name + '</h2><p class="meta project-identity">' + p.contract + ' · ' + p.place + '</p><p>' + p.description + '</p><p class="meta">Next action · Prepare a local claim draft</p>' + pageLink('project/' + p.id, 'Open project') + '</article>').join('') + '</div>';
 }
 function layoutProject(id, view = 'overview') {
   const project = projects.find(p => p.id === id);
@@ -246,6 +246,8 @@ function layoutClaim(id) {
   const claim = allClaims().find(c => c.id === id);
   if (!claim) return layoutMissing();
   const totals = lineTotals(claim.lines || []);
+  const attachments = claim.attachments || [];
+  const images = linkedEvidence([...sampleEvidence, ...state.evidence], id, claim.project);
   const localPreviews = state.certificates.filter(item => item.source.id === id);
   const bundledPreviews = sampleCertificates.filter(item => item.source.id === id);
   const previewSummary = (state.certificateError ? certificateRecords([], state.certificateError) : localPreviews.length ? '<span class="meta">Device-local previews · Not issued</span>' + certificateRecords(localPreviews) : '') +
@@ -255,9 +257,12 @@ function layoutClaim(id) {
     '<p class="review-note"><strong>Period note:</strong> ' + escapeHtml(claim.notes || 'None') + '</p><p class="meta">' + (claim.local ? 'Saved on this device' : 'Bundled fictional sample') + (claim.updatedAt ? ' · ' + displayDate(claim.updatedAt) : '') + '</p>' +
     (claim.reviewedAt ? '<p class="meta">' + (claim.local ? 'Local review' : 'Sample review') + ' · ' + displayDate(claim.reviewedAt) + ' · Not submitted</p>' : '') +
     (claim.lines?.length ? '<h2 class="section-gap">Claim lines</h2><ul class="row-list">' + claim.lines.map(line => '<li class="review-line"><span>' + escapeHtml(line.id + ' · ' + line.title) + '<small class="meta">' + escapeHtml(line.note || '') + '</small></span><strong>' + money(line.current || '0') + '</strong></li>').join('') + '</ul><p class="meta">Previous: ' + money(fromCents(totals.previous)) + ' · Cumulative: ' + money(fromCents(totals.cumulative)) + ' · Synthetic source</p>' : '') +
-    '<h2 class="section-gap">Evidence</h2>' + evidenceCards(claim.attachments || []) +
+    '<section class="section-gap" aria-labelledby="claim-evidence-title"><div class="panel-head"><h2 id="claim-evidence-title">Evidence</h2>' + captureLink(claim.project, id) + '</div>' +
+    (attachments.length ? '<h3>Claim attachments</h3>' + evidenceCards(attachments) : '') +
+    (images.length || state.evidenceError ? '<h3' + (attachments.length ? ' class="section-gap"' : '') + '>Linked images</h3>' + (state.evidenceError ? notice('Device image storage unavailable: ' + escapeHtml(state.evidenceError), 'error') : '') + (images.length ? evidenceCards(images) : '') : '') +
+    (!attachments.length && !images.length && !state.evidenceError ? evidenceCards([]) : '') + '</section>' +
     '<details class="section-gap"><summary>Technical reference</summary><p class="meta">' + escapeHtml(claim.id) + '</p><p class="meta">Source: ' + escapeHtml(claim.sourceVersion || 'Legacy demo amount') + '</p></details>' + (claim.local ? '<button class="button danger section-gap" id="delete-draft" type="button" data-id="' + escapeHtml(claim.id) + '">Delete local draft</button>' : '') +
-    '<h2 class="section-gap">Linked images</h2>' + (state.evidenceError ? notice('Device image storage unavailable: ' + escapeHtml(state.evidenceError), 'error') : '') + evidenceCards(linkedEvidence([...sampleEvidence, ...state.evidence], id, claim.project)) + captureLink(claim.project, id) + '</section><aside class="panel"><h2>Certification</h2><p class="meta">Independent previews. The claim amount remains unchanged.</p>' + (canAssess(claim) ? '<a class="button" href="#certificate-new/' + encodeURIComponent(id) + '">Start assessment</a>' : '<p class="meta">Locally review a valid claim before starting an assessment.</p>') + '<h3 class="section-gap">' + (claim.local ? 'Saved on this device' : 'Sample workflow') + '</h3><p class="meta">' + (claim.local ? 'Not submitted or synchronized. Device storage is not a backup.' : 'Claim, certificate, invoice and payment are separate stages. These examples are not issued business documents.') + '</p><a class="text-link" href="#claims">' + icon('back') + 'Back to claims</a></aside></div>';
+    '</section><aside class="panel"><h2>Certification</h2><p class="meta">Independent previews. The claim amount remains unchanged.</p>' + (canAssess(claim) ? '<a class="button" href="#certificate-new/' + encodeURIComponent(id) + '">Start assessment</a>' : '<p class="meta">Locally review a valid claim before starting an assessment.</p>') + '<h3 class="section-gap">' + (claim.local ? 'Saved on this device' : 'Sample workflow') + '</h3><p class="meta">' + (claim.local ? 'Not submitted or synchronized. Device storage is not a backup.' : 'Claim, certificate, invoice and payment are separate stages. These examples are not issued business documents.') + '</p><a class="text-link" href="#claims">' + icon('back') + 'Back to claims</a></aside></div>';
 }
 
 function layoutCertificates() {
@@ -500,6 +505,8 @@ let scrollDirection = 0;
 let scrollFrame = 0;
 let layoutFrame = 0;
 let observedFooter = null;
+let returnTargets = null;
+let returnPointerFocus = false;
 const footerResize = new ResizeObserver(() => scheduleViewportLayout());
 const editableControl = element => element?.matches('input, select, textarea, [contenteditable="true"]');
 
@@ -515,19 +522,31 @@ function resetScrollChrome() {
   updateScrollChrome();
 }
 
+function returnActionOverlapsControl() {
+  returnTargets ||= main.querySelectorAll('a[href], button, input, select, textarea, summary, [role="button"], [role="link"]');
+  const box = scrollTop.getBoundingClientRect();
+  for (const target of returnTargets) {
+    const area = target.getBoundingClientRect();
+    if (area.width && area.height && area.left < box.right && area.right > box.left &&
+        area.top < box.bottom && area.bottom > box.top && getComputedStyle(target).visibility === 'visible') return true;
+  }
+  return false;
+}
+
 function updateScrollChrome() {
   const y = Math.max(0, window.scrollY);
   const delta = y - previousScrollY;
   previousScrollY = y;
   const height = window.visualViewport?.height || window.innerHeight;
   const longPage = document.documentElement.scrollHeight - window.innerHeight > Math.max(120, height / 2);
-  const protectedFocus = topbar.contains(document.activeElement) || editableControl(document.activeElement);
+  const returnFocused = document.activeElement === scrollTop && document.body.classList.contains('return-top-docked');
+  const protectedFocus = returnFocused || topbar.contains(document.activeElement) || editableControl(document.activeElement);
   const protectedNavigation = document.body.classList.contains('nav-expanded');
   const visibleTop = window.visualViewport?.offsetTop || 0;
   const keyboard = editableControl(document.activeElement) && window.innerHeight - height - visibleTop > 80;
   const showReturn = longPage && y >= height && !keyboard;
   // Do not remove a keyboard user's currently focused return action.
-  scrollTop.hidden = !showReturn && document.activeElement !== scrollTop;
+  scrollTop.hidden = !returnFocused && (!showReturn || returnActionOverlapsControl());
   if (!longPage || y <= topbar.offsetHeight || protectedFocus || protectedNavigation) {
     topbar.classList.remove('is-scroll-hidden');
     scrollAnchor = y;
@@ -587,7 +606,10 @@ function scheduleViewportLayout() {
 }
 
 new ResizeObserver(() => scheduleViewportLayout()).observe(main);
-new MutationObserver(() => scheduleViewportLayout()).observe(main, { childList: true, subtree: true, attributes: true, attributeFilter: ['hidden', 'class'] });
+new MutationObserver(() => {
+  returnTargets = null;
+  scheduleViewportLayout();
+}).observe(main, { childList: true, subtree: true, attributes: true, attributeFilter: ['hidden', 'class'] });
 document.addEventListener('pointerdown', () => { focusIntentGeneration++; }, { passive: true });
 document.addEventListener('keydown', event => { if (event.key === 'Tab') focusIntentGeneration++; });
 document.addEventListener('focusin', () => {
@@ -637,6 +659,18 @@ menu.addEventListener('click', () => {
 window.addEventListener('keydown', event => { if (event.key === 'Escape') collapseNavigation(); });
 window.addEventListener('resize', () => { collapseNavigation(); resetScrollChrome(); scheduleViewportLayout(); });
 document.querySelector('#scroll-top').innerHTML = icon('up');
-document.querySelector('#scroll-top').addEventListener('click', () => window.scrollTo({ top: 0, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' }));
+// Keep pointer activation stationary; keyboard focus uses the protected top-bar slot.
+scrollTop.addEventListener('pointerdown', () => { returnPointerFocus = true; });
+scrollTop.addEventListener('focus', () => {
+  document.body.classList.toggle('return-top-docked', !returnPointerFocus);
+});
+scrollTop.addEventListener('blur', () => {
+  returnPointerFocus = false;
+  document.body.classList.remove('return-top-docked');
+});
+scrollTop.addEventListener('click', () => {
+  if (returnPointerFocus) main.focus({ preventScroll: true });
+  window.scrollTo({ top: 0, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
+});
 await navigate();
 pwa.start();
