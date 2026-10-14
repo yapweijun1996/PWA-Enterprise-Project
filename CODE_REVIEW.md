@@ -268,3 +268,27 @@ Audited on 2026-10-14 against canonical KB-MCP skill `pwa:product-standard` v1.0
 - **Static evidence:** LSP unavailable; installed `agent-impact file pwa-updates.js --json` returned `PROJECT_CONFIG_NOT_FOUND`. Bounded imports/consumers were inspected; no complete graph is claimed.
 - **Cleanup/release:** both isolated origins' four stores returned to zero; own registrations/caches removed; managed tabs/services closed; the owned artifact tree removed. Existing `_site`, icons/illustrations, database names, source fixtures and deployment configuration stayed unchanged. This task did not push or deploy. A read-only public worker fetch reported v0.5.0, not its exact commit or remote installation acceptance.
 - **SCMC:** Simple PASS, Clear PASS, Modular PASS, Consistent PASS within this correction scope: preserve causes instead of hiding failures, keep existing store/update owners, use one shared inset/layout model and retain the documented policy exception. Wider product/device/security acceptance remains separate.
+
+## Visual audit and four scoped fixes
+
+**Baseline:** main `1f143a0`, worker v0.6.0, read-only screenshot review on 2026-10-14. Eight routes at six sizes plus supplemental states produced 54 frames and 13 visual improvement candidates. These are presentation observations/recommendations, not 13 additional confirmed functional bugs. The owner selected only VIS-01 through VIS-04 for implementation.
+
+**Current status:** those four refinements are Implemented and Verified locally under DEMO-012 / worker v0.6.1, with local commit authorized by the owner's subsequent B selection. No push or deployment. Existing BUG-001 through BUG-016 history and RISK-02 are unchanged.
+
+| Finding | Baseline observation | Current correction and local evidence |
+|---|---|---|
+| VIS-01 | At 390x844 the first file title was near y=778 and its view action below the initial viewport | Scoped mobile thumbnail/identity grid retains status, context and full notes. Title now begins at y=582; context ends at y=653 and the 44px view action at y=705, above navigation y=783. Search/type filtering and original record link exercised. |
+| VIS-02 | Claims table/card label did not name the amount basis | Labels now say Claimed this period, with SGD/period retained. Sample generation and savedRecord derive amount from current lines; no calculation changed. Native direction/search filtering and a saved 1,234.56 record retained correct amount/local-only state. |
+| VIS-03 | A 5px visual track reserved a 44px button row, leaving roughly 59px before the form | The track reserves 5px with native 44px hit areas around it. Track/form gap is 20px; period ends at y=738 before footer y=754. All step top/bottom hit points resolve to the intended button; native Enter/validation/month/progression and saved-editor reload exercised. |
+| VIS-04 | Three mobile amount cards occupied roughly 337px | Only certificate-summary becomes a compact mobile three-row panel, about 148px at 390x844. All amounts, negative variance, right alignment, Snapshot/Illustrative basis and not-issued notice retained. Desktop/tablet cards unchanged; no assessment-detail or source-link redesign. |
+
+### Verification and remaining limits
+
+- Existing behavior contracts: **103 passed, zero failed**. Syntax: four changed JS files. Packaging: 35 validated static files; no new runtime module/dependency/test.
+- Real Chromium: 48 after captures across the same eight routes and six sizes; no document horizontal overflow. Two independent reviewers inspected 16 before/after images each and accepted their assigned fixes. No numeric taste score or full WCAG conclusion.
+- Browser smoke: original gallery filtering/link, Claims directional filtering, native step hit/keyboard/validation, saved amount/note persistence through reload, current-period list value and active v0.6.1 complete-cache identity. Observed page exception logs were empty.
+- At 320x720, some identity/context/actions and period fields still require scrolling; certificate summary is about 204px with values wrapping, not clipped. The 390x844 first-viewport criteria are not generalized to every phone height.
+- Findings 05-13 remain unselected: preview/source entry hierarchy, descriptive identity, Settings section access, duplicate evidence empty state, repeated gallery prose, home empty-panel density, project metadata order and partial floating-button overlap. No implementation or approval claim for them.
+- Physical iOS/Safari/installed PWA/software keyboard, full screen reader/contrast/zoom and production financial correctness are not covered. Prior update/offline/inset results remain dated DEMO-011 evidence.
+- LSP unavailable; impact CLI returned PROJECT_CONFIG_NOT_FOUND. Bounded imports, exported consumers, amount sources and relevant tests were inspected instead; no complete static graph is claimed.
+- Scoped source ZIP and screenshot/JSON evidence retained outside the repo; restore not executed. Owned smoke data/caches/registration/tab/service/runtime artifact cleaned. Reference PNGs and existing `_site` unchanged.

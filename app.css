@@ -307,10 +307,12 @@ pre { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 12px; line-heig
   .editor-heading .subtitle { font-size: 13px; }
   .stepper { padding: 0; border: 0; background: transparent; margin-bottom: 20px; }
   .mobile-step-label { display: block; margin: 0 0 4px; font-size: 12px; color: var(--muted); }
-  .stepper ol { gap: 4px; }
+  .stepper ol { gap: 4px; height: 5px; }
   .stepper li:not(:last-child)::after, .step-number { display: none; }
-  .stepper button { width: 100%; height: 44px; min-height: 44px; border-top: 5px solid var(--line); border-radius: 3px; }
-  .stepper [aria-current=step], .stepper .is-complete button { border-color: var(--blue); }
+  /* Keep 44px step targets around the 5px track without reserving blank space below it. */
+  .stepper button { position: absolute; top: -19px; width: 100%; height: 44px; min-height: 44px; border: 0; border-radius: 3px; }
+  .stepper button::after { content: ''; position: absolute; top: 19px; left: 0; right: 0; height: 5px; background: var(--line); border-radius: 3px; pointer-events: none; }
+  .stepper [aria-current=step]::after, .stepper .is-complete button::after { background: var(--blue); }
   .step-name { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }
   .details-fields { grid-template-columns: 1fr; gap: 16px; }
   .context-field { font-size: 13px; padding: 12px; }
@@ -352,6 +354,12 @@ pre { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 12px; line-heig
 #sov-search, #sov-source, #vo-search, #vo-state { font-size: 16px; }
 .data-table tfoot th { border-top: 2px solid var(--line); }
 @media (max-width: 767px) { .contract-cards { grid-template-columns: 1fr; } .project-tabs { gap: 0; } .project-tabs a { padding: 10px 12px; } }
+@media (max-width: 767px) {
+  .certificate-summary { grid-template-columns: 1fr; gap: 8px; padding: 16px; background: white; border: 1px solid var(--line); border-radius: 12px; }
+  .certificate-summary > .panel { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 12px; align-items: baseline; padding: 0; border: 0; background: transparent; }
+  .certificate-summary .label { font-size: 13px; line-height: 1.4; }
+  .certificate-summary .metric { margin: 0; font-size: 18px; text-align: right; }
+}
 /* Local variation proposal task */
 /* Assessment controls share one layout across editing and read-only preview. */
 .assessment-card { padding: 20px 0; border-bottom: 1px solid var(--line); }
@@ -376,6 +384,18 @@ pre { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 12px; line-heig
 .evidence-tile { overflow-wrap: anywhere; min-width: 0; }
 .evidence-tile .evidence-photo { height: 170px; object-fit: cover; margin-bottom: 16px; }
 .evidence-tile h3 { font-size: 16px; margin: 14px 0 8px; }
+.evidence-thumbnail { min-width: 0; }
 @media (max-width: 1199px) { .evidence-gallery { grid-template-columns: repeat(2,minmax(0,1fr)); } }
 @media (max-width: 767px) { .evidence-gallery { grid-template-columns: 1fr; } .capture-preview { min-height: 200px; } .capture-form .editor-action-buttons { display: grid; grid-template-columns: 1fr 1fr; } }
+@media (max-width: 767px) {
+  .evidence-tile { display: grid; grid-template-columns: 80px minmax(0,1fr); grid-template-areas: "thumbnail status" "thumbnail title" "thumbnail context" "action action" "note note" "source source"; gap: 8px 12px; padding: 16px; align-content: start; }
+  .evidence-thumbnail { grid-area: thumbnail; }
+  .evidence-tile .evidence-photo { height: 80px; margin: 0; }
+  .evidence-tile > .status { grid-area: status; justify-self: start; max-width: 100%; }
+  .evidence-tile h3 { grid-area: title; margin: 0; }
+  .evidence-context { grid-area: context; margin: 0; }
+  .evidence-open { grid-area: action; justify-self: start; }
+  .evidence-note { grid-area: note; margin: 0; }
+  .evidence-source { grid-area: source; margin: 0; }
+}
 @media (max-width: 767px) { .variation-form .editor-action-buttons { display: grid; grid-template-columns: 1fr 1fr; } .variation-form .editor-action-buttons button { white-space: normal; padding: 10px 8px; } }

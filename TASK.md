@@ -225,6 +225,14 @@ Acceptance IDs E2E-01–E2E-18 are defined in [SPEC.md](SPEC.md). Their current 
 - **Evidence:** 103 passing behavior contracts, 43 syntax targets, manifest JSON and pristine 35-file artifact; 48 six-route/width/inset checks, native keyboard/transaction-delay focus tests, actual 44px pagers/16px fields, transform hysteresis and measured footer clearance. Incomplete temporary candidate recovery, dirty-tab deferral, loader-backed automatic activation and server-stopped/HTTP-cache-cleared v0.6.0 cold launch/save/reload passed. See [CODE_REVIEW.md](CODE_REVIEW.md#pwa-product-standard-audit-and-remediation) and PROGRESS.md.
 - **Exception/boundary:** retain the documented automatic all-pages-ready exception to the KB manual-activation MUST. No per-hit cache hashing, dark theme, optional icon redesign, production behavior or device/full-accessibility claim. No push/deploy; only owned browser data/artifacts cleaned.
 
+### DEMO-012 — Four selected visual refinements
+
+- **Status:** Implemented and Verified locally on 2026-10-14; worker v0.6.1; not Released.
+- **Scope:** owner-selected VIS-01 through VIS-04 only: mobile Evidence identity/action layout; explicit Claims current-period labels; mobile form step spacing with 44px targets; compact read-only certificate summary. Other visual candidates are not accepted implementation tasks.
+- **Acceptance:** at 390x844, first attachment identity/context/view action fits above bottom navigation, the required period control fits above the task footer, step-track/form gap is 20px with native 44px targets, and certificate summary is below 180px with all values/basis preserved and right-aligned. Desktop/tablet composition, financial values, filters, source snapshots, local-only state and save/reload remain intact; 320px may wrap/scroll without document overflow.
+- **Evidence:** 103 existing contracts, four changed JS syntax checks, 35-file artifact, 48 six-size route screenshots, two independent screenshot reviews, native hit/Enter/validation checks and actual fictional draft save/reload. See [CODE_REVIEW.md](CODE_REVIEW.md#visual-audit-and-four-scoped-fixes) and PROGRESS.md.
+- **Boundary:** no fixture/schema/calculation/update-policy/brand change, new test/dependency/module, push/deployment or physical-device/full-accessibility claim. Local commit is authorized by the owner's subsequent B selection. Scoped source checkpoint/evidence retained outside the repo; owned browser data and runtime cleaned.
+
 ## Demo bug backlog
 
 Historical review baseline: `e9e3b09`, worker v0.4.0, documented in review commit `ac794ba`. **BUG-001 through BUG-013 were Verified locally under DEMO-010/v0.5.0. BUG-014 through BUG-016 were subsequently Verified locally under DEMO-011/v0.6.0**, not Released. [CODE_REVIEW.md](CODE_REVIEW.md#pwa-product-standard-audit-and-remediation) distinguishes the new KB audit from the historical review.

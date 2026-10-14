@@ -64,6 +64,11 @@ From demo v0.6.0, the shell consumes one set of fallback-aware safe-area variabl
 
 Update readiness now distinguishes incomplete candidate caches, failed cache checks, busy/unconfirmed pages and activation failure. Candidate metadata never replaces active-release offline facts; incomplete candidates use separate complete installation. Local digest failures are distinct from an actually rejected server response, and matching-repair retry remains possible after server correction. The safe automatic policy remains an explicit project exception to the canonical KB user-controlled activation MUST. [CODE_REVIEW.md](CODE_REVIEW.md#pwa-product-standard-audit-and-remediation) and PROGRESS.md own local proof and physical-device/accessibility limits; per-request integrity verification of existing cached hits remains outside this correction.
 
+The owner selected visual findings 01-04 for the v0.6.1 refinement, not a new brand direction or approval of the remaining findings. Below 768px, Evidence uses a compact thumbnail/identity arrangement and prioritizes its existing view action before the full note. Claims amounts are labelled `Claimed this period`; sample generation and `savedRecord()` both derive that field from current line amounts.
+
+Mobile claim steps keep 44px native hit targets around a 5px visual track without reserving a blank 39px row. The 20px track-to-form gap preserves form workspace and the existing footer/keyboard guards. Only `.certificate-summary` reflows into compact label/amount rows on mobile, with right-aligned values and unchanged snapshot/illustrative/variance semantics; project contract cards and assessment controls do not inherit that style. Smaller screens may wrap values and scroll, rather than shrink text or hide context. Original/v2 PNGs, calculation rules and the wider product targets remain unchanged.
+
+
 
 ## Proposed system context
 
